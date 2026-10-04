@@ -28,7 +28,7 @@ export class MongoStore implements RateLimitStore {
     const activeDoc = await RateLimitModel.findOneAndUpdate(
       { key, reset: { $gt: now } },
       { $inc: { count: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (activeDoc) {
@@ -49,7 +49,7 @@ export class MongoStore implements RateLimitStore {
           expireAt: expireAt,
         },
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     );
 
     return {

@@ -23,7 +23,7 @@ export class UserRepository {
 
   async linkOwnerProfile(userId: string, ownerId: string) {
     await connectToDatabase();
-    return OwnerModel.findOneAndUpdate({ id: ownerId }, { userId }, { new: true }).exec();
+    return OwnerModel.findOneAndUpdate({ id: ownerId }, { userId }, { returnDocument: "after" }).exec();
   }
 }
 

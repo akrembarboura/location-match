@@ -12,13 +12,14 @@ const getJwtSecretKey = () => {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   const isAdminRoute = pathname.startsWith('/admin');
   const isOwnerRoute = pathname.startsWith('/owner');
+  const isOwnerOnboarding = pathname.startsWith('/owner/list-property') || pathname.startsWith('/owner/onboard');
 
   if (isAdminRoute || isOwnerRoute) {
     const token = request.cookies.get(AUTH_CONFIG.SESSION_COOKIE_NAME)?.value;
-    
+
     if (!token) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
@@ -30,7 +31,7 @@ export async function middleware(request: NextRequest) {
         algorithms: [AUTH_CONFIG.JWT_ALGORITHM],
       });
       const role = payload.role as string;
-      
+
       if (!payload.sub || !payload.exp) {
         throw new Error("Missing claims");
       }
@@ -38,12 +39,11 @@ export async function middleware(request: NextRequest) {
       if (isAdminRoute && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
         return NextResponse.redirect(new URL('/', request.url));
       }
-      
-      if (isOwnerRoute && role !== 'OWNER' && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+
+      if (isOwnerRoute && !isOwnerOnboarding && role !== 'OWNER' && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
         return NextResponse.redirect(new URL('/', request.url));
       }
-
-    } catch (error) {
+    } catch {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
       const response = NextResponse.redirect(loginUrl);
@@ -58,4 +58,3 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*', '/owner/:path*'],
 };
-

@@ -7,6 +7,7 @@ import { formatPrice, getCoverImage } from "@/lib/rentals/types";
 import { SafeImage } from "./SafeImage";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
+import { trackEvent } from "@/lib/analytics/client";
 
 const FAV_KEY = "favorite-houses";
 
@@ -35,6 +36,18 @@ export function useFavorite(id: string) {
 export function HouseCard({ house }: { house: House }) {
   const cover = getCoverImage(house);
   const [fav, toggleFav] = useFavorite(house.id);
+
+  const handleFavoriteClick = () => {
+    toggleFav();
+    trackEvent(fav ? "property_unfavorited" : "property_favorited", {
+      propertyId: house.id,
+      city: house.city,
+      rentalCategory: house.rentalCategory,
+      propertyType: house.propertyType,
+      forceTrack: true,
+    });
+  };
+
   return (
     <article className="group relative flex flex-col">
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
@@ -47,9 +60,14 @@ export function HouseCard({ house }: { house: House }) {
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         </Link>
+        {house.availabilityStatus === "RESERVED" && (
+          <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center rounded-md bg-amber-500/95 backdrop-blur-sm px-2.5 py-1 text-xs font-semibold text-white shadow-sm z-10">
+            Réservée
+          </span>
+        )}
         <button
           type="button"
-          onClick={toggleFav}
+          onClick={handleFavoriteClick}
           aria-pressed={fav}
           aria-label={fav ? t.card.unfavorite : t.card.favorite}
           className="absolute right-2.5 top-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-card/90 text-foreground shadow-card transition-transform active:scale-90"

@@ -3,10 +3,19 @@ import { NotificationModel } from "@/lib/models";
 import crypto from "crypto";
 
 export interface CreateNotificationInput {
-  type?: "NEW_REQUEST" | "STATUS_CHANGE" | "PROPOSAL_ACCEPTED" | "PROPOSAL_REJECTED" | "SYSTEM";
+  type?:
+    | "NEW_REQUEST"
+    | "STATUS_CHANGE"
+    | "PROPOSAL_ACCEPTED"
+    | "PROPOSAL_REJECTED"
+    | "PROPERTY_SUBMITTED"
+    | "PROPERTY_APPROVED"
+    | "PROPERTY_REJECTED"
+    | "SYSTEM";
   title: string;
   message: string;
   requestId?: string;
+  propertyId?: string;
   recipientRole?: string;
   recipientId?: string;
 }
@@ -21,6 +30,7 @@ export class NotificationService {
       title: input.title,
       message: input.message,
       requestId: input.requestId,
+      propertyId: input.propertyId,
       recipientRole: input.recipientRole || "ADMIN",
       recipientId: input.recipientId,
       read: false,
@@ -49,7 +59,7 @@ export class NotificationService {
     return await NotificationModel.findOneAndUpdate(
       { id },
       { $set: { read: true } },
-      { new: true }
+      { returnDocument: "after" }
     )
       .lean()
       .exec();

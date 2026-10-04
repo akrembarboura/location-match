@@ -24,23 +24,33 @@ export function StatusPill({ status }: { status: Property["status"] }) {
   );
 }
 
-export function PropertyCard({ property, compact }: { property: Property; compact?: boolean }) {
+export function PropertyCard({ property, compact }: { property: any; compact?: boolean }) {
+  const coverImg =
+    typeof property.images?.[0] === "string"
+      ? property.images[0]
+      : property.images?.[0]?.url || "/placeholder-property.jpg";
+
   return (
-    <Link href={`/properties/${property.id }`}
+    <Link href={`/houses/${property.slug || property.id}`}
       className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-card transition-shadow hover:shadow-raised"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img
-          src={property.images[0]}
+          src={coverImg}
           alt={property.title}
           loading="lazy"
           width={1200}
           height={800}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
-        <div className="absolute left-3 top-3 flex gap-1.5">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+          {property.availabilityStatus === "RESERVED" && (
+            <span className="rounded bg-amber-500/95 px-2 py-0.5 text-[0.68rem] font-semibold text-white shadow-sm">
+              Réservée
+            </span>
+          )}
           <span className="rounded bg-card/95 px-2 py-0.5 text-[0.68rem] font-semibold text-foreground">
-            {property.type}
+            {property.type || property.propertyType}
           </span>
           {property.verified && (
             <span className="rounded bg-primary px-2 py-0.5 text-[0.68rem] font-medium text-primary-foreground">
@@ -78,7 +88,7 @@ export function PropertyCard({ property, compact }: { property: Property; compac
 
         {!compact && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {property.amenities.slice(0, 3).map((a) => (
+            {property.amenities?.slice(0, 3).map((a: string) => (
               <span key={a} className="rounded bg-surface px-2 py-0.5 text-[0.68rem] text-muted-foreground">
                 {a}
               </span>
