@@ -31,6 +31,17 @@ export async function requireRole(allowedRoles: Role[]) {
   return user;
 }
 
+/** Roles allowed to create / edit / submit listings (mirrors middleware). */
+export const OWNER_ACCESS_ROLES: Role[] = ["OWNER", "ADMIN", "SUPER_ADMIN"];
+
+/**
+ * Guards owner listing APIs. A CUSTOMER must first go through
+ * POST /api/owner/onboard, which performs the role transition server-side.
+ */
+export async function requireOwnerAccess() {
+  return requireRole(OWNER_ACCESS_ROLES);
+}
+
 /** 
  * Enforces ownership. E.g., if updating a property, pass property.ownerId.
  * Currently assumes resourceOwnerId matches the user ID. 

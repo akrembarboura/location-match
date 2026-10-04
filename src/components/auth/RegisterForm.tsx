@@ -101,11 +101,17 @@ export function RegisterForm() {
 
   const loginHref = withCallbackUrl("/login", callbackUrl);
 
+  const isOwnerIntent = callbackUrl?.startsWith("/owner");
+
   return (
     <AuthCard
-      eyebrow="Nouveau compte"
-      title="Créer un compte"
-      description="Créez votre compte LOC MAISON pour gérer vos demandes et locations."
+      eyebrow={isOwnerIntent ? "Espace Propriétaire" : "Nouveau compte"}
+      title={isOwnerIntent ? "Créer votre compte propriétaire" : "Créer un compte"}
+      description={
+        isOwnerIntent
+          ? "Créez votre compte pour publier votre logement sur LOC MAISON."
+          : "Créez votre compte LOC MAISON pour gérer vos demandes et locations."
+      }
       footer={
         <>
           Vous avez déjà un compte ?{" "}

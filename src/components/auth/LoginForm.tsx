@@ -69,11 +69,17 @@ export function LoginForm() {
     );
   }
 
+  const isOwnerIntent = callbackUrl?.startsWith("/owner");
+
   return (
     <AuthCard
-      eyebrow="Mon espace"
+      eyebrow={isOwnerIntent ? "Espace Propriétaire" : "Mon espace"}
       title="Connexion"
-      description="Connectez-vous à votre compte pour gérer vos demandes et locations."
+      description={
+        isOwnerIntent
+          ? "Connectez-vous pour accéder à votre espace propriétaire."
+          : "Connectez-vous à votre compte pour gérer vos demandes et locations."
+      }
       footer={
         <>
           Pas encore de compte ?{" "}
