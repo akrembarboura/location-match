@@ -45,7 +45,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/70 px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
-        LOC MAISON · {f.notice}
+        &copy; 2026 LOC MAISON &mdash; Un projet de <a href="https://microedition.tn/" className="hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">Micro Edition</a>
       </div>
     </footer>
   );

@@ -1,6 +1,14 @@
-# Location Match 🏖️🇹🇳
+# LOC MAISON
 
-**Location Match** is a modern, specialized property rental platform focused on the coastal city of Mahdia, Tunisia. It connects property owners with both vacationers seeking summer getaways and university students looking for reliable housing.
+## Tunisian Rental Marketplace
+
+LOC MAISON is a Tunisian rental marketplace designed to simplify
+property discovery, rental requests, and the connection between
+customers, property owners, and the LOC MAISON team.
+
+Developed by [Micro Edition](https://microedition.tn/).
+
+Founder & Project Lead — Akrem Barboura
 
 ## 🎯 Business Overview
 
@@ -9,7 +17,7 @@ The platform addresses a dual-market need in Mahdia:
 - **Student Housing**: A dedicated section for university students to find affordable, practical long-term housing during the academic year.
 - **Property Owners**: A streamlined portal for landlords ("Propriétaires") to list and manage their properties easily.
 
-## 💻 Tech Stack
+##  Tech Stack
 
 Built with cutting-edge web technologies for maximum performance, SEO, and developer experience:
 
@@ -22,7 +30,7 @@ Built with cutting-edge web technologies for maximum performance, SEO, and devel
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Icons & Assets**: [Lucide React](https://lucide.dev/) & [Embla Carousel](https://www.embla-carousel.com/)
 
-## 🚀 Key Features
+##  Key Features
 
 - **Categorized Search**: Filter by property type (Villas, Studios, Beachfront, Student Housing).
 - **Internationalization (i18n)**: Fully localized in French (`fr.ts`) to serve the local and diaspora market.
