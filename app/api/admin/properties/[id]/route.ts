@@ -4,15 +4,20 @@ import { propertyService } from "@/server/services/PropertyService";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await requireRole(["ADMIN", "SUPER_ADMIN"]);
+    const { id } = await params;
 
-    const searchParams = req.nextUrl.searchParams;
-    const status = searchParams.get("status") || undefined;
+    const result = await propertyService.getAdminProperty(id);
+    if (!result) {
+      return NextResponse.json({ error: "Bien introuvable." }, { status: 404 });
+    }
 
-    const data = await propertyService.getAdminProperties({ status });
-    return NextResponse.json(data);
+    return NextResponse.json(result);
   } catch (error: any) {
     if (error.name === "AuthenticationError") {
       return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
@@ -20,7 +25,7 @@ export async function GET(req: NextRequest) {
     if (error.name === "AuthorizationError") {
       return NextResponse.json({ error: "Accès refusé. Réservé aux administrateurs." }, { status: 403 });
     }
-    console.error("GET /api/admin/properties error:", error);
+    console.error("GET /api/admin/properties/[id] error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -3,33 +3,68 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { StatusPill } from "@/components/site/PropertyCard";
+import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
 import { formatDT } from "@/lib/utils";
-import { Loader2, AlertCircle, Building2 } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  Building2,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Eye,
+  Filter,
+} from "lucide-react";
 
 interface AdminProperty {
   id: string;
   title: string;
   type: string;
+  city: string;
   area: string;
+  rentalCategory: string;
   bedrooms?: number;
   bathrooms?: number;
   surface?: number;
+  pricing?: {
+    price?: number;
+    pricePeriod?: string;
+  };
   summerPrice?: number;
   studentPrice?: number;
   verified: boolean;
   status: string;
-  images?: string[];
+  images?: any[];
+  moderation?: {
+    submittedAt?: string;
+    rejectionReason?: string;
+  };
   owner?: {
     id: string;
     name: string;
     phone: string;
+    email?: string;
   } | null;
 }
 
 export default function AdminProperties() {
   const [properties, setProperties] = useState<AdminProperty[]>([]);
-  const [ownersCount, setOwnersCount] = useState(0);
+  const [counts, setCounts] = useState<{
+    all: number;
+    pending: number;
+    underReview: number;
+    published: number;
+    rejected: number;
+    archived: number;
+  }>({
+    all: 0,
+    pending: 0,
+    underReview: 0,
+    published: 0,
+    rejected: 0,
+    archived: 0,
+  });
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,92 +73,177 @@ export default function AdminProperties() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch("/api/admin/properties");
+        const url =
+          selectedStatus === "ALL"
+            ? "/api/admin/properties"
+            : `/api/admin/properties?status=${selectedStatus}`;
+
+        const res = await fetch(url);
         if (!res.ok) {
-          throw new Error("Erreur de chargement");
+          throw new Error("Erreur de chargement des biens.");
         }
         const data = await res.json();
         setProperties(data.properties || []);
-        setOwnersCount(data.ownersCount || 0);
-      } catch {
-        setError("Impossible de charger les biens immobiliers. Veuillez réessayer plus tard.");
+        if (data.counts) {
+          setCounts(data.counts);
+        }
+      } catch (err: any) {
+        setError(err.message || "Impossible de charger les biens.");
       } finally {
         setLoading(false);
       }
     }
 
     fetchProperties();
-  }, []);
+  }, [selectedStatus]);
 
-  const subtitle = loading
-    ? "Chargement des biens…"
-    : `${properties.length} bien${properties.length > 1 ? "s" : ""} · ${ownersCount} propriétaire${ownersCount > 1 ? "s" : ""}`;
+  const tabs = [
+    { key: "ALL", label: "Toutes", count: counts.all },
+    { key: "PENDING_REVIEW", label: "En attente", count: counts.pending },
+    { key: "UNDER_REVIEW", label: "En cours", count: counts.underReview },
+    { key: "PUBLISHED", label: "Publiées", count: counts.published },
+    { key: "REJECTED", label: "Refusées", count: counts.rejected },
+    { key: "ARCHIVED", label: "Archivées", count: counts.archived },
+  ];
 
   return (
-    <AdminShell title="Biens" subtitle={subtitle}>
-      {loading ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="mt-3 text-sm text-muted-foreground">Chargement des biens enregistrés…</p>
-        </div>
-      ) : error ? (
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <p className="font-medium">{error}</p>
-        </div>
-      ) : properties.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-12 text-center">
-          <div className="rounded-full bg-surface p-3 text-muted-foreground">
-            <Building2 className="h-6 w-6" />
+    <AdminShell
+      title="Biens & Modération"
+      subtitle="Examen, validation et gestion des logements déposés par les propriétaires"
+    >
+      {/* Filter Tabs & Counters */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setSelectedStatus(tab.key)}
+            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+              selectedStatus === tab.key
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-card border border-border text-muted-foreground hover:bg-surface hover:text-foreground"
+            }`}
+          >
+            <span>{tab.label}</span>
+            <span
+              className={`rounded-full px-1.5 py-0.2 text-[0.65rem] ${
+                selectedStatus === tab.key
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "bg-surface text-muted-foreground"
+              }`}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Main Table */}
+      <div className="mt-6">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-12 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-3 text-sm text-muted-foreground">Chargement des biens…</p>
           </div>
-          <h3 className="mt-3 font-display text-lg text-foreground">Aucun bien immobilier enregistré</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Aucun bien n'a été ajouté au catalogue ou par les propriétaires pour le moment.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-surface text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="p-3">Réf</th>
-                <th className="p-3">Bien</th>
-                <th className="p-3">Propriétaire</th>
-                <th className="p-3">Été / sem</th>
-                <th className="p-3">Étudiant / mois</th>
-                <th className="p-3">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {properties.map((p) => (
-                <tr key={p.id} className="border-t border-border hover:bg-surface/50">
-                  <td className="p-3 font-mono text-xs text-muted-foreground">{p.id}</td>
-                  <td className="p-3">
-                    <Link href={`/properties/${p.id}`} className="font-medium text-foreground hover:text-primary">
-                      {p.type} — {p.area}
-                    </Link>
-                  </td>
-                  <td className="p-3">
-                    {p.owner ? (
-                      <>
-                        <div className="font-medium text-foreground">{p.owner.name}</div>
-                        <div className="text-xs text-muted-foreground">{p.owner.phone}</div>
-                      </>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="p-3">{p.summerPrice ? `${formatDT(p.summerPrice)} DT` : "—"}</td>
-                  <td className="p-3">{p.studentPrice ? `${formatDT(p.studentPrice)} DT` : "—"}</td>
-                  <td className="p-3">
-                    <StatusPill status={p.status as any} />
-                  </td>
+        ) : error ? (
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="font-medium">{error}</p>
+          </div>
+        ) : properties.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-12 text-center">
+            <div className="rounded-full bg-surface p-3 text-muted-foreground mb-3">
+              <Building2 className="h-6 w-6" />
+            </div>
+            <h3 className="font-display text-base font-semibold text-foreground">
+              Aucune annonce dans cette catégorie
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selectedStatus === "PENDING_REVIEW"
+                ? "Toutes les demandes de publication ont été traitées."
+                : "Aucun bien ne correspond au filtre sélectionné."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-xs">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-surface text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                <tr>
+                  <th className="p-3.5">Réf</th>
+                  <th className="p-3.5">Logement</th>
+                  <th className="p-3.5">Propriétaire</th>
+                  <th className="p-3.5">Tarif</th>
+                  <th className="p-3.5">Statut</th>
+                  <th className="p-3.5 text-right">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-border">
+                {properties.map((p) => {
+                  const cover = p.images?.[0]?.url || "/placeholder-property.jpg";
+                  const price = p.pricing?.price || p.summerPrice || p.studentPrice || 0;
+                  const period = p.pricing?.pricePeriod === "month" ? "mois" : "sem";
+
+                  return (
+                    <tr key={p.id} className="hover:bg-surface/50 transition-colors">
+                      <td className="p-3.5 font-mono text-xs text-muted-foreground">
+                        {p.id}
+                      </td>
+
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={cover}
+                            alt=""
+                            className="h-10 w-12 rounded object-cover border border-border shrink-0 bg-surface"
+                          />
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground text-sm truncate max-w-xs">
+                              {p.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {p.type} · {p.city} {p.area ? `(${p.area})` : ""} · {p.images?.length || 0} photo{(p.images?.length || 0) > 1 ? "s" : ""}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="p-3.5">
+                        {p.owner ? (
+                          <div>
+                            <p className="font-medium text-foreground text-xs">{p.owner.name}</p>
+                            <p className="text-xs text-muted-foreground">{p.owner.phone}</p>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+
+                      <td className="p-3.5 font-medium text-foreground text-xs">
+                        {price > 0 ? `${formatDT(price)} DT / ${period}` : "—"}
+                      </td>
+
+                      <td className="p-3.5">
+                        <PropertyModerationBadge status={p.status} />
+                      </td>
+
+                      <td className="p-3.5 text-right">
+                        <Link
+                          href={`/admin/properties/${p.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors shadow-2xs"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Examiner
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </AdminShell>
   );
 }
+

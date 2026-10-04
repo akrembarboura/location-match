@@ -10,6 +10,7 @@ interface AdminNotification {
   title: string;
   message: string;
   requestId?: string;
+  propertyId?: string;
   read: boolean;
   createdAt: string;
 }
@@ -167,6 +168,18 @@ export function AdminNotificationBell() {
                           className="font-medium text-primary hover:underline"
                         >
                           Voir la demande →
+                        </Link>
+                      )}
+                      {n.propertyId && (
+                        <Link
+                          href={`/admin/properties/${n.propertyId}`}
+                          onClick={() => {
+                            if (!n.read) handleMarkAsRead(n.id);
+                            setOpen(false);
+                          }}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          Examiner le bien →
                         </Link>
                       )}
                     </div>
