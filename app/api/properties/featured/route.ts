@@ -23,17 +23,9 @@ export async function GET(req: NextRequest) {
     // 4. Return successful JSON payload
     return NextResponse.json(featuredProperties);
     
-  } catch (error: any) {
-    // Crucial: This logs the exact runtime issue to your terminal console
-    console.error("GET /api/properties/featured error:", error);
-    
-    // Returns 500 error payload with optional details for quick debugging
-    return NextResponse.json(
-      { 
-        error: "Internal Server Error",
-        message: error?.message || "An unexpected error occurred"
-      }, 
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    console.error("GET /api/properties/featured failed:", errorName);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
