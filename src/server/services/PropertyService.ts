@@ -11,6 +11,7 @@ import type {
 } from "../validations/property";
 import { notificationService } from "./NotificationService";
 import { OwnerModel, UserModel, HouseModel } from "@/lib/models";
+import { analyticsRepository } from "../analytics/AnalyticsRepository";
 import crypto from "crypto";
 
 function generateSlug(title: string, city: string, id: string): string {
@@ -195,6 +196,33 @@ export class PropertyService {
         propertyId: propId,
         recipientRole: "ADMIN",
       });
+
+      // Record analytics
+      try {
+        await analyticsRepository.recordEvent({
+          eventName: "property_created",
+          propertyId: propId,
+          city: input.city,
+          rentalCategory: input.rentalCategory,
+          propertyType: input.propertyType,
+          actorType: "OWNER",
+          occurredAt: new Date(),
+        });
+
+        if (status === "PENDING_REVIEW") {
+          await analyticsRepository.recordEvent({
+            eventName: "property_submitted",
+            propertyId: propId,
+            city: input.city,
+            rentalCategory: input.rentalCategory,
+            propertyType: input.propertyType,
+            actorType: "OWNER",
+            occurredAt: new Date(),
+          });
+        }
+      } catch {
+        /* Analytics failure must not break property creation */
+      }
     }
 
     return mapPropertyToOwnerDTO(propertyDoc);
@@ -348,6 +376,20 @@ export class PropertyService {
       propertyId: id,
       recipientRole: "ADMIN",
     });
+
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: "property_submitted",
+        propertyId: id,
+        city: updated.city,
+        rentalCategory: updated.rentalCategory,
+        propertyType: updated.propertyType,
+        actorType: "OWNER",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
 
     return mapPropertyToOwnerDTO(updated);
   }
@@ -509,6 +551,20 @@ export class PropertyService {
       recipientRole: "OWNER",
     });
 
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: "property_approved",
+        propertyId: id,
+        city: property.city,
+        rentalCategory: property.rentalCategory,
+        propertyType: property.propertyType,
+        actorType: "ADMIN",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
+
     return mapPropertyToAdminDTO(updated);
   }
 
@@ -549,6 +605,20 @@ export class PropertyService {
       recipientId: property.ownerId,
       recipientRole: "OWNER",
     });
+
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: "property_rejected",
+        propertyId: id,
+        city: property.city,
+        rentalCategory: property.rentalCategory,
+        propertyType: property.propertyType,
+        actorType: "ADMIN",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
 
     return mapPropertyToAdminDTO(updated);
   }
@@ -607,6 +677,20 @@ export class PropertyService {
       reason: `Réservé du ${dates.from.toISOString().slice(0, 10)} au ${dates.to.toISOString().slice(0, 10)}`,
     });
 
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: "reservation_confirmed",
+        propertyId: id,
+        city: property.city,
+        rentalCategory: property.rentalCategory,
+        propertyType: property.propertyType,
+        actorType: "ADMIN",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
+
     return mapPropertyToAdminDTO(updated);
   }
 
@@ -660,6 +744,20 @@ export class PropertyService {
       newStatus: "AVAILABLE",
       reason: "Libération de la réservation",
     });
+
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: "reservation_released",
+        propertyId: id,
+        city: property.city,
+        rentalCategory: property.rentalCategory,
+        propertyType: property.propertyType,
+        actorType: "ADMIN",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
 
     return mapPropertyToAdminDTO(updated);
   }

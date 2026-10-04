@@ -359,3 +359,65 @@ const NotificationSchema = new Schema({
 
 export const NotificationModel =
   mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);
+
+// --- ANALYTICS EVENTS ---
+export const ANALYTICS_EVENT_NAMES = [
+  "page_viewed",
+  "search_performed",
+  "property_viewed",
+  "request_started",
+  "request_submitted",
+  "owner_cta_clicked",
+  "owner_signup_started",
+  "owner_signup_completed",
+  "property_created",
+  "property_submitted",
+  "property_approved",
+  "property_rejected",
+  "proposal_created",
+  "proposal_accepted",
+  "proposal_rejected",
+  "reservation_confirmed",
+  "reservation_released",
+  "property_favorited",
+  "property_unfavorited",
+] as const;
+
+export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
+
+const AnalyticsEventSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    eventName: {
+      type: String,
+      required: true,
+      enum: ANALYTICS_EVENT_NAMES,
+      index: true,
+    },
+    propertyId: { type: String, index: true, sparse: true },
+    rentalCategory: { type: String },
+    propertyType: { type: String },
+    city: { type: String },
+    anonymousId: { type: String, index: true },
+    sessionId: { type: String, index: true },
+    userId: { type: String, sparse: true },
+    actorType: {
+      type: String,
+      enum: ["ANONYMOUS", "CUSTOMER", "OWNER", "ADMIN"],
+      default: "ANONYMOUS",
+    },
+    properties: { type: Schema.Types.Mixed, default: {} },
+    occurredAt: { type: Date, required: true, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+AnalyticsEventSchema.index({ propertyId: 1, eventName: 1, occurredAt: -1 });
+AnalyticsEventSchema.index({ eventName: 1, occurredAt: -1 });
+AnalyticsEventSchema.index({ city: 1, eventName: 1, occurredAt: -1 });
+// 90 days retention for raw behavioral analytics; does not touch business records
+AnalyticsEventSchema.index({ occurredAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
+export const AnalyticsEventModel =
+  mongoose.models.AnalyticsEvent || mongoose.model("AnalyticsEvent", AnalyticsEventSchema);
+

@@ -16,6 +16,7 @@ import {
   DESTINATION_AREAS,
   normalizeTunisianPhone,
 } from "@/lib/rentals/request-schema";
+import { trackEvent } from "@/lib/analytics/client";
 
 function SubmitBar({
   label = "Envoyer ma demande",
@@ -158,6 +159,18 @@ export function SummerRequestForm() {
       if (!res.ok) {
         throw new Error(data.error || "Une erreur est survenue lors de l'envoi.");
       }
+
+      // Track successful request submission
+      trackEvent("request_submitted", {
+        city: effectiveDestination,
+        rentalCategory: "summer",
+        propertyType: propertyType || undefined,
+        forceTrack: true,
+        properties: {
+          destination: effectiveDestination,
+          guests: Number(guests) || 1,
+        },
+      });
 
       router.push(
         `/request/success?ref=${data.id}&name=${encodeURIComponent(fullName)}&dest=${encodeURIComponent(effectiveDestination)}&type=summer`

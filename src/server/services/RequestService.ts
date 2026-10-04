@@ -5,6 +5,7 @@ import { HouseModel, PropertyModel, HousingRequestModel } from "@/lib/models";
 import connectToDatabase from "@/lib/mongoose";
 import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
 import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
+import { analyticsRepository } from "../analytics/AnalyticsRepository";
 import crypto from "crypto";
 
 export class RequestService {
@@ -544,7 +545,20 @@ export class RequestService {
       }
     }
 
-    return await requestRepository.addProposal(id, proposal);
+    const result = await requestRepository.addProposal(id, proposal);
+
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: "proposal_created",
+        propertyId: proposal.propertyId,
+        actorType: "ADMIN",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
+
+    return result;
   }
 
   async respondToProposal(
@@ -552,7 +566,20 @@ export class RequestService {
     propertyId: string,
     action: "ACCEPTED" | "REJECTED"
   ) {
-    return await requestRepository.updateProposalStatus(requestId, propertyId, action);
+    const result = await requestRepository.updateProposalStatus(requestId, propertyId, action);
+
+    try {
+      await analyticsRepository.recordEvent({
+        eventName: action === "ACCEPTED" ? "proposal_accepted" : "proposal_rejected",
+        propertyId,
+        actorType: "CUSTOMER",
+        occurredAt: new Date(),
+      });
+    } catch {
+      /* ignore */
+    }
+
+    return result;
   }
 }
 

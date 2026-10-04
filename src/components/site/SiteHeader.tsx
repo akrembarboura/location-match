@@ -27,6 +27,7 @@ import {
   getUserDisplayName,
   getRoleLabel,
 } from "@/lib/auth/user-helpers";
+import { trackEvent } from "@/lib/analytics/client";
 
 const nav = [
   { to: "/summer", label: "Location d'été" },
@@ -175,7 +176,7 @@ export function SiteHeader() {
         <div className="hidden items-center gap-3.5 lg:flex">
           {/* Subtle phone contact */}
           <a
-            href="tel:+21690000000"
+            href="tel:+21626574203"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary mr-1"
           >
             <Phone className="h-3.5 w-3.5" />
@@ -185,6 +186,7 @@ export function SiteHeader() {
           {/* Primary Landlord Action (Marketplace CTA) */}
           <Link
             href="/owner"
+            onClick={() => trackEvent("owner_cta_clicked")}
             className="inline-flex items-center justify-center rounded-md bg-primary px-3.5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
           >
             Publier votre bien
@@ -525,7 +527,7 @@ export function SiteHeader() {
               Publier votre bien
             </Link>
             <a
-              href="tel:+21690000000"
+              href="tel:+21626574203"
               className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground"
             >
               Contact

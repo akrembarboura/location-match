@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { destinationsQuery } from "@/lib/rentals/api";
 import { t } from "@/lib/i18n";
+import { trackEvent } from "@/lib/analytics/client";
 
 export type SearchValues = { city?: string | undefined; checkIn?: string | undefined; checkOut?: string | undefined; guests?: number | undefined };
 
@@ -24,6 +25,15 @@ export function SearchBar({ initial = {} }: { initial?: SearchValues }) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        trackEvent("search_performed", {
+          city: city || "Toutes",
+          properties: {
+            destination: city || undefined,
+            guests,
+            hasCheckIn: Boolean(checkIn),
+            hasCheckOut: Boolean(checkOut),
+          },
+        });
         const params = new URLSearchParams();
         if (city) params.set("city", city);
         if (checkIn) params.set("checkIn", checkIn);

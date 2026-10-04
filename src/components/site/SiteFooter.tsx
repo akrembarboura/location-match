@@ -38,9 +38,22 @@ export function SiteFooter() {
           <p className="eyebrow">{f.company}</p>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li><Link href="/about" className={link}>{f.about}</Link></li>
-            <li><a href="tel:+21690000000" className={link}>{f.contact} · +216 90 000 000</a></li>
+            <li><a href="tel:+21626574203" className={link}>{f.contact} · +216 26 574 203</a></li>
             <li><Link href="/terms" className={link}>{f.terms}</Link></li>
             <li><Link href="/privacy" className={link}>{f.privacy}</Link></li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("loc_maison_open_consent"));
+                  }
+                }}
+                className="hover:text-primary transition-colors text-left cursor-pointer"
+              >
+                Gestion des cookies
+              </button>
+            </li>
           </ul>
         </div>
       </div>

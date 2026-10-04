@@ -128,7 +128,7 @@ export function LoginForm() {
 
         <p className="text-right text-xs text-muted-foreground">
           Mot de passe oublié ?{" "}
-          <a href="tel:+21690000000" className="font-medium text-primary underline-offset-4 hover:underline">
+          <a href="tel:+21626574203" className="font-medium text-primary underline-offset-4 hover:underline">
             Contactez-nous
           </a>
         </p>

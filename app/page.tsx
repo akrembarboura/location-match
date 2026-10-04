@@ -13,6 +13,7 @@ import { SafeImage } from "@/components/rentals/SafeImage";
 import { categoriesQuery, destinationsQuery, featuredHousesQuery } from "@/lib/rentals/api";
 import type { Category } from "@/lib/rentals/types";
 import { t } from "@/lib/i18n";
+import { trackEvent } from "@/lib/analytics/client";
 const hero = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889819/location-match/hero.jpg";
 
 
@@ -152,7 +153,11 @@ function Home() {
               <li key={p} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-primary-foreground/80" /> {p}</li>
             ))}
           </ul>
-          <Link href="/owner/list-property" className="mt-7 inline-flex h-12 items-center gap-2 rounded-lg bg-card px-6 font-display text-sm font-semibold text-primary transition-colors hover:bg-sand">
+          <Link
+            href="/owner/list-property"
+            onClick={() => trackEvent("owner_cta_clicked")}
+            className="mt-7 inline-flex h-12 items-center gap-2 rounded-lg bg-card px-6 font-display text-sm font-semibold text-primary transition-colors hover:bg-sand"
+          >
             {t.owner.cta} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
