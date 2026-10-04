@@ -4,26 +4,26 @@
  * (e.g. with server functions) — no UI change needed.
  */
 import { queryOptions } from "@tanstack/react-query";
-import { mockCategories, mockDestinations, mockHouses } from "./mock";
 import type { HouseFilters } from "./types";
 
-function overlaps(aFrom: string, aTo: string, bFrom: string, bTo: string) {
-  return aFrom < bTo && bFrom < aTo;
+export function getBaseUrl() {
+  if (typeof window !== "undefined") return ""; // browser
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // vercel
+  return `http://localhost:${process.env.PORT ?? 3000}`; // local server
 }
 
 async function fetchHouses(filters: HouseFilters = {}) {
-  return mockHouses.filter((h) => {
-    if (!h.isPublished) return false;
-    if (filters.rentalCategory && h.rentalCategory !== filters.rentalCategory) return false;
-    if (filters.city && h.city.toLowerCase() !== filters.city.toLowerCase()) return false;
-    if (filters.category && !h.categoryIds.includes(filters.category)) return false;
-    if (filters.guests && h.guests < filters.guests) return false;
-    if (filters.checkIn && filters.checkOut) {
-      const { checkIn, checkOut } = filters;
-      if (h.unavailable.some((r) => overlaps(checkIn, checkOut, r.from, r.to))) return false;
-    }
-    return true;
-  });
+  const params = new URLSearchParams();
+  if (filters.rentalCategory) params.append("rentalCategory", filters.rentalCategory);
+  if (filters.city) params.append("city", filters.city);
+  if (filters.category) params.append("category", filters.category);
+  if (filters.guests) params.append("guests", filters.guests.toString());
+  if (filters.checkIn) params.append("checkIn", filters.checkIn);
+  if (filters.checkOut) params.append("checkOut", filters.checkOut);
+
+  const res = await fetch(`${getBaseUrl()}/api/properties?${params.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch properties");
+  return res.json();
 }
 
 export const housesQuery = (filters: HouseFilters = {}) =>
@@ -32,18 +32,43 @@ export const housesQuery = (filters: HouseFilters = {}) =>
 export const featuredHousesQuery = () =>
   queryOptions({
     queryKey: ["houses", "featured"],
-    queryFn: async () =>
-      (await fetchHouses({ rentalCategory: "summer" })).filter((h) => h.isFeatured).slice(0, 8),
+    queryFn: async () => {
+      const res = await fetch(`${getBaseUrl()}/api/properties/featured`);
+      if (!res.ok) throw new Error("Failed to fetch featured properties");
+      return res.json();
+    },
   });
 
 export const houseBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ["house", slug],
-    queryFn: async () => mockHouses.find((h) => h.slug === slug && h.isPublished) ?? null,
+    queryFn: async () => {
+      const res = await fetch(`${getBaseUrl()}/api/properties/${slug}`);
+      if (!res.ok) {
+        if (res.status === 404) return null;
+        throw new Error("Failed to fetch property");
+      }
+      return res.json();
+    },
   });
 
 export const destinationsQuery = () =>
-  queryOptions({ queryKey: ["destinations"], queryFn: async () => mockDestinations });
+  queryOptions({ 
+    queryKey: ["destinations"], 
+    queryFn: async () => {
+      const res = await fetch(`${getBaseUrl()}/api/destinations`);
+      if (!res.ok) throw new Error("Failed to fetch destinations");
+      return res.json();
+    } 
+  });
 
 export const categoriesQuery = () =>
-  queryOptions({ queryKey: ["categories"], queryFn: async () => mockCategories });
+  queryOptions({ 
+    queryKey: ["categories"], 
+    queryFn: async () => {
+      const res = await fetch(`${getBaseUrl()}/api/categories`);
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      return res.json();
+    } 
+  });
+

@@ -1,40 +1,99 @@
 "use client";
+
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
-import { z } from "zod";
+import { CheckCircle2, FileText, ArrowRight, MessageSquare, Clock } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 
+function SuccessContent() {
+  const searchParams = useSearchParams();
+  const type = searchParams.get("type");
+  const ref = searchParams.get("ref");
+  const name = searchParams.get("name");
+  const dest = searchParams.get("dest");
 
-
-function Success() {
-  const searchParams = useSearchParams(); const type = searchParams.get("type");
   return (
     <PageShell>
       <div className="mx-auto max-w-xl px-4 py-16 text-center sm:py-24">
-        <CheckCircle2 className="mx-auto h-14 w-14 text-success" />
-        <h1 className="mt-5 font-display text-3xl text-foreground">Demande reçue</h1>
-        <p className="mt-3 text-muted-foreground">
-          {type === "student"
-            ? "Nous contactons les propriétaires près de votre université."
-            : "Nous vérifions la disponibilité pour vos dates."}{" "}
-          Attendez-vous à un message WhatsApp de notre équipe dans quelques heures.
+        <CheckCircle2 className="mx-auto h-16 w-16 text-success animate-in zoom-in-75 duration-300" />
+        
+        <h1 className="mt-5 font-display text-3xl text-foreground sm:text-4xl">
+          Demande enregistrée !
+        </h1>
+
+        {ref && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-foreground shadow-sm">
+            <FileText className="h-4 w-4 text-primary" />
+            Référence : <span className="font-mono font-bold text-primary">{ref}</span>
+          </div>
+        )}
+
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+          Merci {name ? <strong>{name}</strong> : ""} ! Votre demande pour{" "}
+          {dest ? <strong>{dest}</strong> : "votre séjour"} a bien été transmise à notre équipe.
         </p>
-        <ol className="mx-auto mt-8 max-w-sm space-y-3 text-left text-sm">
-          {["Nous contactons des propriétaires vérifiés", "Nous vous envoyons les meilleures options", "Vous visitez ou appelez, puis confirmez"].map((s, i) => (
-            <li key={s} className="flex gap-3 rounded-md border border-border bg-card p-3">
-              <span className="font-display text-primary">{i + 1}</span>{s}
+
+        {/* Workflow Steps Card */}
+        <div className="mx-auto mt-8 rounded-xl border border-border bg-card p-6 text-left shadow-card">
+          <h2 className="flex items-center gap-2 font-display text-base text-foreground">
+            <Clock className="h-4 w-4 text-primary" /> Prochaines étapes
+          </h2>
+          <ol className="mt-4 space-y-3 text-sm">
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-xs font-bold text-primary">
+                1
+              </span>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Examen de vos critères :</strong> Notre équipe vérifie la disponibilité auprès des propriétaires à {dest || "destination"}.
+              </p>
             </li>
-          ))}
-        </ol>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/dashboard" className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-dark">Suivre mes demandes</Link>
-          <Link href="/properties" className="rounded-md border border-border px-5 py-2.5 text-sm text-foreground hover:border-primary">Parcourir les biens</Link>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-xs font-bold text-primary">
+                2
+              </span>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Contact & Propositions :</strong> Vous recevrez un message WhatsApp / appel avec les logements correspondants.
+              </p>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-xs font-bold text-primary">
+                3
+              </span>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Validation & Réservation :</strong> Vous confirmez votre choix en toute sécurité avant toute démarche.
+              </p>
+            </li>
+          </ol>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+          {ref && (
+            <Link
+              href={`/request/${ref}`}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
+            >
+              Suivre ma demande & voir les propositions
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+          <Link
+            href="/houses"
+            className="inline-flex items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-medium text-foreground hover:bg-surface"
+          >
+            Explorer les maisons disponibles
+          </Link>
         </div>
       </div>
     </PageShell>
   );
 }
 
-export default function SuccessPage() { return <Suspense fallback={<div>Chargement...</div>}><Success /></Suspense>; }
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-sm text-muted-foreground">Chargement...</div>}>
+      <SuccessContent />
+    </Suspense>
+  );
+}

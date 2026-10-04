@@ -3,10 +3,10 @@
  * what the API returns. Image URLs are placeholders: swap `url` values for
  * your own photos (any number per house).
  */
-import hero from "@/assets/hero.jpg";
-import p1 from "@/assets/prop-1.jpg";
-import p2 from "@/assets/prop-2.jpg";
-import p3 from "@/assets/prop-3.jpg";
+const hero = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889819/location-match/hero.jpg";
+const p1 = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889822/location-match/prop-1.jpg";
+const p2 = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889823/location-match/prop-2.jpg";
+const p3 = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889824/location-match/prop-3.jpg";
 import type { Category, Destination, House, HouseImage } from "./types";
 
 const pool = [p1, p2, p3, hero];
@@ -14,7 +14,7 @@ const pool = [p1, p2, p3, hero];
 function imgs(houseId: string, count: number, alt: string, offset = 0): HouseImage[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `${houseId}-img-${i + 1}`,
-    url: (pool[(i + offset) % pool.length] ?? hero).src,
+    url: (pool[(i + offset) % pool.length] ?? hero),
     alt: `${alt} — photo ${i + 1}`,
     position: i,
   }));
@@ -31,7 +31,7 @@ export const mockCategories: Category[] = [
 ];
 
 export const mockDestinations: Destination[] = [
-  { id: "mahdia", slug: "mahdia", name: "Mahdia", governorate: "Mahdia", imageUrl: hero.src, tagline: "Eau turquoise et médina blanche" },
+  { id: "mahdia", slug: "mahdia", name: "Mahdia", governorate: "Mahdia", imageUrl: hero, tagline: "Eau turquoise et médina blanche" },
 ];
 
 type Seed = Omit<House, "images" | "coverImageId" | "currency" | "isPublished" | "unavailable"> & {

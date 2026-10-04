@@ -1,6 +1,6 @@
-import prop1 from "@/assets/prop-1.jpg";
-import prop2 from "@/assets/prop-2.jpg";
-import prop3 from "@/assets/prop-3.jpg";
+const prop1 = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889822/location-match/prop-1.jpg";
+const prop2 = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889823/location-match/prop-2.jpg";
+const prop3 = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889824/location-match/prop-3.jpg";
 
 export const AREAS = [
   "Hiboun",
@@ -56,7 +56,7 @@ export type Property = {
   nearUniversity?: string;
 };
 
-const img = [prop1.src, prop3.src, prop2.src];
+const img = [prop1, prop3, prop2];
 
 export const properties: Property[] = [
   {
@@ -72,7 +72,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Available",
     amenities: ["Air conditioning", "Wi-Fi", "Balcony", "Sea view", "Near beach", "Washing machine"],
-    images: [prop1.src, prop3.src, prop2.src],
+    images: [prop1, prop3, prop2],
     description:
       "Second-floor apartment on the Hiboun seafront road, five minutes on foot from the beach. Two bedrooms, a bright living room opening onto a balcony, and a fully equipped kitchen. The owner lives in the building and handles the keys personally.",
     ownerId: "OWN-1",
@@ -91,7 +91,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Available",
     amenities: ["Air conditioning", "Wi-Fi", "Parking", "Near beach"],
-    images: [prop3.src, prop1.src],
+    images: [prop3, prop1],
     description:
       "Compact one-bedroom flat behind the hotel strip, well suited to a couple or two students. Private parking space, reliable Wi-Fi, and a bakery and grocery on the same street.",
     ownerId: "OWN-2",
@@ -110,7 +110,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Booked for summer",
     amenities: ["Air conditioning", "Wi-Fi", "Parking", "Washing machine", "Balcony"],
-    images: [prop1.src, prop2.src],
+    images: [prop1, prop2],
     description:
       "Large apartment near the city centre, close to the market and the train station. Three bedrooms with wardrobes, two bathrooms, and a long balcony over a calm side street.",
     ownerId: "OWN-3",
@@ -129,7 +129,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Available",
     amenities: ["Air conditioning", "Wi-Fi", "Parking", "Pool", "Sea view", "Balcony"],
-    images: [prop3.src, prop1.src],
+    images: [prop3, prop1],
     description:
       "Detached villa for a large family or two families travelling together. Shaded terrace, small pool, outdoor kitchen, and space for two cars inside the gate.",
     ownerId: "OWN-4",
@@ -148,7 +148,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Available",
     amenities: ["Furnished", "Wi-Fi", "Air conditioning", "Near university", "Quiet"],
-    images: [prop2.src, prop1.src],
+    images: [prop2, prop1],
     description:
       "Rented by the academic year to students only. Fully furnished with desks in both bedrooms, ten minutes on foot from FSEG, on a quiet street with a pharmacy at the corner.",
     ownerId: "OWN-1",
@@ -168,7 +168,7 @@ export const properties: Property[] = [
     verified: false,
     status: "Pending verification",
     amenities: ["Furnished", "Wi-Fi", "Quiet"],
-    images: [prop2.src],
+    images: [prop2],
     description:
       "Independent studio on the ground floor of a small house, with its own entrance. Bed, desk, kitchenette and shower room. Water and electricity shared with the owner and billed monthly.",
     ownerId: "OWN-5",
@@ -188,7 +188,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Available",
     amenities: ["Air conditioning", "Wi-Fi", "Sea view", "Near beach", "Parking"],
-    images: [prop1.src, prop3.src],
+    images: [prop1, prop3],
     description:
       "Quieter than the tourist zone and still close to the water. Bright living room, two bedrooms, and a terrace used for evening meals in summer.",
     ownerId: "OWN-2",
@@ -207,7 +207,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Available",
     amenities: ["Furnished", "Wi-Fi", "Near university", "Washing machine"],
-    images: [prop2.src],
+    images: [prop2],
     description:
       "One private room in an S+3 shared by three students. Kitchen and bathroom shared, washing machine included, internet already installed. Female students only this year.",
     ownerId: "OWN-3",
@@ -227,7 +227,7 @@ export const properties: Property[] = [
     verified: false,
     status: "Pending verification",
     amenities: ["Wi-Fi", "Balcony", "Air conditioning"],
-    images: [prop3.src, prop2.src],
+    images: [prop3, prop2],
     description:
       "Traditional house converted into a small apartment, reached through an interior courtyard. Thick walls keep it cool in July. Narrow street, so no car access to the door.",
     ownerId: "OWN-5",
@@ -246,7 +246,7 @@ export const properties: Property[] = [
     verified: true,
     status: "Rented (academic year)",
     amenities: ["Air conditioning", "Wi-Fi", "Parking", "Near beach", "Washing machine", "Balcony"],
-    images: [prop1.src, prop3.src, prop2.src],
+    images: [prop1, prop3, prop2],
     description:
       "Ground-floor apartment with a small garden, rented to a group of students until June and available again for the summer season.",
     ownerId: "OWN-4",
