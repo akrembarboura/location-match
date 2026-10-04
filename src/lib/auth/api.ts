@@ -147,6 +147,8 @@ export const currentUserQuery = () =>
     staleTime: 5 * 60 * 1000, // 5 minutes
     // Don't retry auth checks constantly
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
 export function useAuthMutations() {

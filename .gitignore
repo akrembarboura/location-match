@@ -35,3 +35,9 @@ dist-ssr
 .next/
 out/
 next-env.d.ts
+
+# Diagnostic scripts
+scripts/
+diagnose-admin.ts
+test-admin-api.ts
+create-admin.ts

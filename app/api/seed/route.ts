@@ -32,6 +32,12 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
 
+    // Dev-only: allows resetting rate limit counters without re-seeding the entire DB
+    if (searchParams.get("action") === "clear-rate-limits") {
+      await RateLimitModel.deleteMany({});
+      return NextResponse.json({ success: true, message: "Rate limits cleared successfully!" });
+    }
+
     await HouseModel.deleteMany({});
     await CategoryModel.deleteMany({});
     await DestinationModel.deleteMany({});

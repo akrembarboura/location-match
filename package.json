@@ -11,7 +11,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:admin": "tsx scripts/test-admin-login.ts",
+    "db:local": "tsx scripts/start-local-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

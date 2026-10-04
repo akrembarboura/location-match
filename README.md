@@ -61,7 +61,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 📂 Project Structure
+##  Project Structure
 
 - `/app`: Next.js App Router pages and layouts (e.g., `/admin`, `/owner`, `/student`, `/houses`).
 - `/src/components`: Reusable UI components, layout shells, and interactive elements.
@@ -69,6 +69,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `/src/hooks`: Custom React hooks for business logic.
 - `/src/assets`: Static images and design assets.
 
-## 📝 License
+##  License
 
 This project is proprietary and confidential.

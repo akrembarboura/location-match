@@ -19,6 +19,7 @@ async function connectToDatabase() {
 
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
     };
     
     console.log("Connecting to MongoDB in Next.js context...");
@@ -28,7 +29,10 @@ async function connectToDatabase() {
       console.log("Connected successfully to MongoDB.");
       return mongoose;
     }).catch(e => {
-      console.error("Mongoose connection failed:", e);
+      console.error("Mongoose connection failed:", e.message || e);
+      if (e.name === "MongooseServerSelectionError") {
+        console.error("Tip: If using MongoDB Atlas, check if your current IP address is whitelisted under Network Access in MongoDB Atlas dashboard.");
+      }
       throw e;
     });
   }

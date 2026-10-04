@@ -20,7 +20,7 @@ export function useAuthPageRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl") || searchParams.get("next"));
 
   useEffect(() => {
     if (!user) return;
