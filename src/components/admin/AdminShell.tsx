@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { LayoutDashboard, Inbox, Building2, ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
+import { AdminNotificationBell } from "./AdminNotificationBell";
 
 const links = [
   { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
@@ -62,9 +63,9 @@ export function AdminShell({
               <h1 className="font-display text-xl text-foreground">{title}</h1>
               {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
             </div>
-            <span className="rounded border border-dashed border-border bg-sand px-2.5 py-1 text-xs text-muted-foreground">
-              Opérations internes · démo
-            </span>
+            <div className="flex items-center gap-3">
+              <AdminNotificationBell />
+            </div>
           </div>
           <nav className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
             {links.map(({ to, label, exact }) => {
