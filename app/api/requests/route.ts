@@ -52,3 +52,22 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const currentUser = await authService.getCurrentUser().catch(() => null);
+    if (!currentUser) {
+      return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    }
+
+    const requests = await requestService.getCustomerRequests(currentUser.id);
+    return NextResponse.json(requests);
+  } catch (error: any) {
+    console.error("GET /api/requests error:", error);
+    return NextResponse.json(
+      { error: "Une erreur est survenue lors de la récupération de vos demandes." },
+      { status: 500 }
+    );
+  }
+}
+

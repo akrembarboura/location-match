@@ -3,6 +3,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, User, Phone, MapPin, Calendar, Home, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Field, TextField, SelectField, ChipGroup } from "./Field";
 import {
   PROPERTY_TYPES,
@@ -75,21 +76,16 @@ export function SummerRequestForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { user } = useAuth();
+
   // Pre-fill user information if logged in
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.user) {
-          const name = [data.user.firstName, data.user.lastName].filter(Boolean).join(" ");
-          if (name) setFullName(name);
-          if (data.user.phone) setPhone(data.user.phone);
-        }
-      })
-      .catch(() => {
-        // Ignore unauthenticated errors
-      });
-  }, []);
+    if (user) {
+      const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
+      if (name) setFullName(name);
+      if (user.phone) setPhone(user.phone);
+    }
+  }, [user]);
 
   const availableAreas = DESTINATION_AREAS[destination] || [];
 
@@ -398,20 +394,16 @@ export function StudentRequestForm() {
   // State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   // Pre-fill user information if logged in
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.user) {
-          const name = [data.user.firstName, data.user.lastName].filter(Boolean).join(" ");
-          if (name) setFullName(name);
-          if (data.user.phone) setPhone(data.user.phone);
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (user) {
+      const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
+      if (name) setFullName(name);
+      if (user.phone) setPhone(user.phone);
+    }
+  }, [user]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

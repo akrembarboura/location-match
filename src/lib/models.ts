@@ -196,3 +196,22 @@ const DealSchema = new Schema({
 }, { timestamps: true });
 
 export const DealModel = mongoose.models.Deal || mongoose.model("Deal", DealSchema);
+
+// --- NOTIFICATIONS ---
+const NotificationSchema = new Schema({
+  id: { type: String, required: true, unique: true },
+  type: {
+    type: String,
+    enum: ["NEW_REQUEST", "STATUS_CHANGE", "PROPOSAL_ACCEPTED", "PROPOSAL_REJECTED", "SYSTEM"],
+    default: "NEW_REQUEST",
+  },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  requestId: { type: String },
+  recipientRole: { type: String, default: "ADMIN" },
+  recipientId: { type: String },
+  read: { type: Boolean, default: false },
+}, { timestamps: true });
+
+export const NotificationModel =
+  mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);

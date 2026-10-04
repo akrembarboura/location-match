@@ -1,5 +1,6 @@
 import { requestRepository } from "../repositories/RequestRepository";
 import { propertyRepository } from "../repositories/PropertyRepository";
+import { notificationService } from "./NotificationService";
 import { HouseModel } from "@/lib/models";
 import connectToDatabase from "@/lib/mongoose";
 import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
@@ -64,6 +65,22 @@ export class RequestService {
 
     const doc = await requestRepository.create(data);
 
+    // Persist real notification for administrators
+    try {
+      const categoryLabel = input.rentalCategory === "summer" ? "Été" : "Étudiant";
+      const destArea = input.rentalCategory === "summer" ? input.area : undefined;
+      const destLabel = input.destination || destArea || "Tunisie";
+      await notificationService.createNotification({
+        type: "NEW_REQUEST",
+        title: "Nouvelle demande reçue",
+        message: `${input.fullName} a envoyé une demande (${categoryLabel}) pour ${destLabel}.`,
+        requestId: doc.id,
+        recipientRole: "ADMIN",
+      });
+    } catch (notifErr) {
+      console.error("Failed to create admin notification:", notifErr);
+    }
+
     return {
       id: doc.id,
       fullName: doc.customer?.fullName,
@@ -76,6 +93,10 @@ export class RequestService {
       status: doc.status,
       createdAt: doc.createdAt,
     };
+  }
+
+  async getCustomerRequests(customerId: string) {
+    return await requestRepository.findByCustomerId(customerId);
   }
 
   async getClientRequest(id: string) {
