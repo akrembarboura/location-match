@@ -61,6 +61,22 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Production Configuration
+
+Copy `.env.example` to `.env.local` for local development. For production, configure these
+variables in the hosting provider's production environment; do not commit credentials:
+
+- `MONGODB_URI` — production MongoDB connection string. Use a dedicated database and allow
+  network access only from the deployed application.
+- `JWT_SECRET` — a cryptographically random secret of at least 32 bytes. Keep it stable
+  between deployments so existing sessions remain valid.
+- `NEXT_PUBLIC_APP_URL` — the canonical HTTPS URL of the deployed site.
+- `CLOUDINARY_URL` and `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` — required for property image
+  uploads and image delivery.
+
+Run `npm test`, `npm run lint`, and `npm run build` before deployment. The production build
+fails on TypeScript and ESLint errors rather than silently skipping those checks.
+
 ##  Project Structure
 
 - `/app`: Next.js App Router pages and layouts (e.g., `/admin`, `/owner`, `/student`, `/houses`).
