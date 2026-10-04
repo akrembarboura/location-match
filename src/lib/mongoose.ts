@@ -1,10 +1,16 @@
 import mongoose from "mongoose";
 
-let cached = (global as any).mongoose;
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
 
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
-}
+const globalWithMongoose = globalThis as typeof globalThis & {
+  mongoose?: MongooseCache;
+};
+const cached =
+  globalWithMongoose.mongoose ??
+  (globalWithMongoose.mongoose = { conn: null, promise: null });
 
 async function connectToDatabase() {
   if (cached.conn) {
@@ -12,28 +18,34 @@ async function connectToDatabase() {
   }
 
   if (!cached.promise) {
-    const uri = process.env.MONGODB_URI;
+    const uri =
+      process.env.MONGODB_URI?.trim() ||
+      (process.env.NODE_ENV === "development"
+        ? "mongodb://127.0.0.1:27017/location_match"
+        : "");
     if (!uri) {
-      throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
+      throw new Error(
+        "MONGODB_URI is required in production. Configure it in the hosting provider's environment variables."
+      );
     }
 
     const opts = {
       bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
     };
-    
-    console.log("Connecting to MongoDB in Next.js context...");
-    console.log("URI starting with:", uri.substring(0, 30));
 
-    cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
+    console.log("Connecting to MongoDB...");
+
+    cached.promise = mongoose.connect(uri, opts).then((connection) => {
       console.log("Connected successfully to MongoDB.");
-      return mongoose;
-    }).catch(e => {
-      console.error("Mongoose connection failed:", e.message || e);
-      if (e.name === "MongooseServerSelectionError") {
+      return connection;
+    }).catch((error: unknown) => {
+      const errorName = error instanceof Error ? error.name : "UnknownError";
+      console.error("Mongoose connection failed:", errorName);
+      if (errorName === "MongooseServerSelectionError") {
         console.error("Tip: If using MongoDB Atlas, check if your current IP address is whitelisted under Network Access in MongoDB Atlas dashboard.");
       }
-      throw e;
+      throw error;
     });
   }
 

@@ -25,11 +25,14 @@ export async function rateLimit(key: string, policy: RateLimitPolicy): Promise<R
       remaining: Math.max(0, limit - count),
       reset,
     };
-  } catch (err) {
-    console.error("Rate limit store failed:", err);
+  } catch {
     // Fail-closed for sensitive endpoints in production/test, Fail-open in development
     const isSensitive = policy.name.startsWith("AUTH_") || policy.name === "ADMIN_API";
     const failClosed = isSensitive && process.env.NODE_ENV !== "development";
+    const logMessage = failClosed
+      ? "Rate limit store unavailable; blocking request:"
+      : "Rate limit store unavailable; allowing request:";
+    console.warn(logMessage, policy.name);
     return {
       success: !failClosed,
       limit,
