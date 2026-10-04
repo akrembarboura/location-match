@@ -99,7 +99,9 @@ export const fr = {
   },
   footer: {
     tagline: "La plateforme tunisienne de location de logements.",
+    taglineMobile: "La location en Tunisie, simplement.",
     subtagline: "Locations d'été, logements étudiants et autres locations adaptées à vos besoins.",
+    subtaglineMobile: "Été · Étudiant · Vacances",
     explore: "Explorer",
     company: "LOC MAISON",
     about: "À propos",

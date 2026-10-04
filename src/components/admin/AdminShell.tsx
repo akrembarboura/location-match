@@ -68,16 +68,22 @@ export function AdminShell({
               <AdminNotificationBell />
             </div>
           </div>
-          <nav className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
+          <nav
+            aria-label="Navigation d’administration"
+            className="mt-4 flex gap-5 overflow-x-auto border-b border-border lg:hidden"
+          >
             {links.map(({ to, label, exact }) => {
               const isActive = exact ? pathname === to : pathname?.startsWith(to);
               return (
                 <Link
                   key={to}
                   href={to}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "whitespace-nowrap rounded-full border border-border px-3.5 py-1.5 text-sm text-muted-foreground",
-                    isActive && "border-primary bg-primary-soft text-primary"
+                    "relative -mb-px whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-1 text-sm transition-colors",
+                    isActive
+                      ? "border-primary font-semibold text-primary"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
                   )}
                 >
                   {label}
@@ -85,6 +91,13 @@ export function AdminShell({
               );
             })}
           </nav>
+          <Link
+            href="/"
+            className="mt-3 inline-flex min-h-11 w-full items-center gap-2 border-t border-border pt-3 text-sm font-medium text-primary transition-colors hover:text-primary-dark lg:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour au site LOC MAISON
+          </Link>
         </header>
         <div className="min-w-0 flex-1 px-4 py-6 sm:px-6">{children}</div>
       </div>
