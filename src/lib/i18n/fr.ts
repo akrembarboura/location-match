@@ -12,9 +12,9 @@ export const fr = {
     menuClose: "Fermer le menu",
   },
   hero: {
-    eyebrow: "Locations d'été à Mahdia",
-    title: "Trouvez la maison de vos vacances à Mahdia.",
-    subtitle: "Villas, maisons et appartements près de la mer, avec de vraies photos et des prix clairs en dinars.",
+    eyebrow: "Locations d'été en Tunisie",
+    title: "Trouvez votre location d'été en Tunisie",
+    subtitle: "Indiquez vos besoins. Notre équipe recherche les logements disponibles et vous propose les options qui correspondent à vos dates et à votre budget.",
   },
   search: {
     where: "Destination",
@@ -98,7 +98,8 @@ export const fr = {
     bathrooms: (n: number) => `${n} salle${n > 1 ? "s" : ""} de bain`,
   },
   footer: {
-    tagline: "La plateforme tunisienne de locations d'été et de logement étudiant.",
+    tagline: "La plateforme tunisienne de location de logements.",
+    subtagline: "Locations d'été, logements étudiants et autres locations adaptées à vos besoins.",
     explore: "Explorer",
     company: "LOC MAISON",
     about: "À propos",
@@ -109,6 +110,6 @@ export const fr = {
     terms: "Conditions",
     privacy: "Confidentialité",
     student: "Logement étudiant",
-    demo: "Prototype — maisons, prix et photos sont des exemples.",
+    notice: "Plateforme tunisienne de mise en relation locative.",
   },
 };

@@ -6,8 +6,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { MobileTabBar } from "@/components/site/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "LOC MAISON — Locations d'été à Mahdia",
-  description: "Villas, maisons et appartements de vacances à Mahdia. Vraies photos et prix clairs en dinars.",
+  title: "LOC MAISON — Locations de vacances et logements en Tunisie",
+  description: "Villas, maisons et appartements de vacances en Tunisie. Vraies photos et prix clairs en dinars.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
 };
 

@@ -13,7 +13,7 @@ import { SafeImage } from "@/components/rentals/SafeImage";
 import { categoriesQuery, destinationsQuery, featuredHousesQuery } from "@/lib/rentals/api";
 import type { Category } from "@/lib/rentals/types";
 import { t } from "@/lib/i18n";
-import hero from "@/assets/hero.jpg";
+const hero = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889819/location-match/hero.jpg";
 
 
 
@@ -41,8 +41,8 @@ function Home() {
       {/* Hero */}
       <section className="relative isolate">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <img src={hero.src} alt="" width={1600} height={1008} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-foreground/55 via-foreground/35 to-background" />
+          <img src={hero} alt="" width={1600} height={1008} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-linear-to-b from-foreground/55 via-foreground/35 to-background" />
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
           <p className="font-display text-xs font-medium uppercase tracking-[0.16em] text-primary-foreground/85">{t.hero.eyebrow}</p>
@@ -52,11 +52,10 @@ function Home() {
         </div>
       </section>
 
-      {/* Categories */}
       <section className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
         <h2 className="sr-only">{t.categories.title}</h2>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
-          {categories.map((c) => <CategoryChip key={c.id} c={c} />)}
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:flex-wrap sm:px-0">
+          {categories.map((c: any) => <CategoryChip key={c.id} c={c} />)}
         </div>
       </section>
 
@@ -81,17 +80,17 @@ function Home() {
       <section className="border-y border-border bg-sand">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <SectionHeading eyebrow={t.destinations.eyebrow} title={t.destinations.title} />
-          <div className="-mx-4 mt-8 flex snap-x gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-4">
-            {destinations.map((d, i) => (
+          <div className="-mx-4 mt-8 flex snap-x gap-4 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-4">
+            {destinations.map((d: any, i: number) => (
               <Link
                 key={d.id}
                 href={{ pathname: "/houses", query: { city: d.name } }}
                 className={`group relative block w-[70%] shrink-0 snap-start overflow-hidden rounded-lg sm:w-auto ${i === 0 ? "sm:col-span-2 sm:row-span-2" : ""}`}
               >
-                <div className={`${i === 0 ? "aspect-[3/4] sm:aspect-auto sm:h-full" : "aspect-[3/4] sm:aspect-[4/3]"}`}>
+                <div className={`${i === 0 ? "aspect-3/4 sm:aspect-auto sm:h-full" : "aspect-3/4 sm:aspect-4/3"}`}>
                   <SafeImage src={d.imageUrl ?? ""} alt={d.name} className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-foreground/70 via-transparent to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <p className="font-display text-lg text-primary-foreground">{d.name}</p>
                   <p className="text-sm text-primary-foreground/85">{d.tagline}</p>

@@ -63,7 +63,7 @@ function HouseDetail() {
             <p className="mt-2 leading-relaxed text-muted-foreground">{house.description}</p>
             <h2 className="mt-8 font-display text-lg text-foreground">{t.detail.amenities}</h2>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {house.amenities.map((a) => (
+              {house.amenities.map((a: string) => (
                 <li key={a} className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> {a}</li>
               ))}
             </ul>

@@ -1,9 +1,11 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, Phone, Home, Sun, GraduationCap, Building2 } from "lucide-react";
+import { Menu, X, Phone, Home, Sun, GraduationCap, Building2, User as UserIcon, LogIn, LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -16,6 +18,16 @@ const nav = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  if (pathname?.startsWith("/admin")) return null;
+
+  const dashboardHref =
+    user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
+      ? "/admin"
+      : user?.role === "OWNER"
+      ? "/owner"
+      : "/dashboard";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
@@ -39,7 +51,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-4 lg:flex">
           <a
             href="tel:+21690000000"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
@@ -47,6 +59,36 @@ export function SiteHeader() {
             <Phone className="h-4 w-4" />
             Contact
           </a>
+
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-3 border-l border-border pl-3">
+              <Link
+                href={dashboardHref}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
+              >
+                <UserIcon className="h-4 w-4" />
+                {user.firstName || "Mon espace"}
+              </Link>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-destructive"
+                title="Déconnexion"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="sr-only">Déconnexion</span>
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
+            >
+              <LogIn className="h-4 w-4" />
+              Connexion
+            </Link>
+          )}
+
           <Link
             href="/owner/list-property"
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-dark"
@@ -81,6 +123,36 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+
+            {isAuthenticated && user ? (
+              <>
+                <Link
+                  href={dashboardHref}
+                  onClick={() => setOpen(false)}
+                  className="border-b border-border py-3 text-[0.95rem] font-medium text-foreground"
+                >
+                  Mon espace ({user.firstName || user.email})
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    logout();
+                  }}
+                  className="border-b border-border py-3 text-left text-[0.95rem] font-medium text-destructive last:border-0"
+                >
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="border-b border-border py-3 text-[0.95rem] font-medium text-primary last:border-0"
+              >
+                Connexion / Créer un compte
+              </Link>
+            )}
           </div>
           <div className="mt-4 flex gap-2">
             <Link
@@ -112,6 +184,8 @@ const bottomNav = [
 
 export function MobileTabBar() {
   const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
       {bottomNav.map(({ to, label, icon: Icon }) => (

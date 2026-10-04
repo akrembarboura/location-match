@@ -37,7 +37,7 @@ export function SearchBar({ initial = {} }: { initial?: SearchValues }) {
         <span className={label}>{t.search.where}</span>
         <select value={city} onChange={(e) => setCity(e.target.value)} className={input}>
           <option value="">{t.search.anywhere}</option>
-          {destinations.map((d) => (
+          {destinations.map((d: any) => (
             <option key={d.id} value={d.name}>{d.name}</option>
           ))}
         </select>

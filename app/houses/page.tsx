@@ -46,7 +46,7 @@ function HousesPage() {
           >
             {t.list.allCategories}
           </Link>
-          {categories.filter((c) => c.rentalCategory === "summer").map((c) => (
+          {categories.filter((c: any) => c.rentalCategory === "summer").map((c: any) => (
             <Link
               key={c.id}
               href={`/houses?category=${c.id}`}
