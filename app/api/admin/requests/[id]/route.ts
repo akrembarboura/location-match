@@ -39,7 +39,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireRole(["ADMIN", "SUPER_ADMIN"]);
+    const adminUser = await requireRole(["ADMIN", "SUPER_ADMIN"]);
     const { id } = await params;
     const body = await req.json();
     const parsed = PatchSchema.safeParse(body);
@@ -51,7 +51,8 @@ export async function PATCH(
     const updated = await requestService.updateRequestStatus(
       id,
       parsed.data.status || "PENDING",
-      parsed.data.adminNotes
+      parsed.data.adminNotes,
+      adminUser.id
     );
 
     if (!updated) {

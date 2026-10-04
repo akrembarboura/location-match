@@ -78,28 +78,160 @@ const DestinationSchema = new Schema({
 
 export const DestinationModel = mongoose.models.Destination || mongoose.model("Destination", DestinationSchema);
 
-// --- PROPERTIES (Admin/Owner) ---
+// --- PROPERTIES (Admin/Owner/Public unified) ---
+export const PROPERTY_STATUSES = [
+  "DRAFT",
+  "PENDING_REVIEW",
+  "UNDER_REVIEW",
+  "PUBLISHED",
+  "REJECTED",
+  "ARCHIVED",
+] as const;
+export type PropertyStatus = (typeof PROPERTY_STATUSES)[number];
+
+const PropertyImageSchema = new Schema({
+  id: { type: String },
+  url: { type: String, required: true },
+  publicId: { type: String },
+  alt: { type: String },
+  sortOrder: { type: Number, default: 0 },
+  position: { type: Number, default: 0 },
+  width: { type: Number },
+  height: { type: Number },
+}, { _id: false });
+
 const PropertySchema = new Schema({
   id: { type: String, required: true, unique: true },
-  title: String,
-  type: String,
-  area: String,
-  bedrooms: Number,
-  bathrooms: Number,
-  surface: Number,
-  summerPrice: Number,
-  studentPrice: Number,
-  verified: Boolean,
-  status: String,
-  amenities: [String],
-  images: [String],
-  description: String,
-  ownerId: String,
-  walkToBeach: String,
-  nearUniversity: String,
+  slug: { type: String, sparse: true },
+  ownerId: { type: String, index: true },
+  title: { type: String, required: true },
+  description: { type: String },
+  rentalCategory: { 
+    type: String, 
+    enum: ["summer", "student"], 
+    default: "summer",
+    index: true 
+  },
+  propertyType: { type: String, default: "Appartement" },
+  type: { type: String }, // Legacy view compatibility
+
+  // Location
+  location: {
+    country: { type: String, default: "Tunisie" },
+    governorate: { type: String, default: "Mahdia" },
+    city: { type: String, default: "Mahdia" },
+    area: { type: String },
+    address: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
+  },
+  city: { type: String, default: "Mahdia", index: true },
+  governorate: { type: String, default: "Mahdia" },
+  area: { type: String },
+
+  // Pricing
+  pricing: {
+    price: { type: Number },
+    pricePeriod: { type: String, enum: ["night", "week", "month"], default: "week" },
+    currency: { type: String, default: "TND" },
+  },
+  summerPrice: { type: Number },
+  studentPrice: { type: Number },
+  pricePerNight: { type: Number },
+  currency: { type: String, default: "TND" },
+
+  // Capacity
+  capacity: {
+    guests: { type: Number, default: 1 },
+    bedrooms: { type: Number, default: 1 },
+    bathrooms: { type: Number, default: 1 },
+    surface: { type: Number },
+  },
+  guests: { type: Number, default: 1 },
+  bedrooms: { type: Number, default: 1 },
+  bathrooms: { type: Number, default: 1 },
+  surface: { type: Number },
+
+  // Amenities & Features
+  amenities: { type: [String], default: [] },
+  walkToBeach: { type: String },
+  nearUniversity: { type: String },
+
+  // Images
+  images: { type: [Schema.Types.Mixed], default: [] },
+  coverImageId: { type: String },
+
+  // Availability
+  availability: {
+    availableFrom: { type: String },
+    availableTo: { type: String },
+  },
+  unavailable: [{ from: String, to: String, _id: false }],
+  availabilityStatus: {
+    type: String,
+    enum: ["AVAILABLE", "RESERVED"],
+    default: "AVAILABLE",
+    index: true,
+  },
+  reservation: {
+    type: new Schema({
+      from: { type: Date },
+      to: { type: Date },
+      updatedAt: { type: Date },
+      updatedBy: { type: String },
+    }, { _id: false }),
+    default: null,
+  },
+
+  // Moderation & Status
+  status: {
+    type: String,
+    default: "DRAFT",
+    index: true,
+  },
+  verified: { type: Boolean, default: false },
+  isPublished: { type: Boolean, default: false, index: true },
+  isFeatured: { type: Boolean, default: false },
+  rating: { type: Number },
+  reviewCount: { type: Number, default: 0 },
+
+  // Moderation details
+  moderation: {
+    submittedAt: { type: Date },
+    reviewedAt: { type: Date },
+    reviewedBy: { type: String },
+    rejectionReason: { type: String },
+  },
+  submittedAt: { type: Date },
+  reviewedAt: { type: Date },
+  reviewedBy: { type: String },
+  rejectionReason: { type: String },
 }, { timestamps: true });
 
+PropertySchema.index({ status: 1, city: 1, rentalCategory: 1 });
+PropertySchema.index({ ownerId: 1, createdAt: -1 });
+PropertySchema.index({ availabilityStatus: 1, "reservation.from": 1, "reservation.to": 1 });
+
 export const PropertyModel = mongoose.models.Property || mongoose.model("Property", PropertySchema);
+
+// --- PROPERTY MODERATION EVENTS ---
+const PropertyModerationEventSchema = new Schema({
+  id: { type: String, required: true, unique: true },
+  propertyId: { type: String, required: true, index: true },
+  adminId: { type: String, required: true },
+  action: { 
+    type: String, 
+    enum: ["SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "ARCHIVED", "RESERVED", "RELEASED"], 
+    required: true 
+  },
+  previousStatus: { type: String },
+  newStatus: { type: String, required: true },
+  reason: { type: String },
+}, { timestamps: true });
+
+export const PropertyModerationEventModel =
+  mongoose.models.PropertyModerationEvent ||
+  mongoose.model("PropertyModerationEvent", PropertyModerationEventSchema);
 
 // --- OWNERS ---
 const OwnerSchema = new Schema({
@@ -173,6 +305,8 @@ const HousingRequestSchema = new Schema({
   adminNotes: { type: String },
   proposedProperties: { type: [PropertyProposalSchema], default: [] },
   selectedProperty: { type: String },
+  propertyId: { type: String, index: true },
+  message: { type: String },
   // Legacy / Prototype Compatibility Fields
   kind: { type: String },
   people: { type: Number },
@@ -202,12 +336,22 @@ const NotificationSchema = new Schema({
   id: { type: String, required: true, unique: true },
   type: {
     type: String,
-    enum: ["NEW_REQUEST", "STATUS_CHANGE", "PROPOSAL_ACCEPTED", "PROPOSAL_REJECTED", "SYSTEM"],
+    enum: [
+      "NEW_REQUEST",
+      "STATUS_CHANGE",
+      "PROPOSAL_ACCEPTED",
+      "PROPOSAL_REJECTED",
+      "PROPERTY_SUBMITTED",
+      "PROPERTY_APPROVED",
+      "PROPERTY_REJECTED",
+      "SYSTEM",
+    ],
     default: "NEW_REQUEST",
   },
   title: { type: String, required: true },
   message: { type: String, required: true },
   requestId: { type: String },
+  propertyId: { type: String },
   recipientRole: { type: String, default: "ADMIN" },
   recipientId: { type: String },
   read: { type: Boolean, default: false },

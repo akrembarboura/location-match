@@ -156,175 +156,285 @@ export default function RequestTrackingPage() {
         )}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-          {/* Main: Proposals & Status */}
+          {/* Main: Property Reservation or Generic Proposals */}
           <div className="space-y-6">
-            <div>
-              <h2 className="font-display text-xl text-foreground">
-                Logement(s) proposé(s) par l'équipe LOC MAISON
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Vérifiez les logements sélectionnés pour vous, et confirmez votre choix pour bloquer la réservation.
-              </p>
-            </div>
-
-            {proposals.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
-                <Clock className="mx-auto h-10 w-10 text-primary animate-pulse" />
-                <h3 className="mt-3 font-display text-base font-semibold text-foreground">
-                  Recherche en cours
-                </h3>
-                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                  Notre équipe sélectionne actuellement les meilleures maisons disponibles à{" "}
-                  <strong>{requestData.destination}</strong> pour vos dates ({requestData.checkIn} → {requestData.checkOut || "flexible"}).
-                </p>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Dès qu'un bien correspond à vos critères, il apparaîtra directement ici et vous recevrez un message WhatsApp.
-                </p>
-              </div>
-            ) : (
+            {requestData.propertyId && requestData.selectedPropertyDetails ? (
               <div className="space-y-6">
-                {proposals.map((p: any) => {
-                  const house = p.house;
-                  const isPending = p.status === "PENDING_CLIENT";
-                  const isAccepted = p.status === "ACCEPTED";
-                  const isRejected = p.status === "REJECTED";
+                <div>
+                  <h2 className="font-display text-xl text-foreground">
+                    Votre réservation de logement
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Détails du logement sélectionné et suivi de votre demande par l'équipe LOC MAISON.
+                  </p>
+                </div>
 
-                  return (
-                    <div
-                      key={p.propertyId}
-                      className={`overflow-hidden rounded-xl border bg-card shadow-card transition-all ${
-                        isAccepted
-                          ? "border-green-500 ring-2 ring-green-500/20"
-                          : isRejected
-                          ? "opacity-60 border-border"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="grid sm:grid-cols-[240px_1fr]">
-                        {/* Photo */}
-                        <div className="relative aspect-[4/3] sm:aspect-auto bg-muted">
-                          {house?.coverImage ? (
-                            <img
-                              src={house.coverImage}
-                              alt={house.title || "Logement proposé"}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                              Photo non disponible
-                            </div>
-                          )}
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+                  <div className="grid sm:grid-cols-[280px_1fr]">
+                    {/* Property Cover Image */}
+                    <div className="relative aspect-[4/3] sm:aspect-auto bg-muted">
+                      {requestData.selectedPropertyDetails.coverImage ? (
+                        <img
+                          src={requestData.selectedPropertyDetails.coverImage}
+                          alt={requestData.selectedPropertyDetails.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                          Photo du bien
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className="p-6 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                            {requestData.selectedPropertyDetails.city}
+                            {requestData.selectedPropertyDetails.area ? ` · ${requestData.selectedPropertyDetails.area}` : ""}
+                          </span>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Capacité max : {requestData.selectedPropertyDetails.guests || 1} pers.
+                          </span>
                         </div>
 
-                        {/* Details */}
-                        <div className="p-5 flex flex-col justify-between">
-                          <div>
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-primary">
-                                {house?.city || requestData.destination}
-                              </span>
-                              <span
-                                className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium ${
-                                  isAccepted
-                                    ? "bg-green-100 text-green-800"
-                                    : isRejected
-                                    ? "bg-gray-100 text-gray-600"
-                                    : "bg-primary/10 text-primary"
-                                }`}
-                              >
-                                {isAccepted
-                                  ? "✓ Proposition acceptée"
-                                  : isRejected
-                                  ? "Proposition refusée"
-                                  : "En attente de votre réponse"}
-                              </span>
-                            </div>
+                        <h3 className="mt-1 font-display text-xl font-bold text-foreground">
+                          {requestData.selectedPropertyDetails.title}
+                        </h3>
 
-                            <h3 className="mt-1 font-display text-lg font-bold text-foreground">
-                              {house?.title || `Logement Réf. ${p.propertyId}`}
-                            </h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Période demandée : <strong>{requestData.checkIn}</strong> au <strong>{requestData.checkOut}</strong>
+                          {" "}({requestData.guests} voyageur{requestData.guests > 1 ? "s" : ""})
+                        </p>
 
-                            {house?.location && (
-                              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                                <MapPin className="h-3.5 w-3.5" /> {house.location}, {house.city}
-                              </p>
-                            )}
+                        <div className="mt-4 flex items-center gap-3">
+                          <span className="font-display text-2xl font-bold text-primary">
+                            {requestData.selectedPropertyDetails.pricing?.price} DT
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            / {requestData.selectedPropertyDetails.pricing?.pricePeriod === "month" ? "mois" : "semaine"}
+                          </span>
+                        </div>
 
-                            {p.adminMessage && (
-                              <div className="mt-3 rounded-lg bg-surface p-3 text-xs text-foreground">
-                                <p className="font-semibold text-primary">Message de notre équipe :</p>
-                                <p className="mt-0.5 text-muted-foreground">{p.adminMessage}</p>
-                              </div>
-                            )}
-
-                            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-semibold text-foreground">
-                              <span className="text-primary font-display text-xl">
-                                {p.proposedPrice || house?.pricePerNight} DT{" "}
-                                <span className="text-xs text-muted-foreground font-normal">
-                                  {requestData.rentalCategory === "summer" ? "/ nuit" : "/ mois"}
-                                </span>
-                              </span>
-                              {house?.bedrooms && (
-                                <span className="text-xs text-muted-foreground font-normal">
-                                  {house.bedrooms} chambres
-                                </span>
-                              )}
-                            </div>
+                        {requestData.message && (
+                          <div className="mt-4 rounded-lg bg-surface p-3 text-xs text-muted-foreground">
+                            <span className="font-semibold text-foreground">Votre message transmis :</span>
+                            <p className="mt-0.5 italic">« {requestData.message} »</p>
                           </div>
+                        )}
+                      </div>
 
-                          {/* Client Actions */}
-                          <div className="mt-5 border-t border-border pt-4">
-                            {isPending && (
-                              <div className="flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  disabled={actionLoading === p.propertyId}
-                                  onClick={() => handleProposalAction(p.propertyId, "ACCEPTED")}
-                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-                                >
-                                  <Check className="h-4 w-4" />
-                                  Accepter cette proposition
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={actionLoading === p.propertyId}
-                                  onClick={() => handleProposalAction(p.propertyId, "REJECTED")}
-                                  className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-surface disabled:opacity-50"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                  Refuser
-                                </button>
-                                {house?.slug && (
-                                  <Link
-                                    href={`/houses/${house.slug}`}
-                                    target="_blank"
-                                    className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2.5 text-xs text-foreground hover:bg-surface"
-                                  >
-                                    Voir la fiche complète →
-                                  </Link>
-                                )}
-                              </div>
-                            )}
-
-                            {isAccepted && (
-                              <div className="flex items-center gap-2 text-xs font-semibold text-green-700">
-                                <CheckCircle2 className="h-4 w-4" />
-                                Vous avez accepté cette offre. Notre conseiller va vous contacter pour finaliser le contrat.
-                              </div>
-                            )}
-
-                            {isRejected && (
-                              <p className="text-xs text-muted-foreground">
-                                Vous avez refusé ce bien. Nous continuons la recherche.
-                              </p>
-                            )}
+                      <div className="mt-6 border-t border-border pt-4">
+                        {requestData.status === "PENDING" && (
+                          <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 p-3.5 text-xs font-medium text-amber-800">
+                            <Clock className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                            <span>
+                              Votre demande est en cours de vérification par un conseiller LOC MAISON. Nous confirmons la disponibilité avec le propriétaire.
+                            </span>
                           </div>
+                        )}
+                        {requestData.status === "CONFIRMED" && (
+                          <div className="flex items-start gap-2.5 rounded-lg bg-emerald-50 p-3.5 text-xs font-medium text-emerald-800">
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                            <span>
+                              Félicitations ! Votre réservation pour ce logement est confirmée. Notre équipe prendra contact avec vous pour finaliser votre séjour.
+                            </span>
+                          </div>
+                        )}
+                        {requestData.status === "REJECTED" && (
+                          <div className="flex items-start gap-2.5 rounded-lg bg-rose-50 p-3.5 text-xs font-medium text-rose-800">
+                            <XCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                            <span>
+                              Ce logement n'est malheureusement plus disponible pour vos dates sélectionnées.
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="mt-4 flex items-center justify-between">
+                          <Link
+                            href={`/properties/${requestData.selectedPropertyDetails.id}`}
+                            className="text-xs font-semibold text-primary hover:underline"
+                          >
+                            Revoir la fiche du logement →
+                          </Link>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
+            ) : (
+              <>
+                <div>
+                  <h2 className="font-display text-xl text-foreground">
+                    Logement(s) proposé(s) par l'équipe LOC MAISON
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Vérifiez les logements sélectionnés pour vous, et confirmez votre choix pour bloquer la réservation.
+                  </p>
+                </div>
+
+                {proposals.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+                    <Clock className="mx-auto h-10 w-10 text-primary animate-pulse" />
+                    <h3 className="mt-3 font-display text-base font-semibold text-foreground">
+                      Recherche en cours
+                    </h3>
+                    <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                      Notre équipe sélectionne actuellement les meilleures maisons disponibles à{" "}
+                      <strong>{requestData.destination}</strong> pour vos dates ({requestData.checkIn} → {requestData.checkOut || "flexible"}).
+                    </p>
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Dès qu'un bien correspond à vos critères, il apparaîtra directement ici et vous recevrez un message WhatsApp.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {proposals.map((p: any) => {
+                      const house = p.house;
+                      const isPending = p.status === "PENDING_CLIENT";
+                      const isAccepted = p.status === "ACCEPTED";
+                      const isRejected = p.status === "REJECTED";
+
+                      return (
+                        <div
+                          key={p.propertyId}
+                          className={`overflow-hidden rounded-xl border bg-card shadow-card transition-all ${
+                            isAccepted
+                              ? "border-green-500 ring-2 ring-green-500/20"
+                              : isRejected
+                              ? "opacity-60 border-border"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="grid sm:grid-cols-[240px_1fr]">
+                            {/* Photo */}
+                            <div className="relative aspect-[4/3] sm:aspect-auto bg-muted">
+                              {house?.coverImage ? (
+                                <img
+                                  src={house.coverImage}
+                                  alt={house.title || "Logement proposé"}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                                  Photo non disponible
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Details */}
+                            <div className="p-5 flex flex-col justify-between">
+                              <div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-semibold text-primary">
+                                    {house?.city || requestData.destination}
+                                  </span>
+                                  <span
+                                    className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium ${
+                                      isAccepted
+                                        ? "bg-green-100 text-green-800"
+                                        : isRejected
+                                        ? "bg-gray-100 text-gray-600"
+                                        : "bg-primary/10 text-primary"
+                                    }`}
+                                  >
+                                    {isAccepted
+                                      ? "✓ Proposition acceptée"
+                                      : isRejected
+                                      ? "Proposition refusée"
+                                      : "En attente de votre réponse"}
+                                  </span>
+                                </div>
+
+                                <h3 className="mt-1 font-display text-lg font-bold text-foreground">
+                                  {house?.title || `Logement Réf. ${p.propertyId}`}
+                                </h3>
+
+                                {house?.location && (
+                                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                                    <MapPin className="h-3.5 w-3.5" /> {house.location}, {house.city}
+                                  </p>
+                                )}
+
+                                {p.adminMessage && (
+                                  <div className="mt-3 rounded-lg bg-surface p-3 text-xs text-foreground">
+                                    <p className="font-semibold text-primary">Message de notre équipe :</p>
+                                    <p className="mt-0.5 text-muted-foreground">{p.adminMessage}</p>
+                                  </div>
+                                )}
+
+                                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-semibold text-foreground">
+                                  <span className="text-primary font-display text-xl">
+                                    {p.proposedPrice || house?.pricePerNight} DT{" "}
+                                    <span className="text-xs text-muted-foreground font-normal">
+                                      {requestData.rentalCategory === "summer" ? "/ nuit" : "/ mois"}
+                                    </span>
+                                  </span>
+                                  {house?.bedrooms && (
+                                    <span className="text-xs text-muted-foreground font-normal">
+                                      {house.bedrooms} chambres
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Client Actions */}
+                              <div className="mt-5 border-t border-border pt-4">
+                                {isPending && (
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={actionLoading === p.propertyId}
+                                      onClick={() => handleProposalAction(p.propertyId, "ACCEPTED")}
+                                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                      Accepter cette proposition
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={actionLoading === p.propertyId}
+                                      onClick={() => handleProposalAction(p.propertyId, "REJECTED")}
+                                      className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-surface disabled:opacity-50"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                      Refuser
+                                    </button>
+                                    {house?.slug && (
+                                      <Link
+                                        href={`/houses/${house.slug}`}
+                                        target="_blank"
+                                        className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2.5 text-xs text-foreground hover:bg-surface"
+                                      >
+                                        Voir la fiche complète →
+                                      </Link>
+                                    )}
+                                  </div>
+                                )}
+
+                                {isAccepted && (
+                                  <div className="flex items-center gap-2 text-xs font-semibold text-green-700">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    Vous avez accepté cette offre. Notre conseiller va vous contacter pour finaliser le contrat.
+                                  </div>
+                                )}
+
+                                {isRejected && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Vous avez refusé ce bien. Nous continuons la recherche.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
 

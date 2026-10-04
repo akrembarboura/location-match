@@ -78,9 +78,13 @@ export default function AdminRequests() {
         setRequestsList((prev) =>
           prev.map((r) => (r.id === selectedReq.id ? { ...r, status: newStatus } : r))
         );
+        await fetchAdminRequests();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setStatusMessage(d.error || "Erreur lors de la mise à jour");
       }
     } catch {
-      setStatusMessage("Erreur lors de la mise à jour");
+      setStatusMessage("Erreur réseau lors de la mise à jour");
     }
   };
 
@@ -177,9 +181,16 @@ export default function AdminRequests() {
                   }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-semibold text-primary">
-                      {q.id}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-primary">
+                        {q.id}
+                      </span>
+                      {q.propertyId && (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                          Réservation directe
+                        </span>
+                      )}
+                    </div>
                     <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                       {q.status || q.stage || "PENDING"}
                     </span>
@@ -188,6 +199,12 @@ export default function AdminRequests() {
                   <p className="mt-2 font-display text-base font-bold text-foreground">
                     {customerName}
                   </p>
+
+                  {q.selectedPropertyDetails?.title && (
+                    <p className="text-xs font-medium text-primary line-clamp-1">
+                      Logement : {q.selectedPropertyDetails.title}
+                    </p>
+                  )}
 
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
@@ -234,6 +251,68 @@ export default function AdminRequests() {
                   </div>
                 )}
 
+                {/* Direct Property Reservation Details */}
+                {selectedReq.selectedPropertyDetails && (
+                  <div className="mt-5 overflow-hidden rounded-lg border border-border bg-surface p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                        Demande de réservation directe
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          selectedReq.selectedPropertyDetails.availabilityStatus === "RESERVED"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-emerald-100 text-emerald-800"
+                        }`}
+                      >
+                        Bien : {selectedReq.selectedPropertyDetails.availabilityStatus}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex gap-3">
+                      {selectedReq.selectedPropertyDetails.coverImage ? (
+                        <img
+                          src={selectedReq.selectedPropertyDetails.coverImage}
+                          alt={selectedReq.selectedPropertyDetails.title}
+                          className="h-16 w-20 rounded-md object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">
+                          <Home className="h-6 w-6" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h4 className="truncate font-display text-sm font-bold text-foreground">
+                          {selectedReq.selectedPropertyDetails.title}
+                        </h4>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {selectedReq.selectedPropertyDetails.city}
+                          {selectedReq.selectedPropertyDetails.area ? ` · ${selectedReq.selectedPropertyDetails.area}` : ""}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-primary">
+                          {selectedReq.selectedPropertyDetails.pricing?.price} DT
+                          <span className="text-[10px] font-normal text-muted-foreground">
+                            {" "}/ {selectedReq.selectedPropertyDetails.pricing?.pricePeriod === "month" ? "mois" : "semaine"}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 border-t border-border pt-2 text-[11px] text-muted-foreground">
+                      <span>Capacité max : <strong>{selectedReq.selectedPropertyDetails.guests || 1} pers.</strong></span>
+                      {" · "}
+                      <a
+                        href={`/properties/${selectedReq.selectedPropertyDetails.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        Voir la fiche du logement ↗
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {/* Workflow Status Selector */}
                 <div className="mt-5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -250,6 +329,16 @@ export default function AdminRequests() {
                       </option>
                     ))}
                   </select>
+                  {selectedReq.propertyId && selectedReq.status !== "CONFIRMED" && (
+                    <p className="mt-1 text-[11px] text-amber-700">
+                      Passer le statut à "CONFIRMED" bloquera automatiquement ce logement pour les dates {selectedReq.checkIn} → {selectedReq.checkOut}.
+                    </p>
+                  )}
+                  {selectedReq.propertyId && selectedReq.status === "CONFIRMED" && (
+                    <p className="mt-1 text-[11px] text-emerald-700 font-medium">
+                      ✓ Logement réservé sur ces dates ({selectedReq.checkIn} → {selectedReq.checkOut}).
+                    </p>
+                  )}
                 </div>
 
                 {/* Requirements Summary */}
@@ -295,6 +384,16 @@ export default function AdminRequests() {
                       <span className="text-muted-foreground">Équipements :</span>
                       <p className="mt-1 font-medium text-foreground">
                         {selectedReq.amenities.join(", ")}
+                      </p>
+                    </div>
+                  )}
+                  {selectedReq.message && (
+                    <div className="pt-2 border-t border-border">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3 text-primary" /> Message du voyageur :
+                      </span>
+                      <p className="mt-1 font-medium text-foreground italic">
+                        « {selectedReq.message} »
                       </p>
                     </div>
                   )}

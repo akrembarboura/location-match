@@ -184,7 +184,7 @@ export function SiteHeader() {
 
           {/* Primary Landlord Action (Marketplace CTA) */}
           <Link
-            href="/owner/list-property"
+            href="/owner"
             className="inline-flex items-center justify-center rounded-md bg-primary px-3.5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
           >
             Publier votre bien
@@ -518,7 +518,7 @@ export function SiteHeader() {
 
           <div className="mt-4 flex gap-2">
             <Link
-              href="/owner/list-property"
+              href="/owner"
               onClick={() => setNavOpen(false)}
               className="flex-1 rounded-md bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground"
             >

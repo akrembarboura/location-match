@@ -40,6 +40,8 @@ export type House = {
   reviewCount: number;
   isFeatured: boolean;
   isPublished: boolean;
+  availabilityStatus?: "AVAILABLE" | "RESERVED";
+  reservation?: { from: string; to: string } | null;
   /** Ranges already booked (ISO dates). Availability-ready. */
   unavailable: { from: string; to: string }[];
 };

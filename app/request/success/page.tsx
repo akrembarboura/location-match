@@ -12,6 +12,7 @@ function SuccessContent() {
   const ref = searchParams.get("ref");
   const name = searchParams.get("name");
   const dest = searchParams.get("dest");
+  const prop = searchParams.get("prop");
 
   return (
     <PageShell>
@@ -19,7 +20,7 @@ function SuccessContent() {
         <CheckCircle2 className="mx-auto h-16 w-16 text-success animate-in zoom-in-75 duration-300" />
         
         <h1 className="mt-5 font-display text-3xl text-foreground sm:text-4xl">
-          Demande enregistrée !
+          {prop ? "Demande de réservation reçue !" : "Demande enregistrée !"}
         </h1>
 
         {ref && (
@@ -31,7 +32,8 @@ function SuccessContent() {
 
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">
           Merci {name ? <strong>{name}</strong> : ""} ! Votre demande pour{" "}
-          {dest ? <strong>{dest}</strong> : "votre séjour"} a bien été transmise à notre équipe.
+          {prop ? <strong>{prop}</strong> : dest ? <strong>{dest}</strong> : "votre séjour"}
+          {prop && dest ? ` à ${dest}` : ""} a bien été transmise à notre équipe.
         </p>
 
         {/* Workflow Steps Card */}
@@ -45,7 +47,10 @@ function SuccessContent() {
                 1
               </span>
               <p className="text-muted-foreground">
-                <strong className="text-foreground">Examen de vos critères :</strong> Notre équipe vérifie la disponibilité auprès des propriétaires à {dest || "destination"}.
+                <strong className="text-foreground">Vérification de la disponibilité :</strong>{" "}
+                {prop
+                  ? `Notre équipe contacte le propriétaire pour valider vos dates.`
+                  : `Notre équipe vérifie la disponibilité auprès des propriétaires à ${dest || "destination"}.`}
               </p>
             </li>
             <li className="flex gap-3">
@@ -53,7 +58,7 @@ function SuccessContent() {
                 2
               </span>
               <p className="text-muted-foreground">
-                <strong className="text-foreground">Contact & Propositions :</strong> Vous recevrez un message WhatsApp / appel avec les logements correspondants.
+                <strong className="text-foreground">Contact & Confirmation :</strong> Vous recevrez un message WhatsApp / appel dès la confirmation du propriétaire.
               </p>
             </li>
             <li className="flex gap-3">
@@ -61,7 +66,7 @@ function SuccessContent() {
                 3
               </span>
               <p className="text-muted-foreground">
-                <strong className="text-foreground">Validation & Réservation :</strong> Vous confirmez votre choix en toute sécurité avant toute démarche.
+                <strong className="text-foreground">Finalisation :</strong> Votre logement est réservé et nous préparons votre accueil.
               </p>
             </li>
           </ol>

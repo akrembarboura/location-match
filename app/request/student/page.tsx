@@ -1,20 +1,36 @@
 import { PageShell } from "@/components/site/PageShell";
 import { StudentRequestForm } from "@/components/site/RequestForms";
+import { PropertyReservationForm } from "@/components/rentals/PropertyReservationForm";
 
+export default async function RequestStudent({
+  searchParams,
+}: {
+  searchParams: Promise<{ propertyId?: string }>;
+}) {
+  const { propertyId } = await searchParams;
 
-
-function RequestStudent() {
   return (
     <PageShell>
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-        <p className="eyebrow">Student request</p>
-        <h1 className="mt-2 font-display text-3xl text-foreground">Tell us about your year</h1>
-        <div className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
-          <StudentRequestForm />
+        <p className="eyebrow">
+          {propertyId ? "Demande de logement étudiant" : "Logement étudiant"}
+        </p>
+        <h1 className="mt-2 font-display text-3xl font-bold text-foreground">
+          {propertyId ? "Demander ce logement" : "Parlez-nous de votre année universitaire"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {propertyId
+            ? "Vérifiez les détails du logement et renseignez votre période souhaitée pour envoyer votre demande."
+            : "Trouvez un studio ou un appartement partagé près des facultés et instituts de Mahdia (FSEG, ISI, ISET, ISAM)."}
+        </p>
+        <div className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-7 shadow-xs">
+          {propertyId ? (
+            <PropertyReservationForm propertyId={propertyId} category="student" />
+          ) : (
+            <StudentRequestForm />
+          )}
         </div>
       </div>
     </PageShell>
   );
 }
-
-export default RequestStudent;

@@ -172,11 +172,42 @@ export const StudentRequestSchema = baseSchema.extend({
   genderPreference: z.string().trim().optional(),
 });
 
+export const PropertyReservationSchema = z
+  .object({
+    propertyId: z.string().trim().min(1, "Identifiant du logement requis."),
+    rentalCategory: z.enum(["summer", "student", "universe"]).default("summer"),
+    fullName,
+    phone: phoneField,
+    email: z.string().email("Adresse email invalide.").optional().or(z.literal("")),
+    checkIn: isoDate,
+    checkOut: isoDate.optional(),
+    guests: z.coerce.number().int().min(1, "Au moins 1 personne.").max(30).default(1),
+    message: z.string().trim().max(1000).optional(),
+    university: z.string().trim().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.rentalCategory === "summer" && !data.checkOut) {
+        return false;
+      }
+      if (data.checkOut && data.checkIn) {
+        return data.checkOut > data.checkIn;
+      }
+      return true;
+    },
+    {
+      path: ["checkOut"],
+      message: "La date de départ doit être postérieure à la date d'arrivée.",
+    }
+  );
+
 export const CreateRentalRequestSchema = z.union([
+  PropertyReservationSchema,
   SummerRequestSchema,
   StudentRequestSchema,
 ]);
 
 export type SummerRequestInput = z.infer<typeof SummerRequestSchema>;
 export type StudentRequestInput = z.infer<typeof StudentRequestSchema>;
+export type PropertyReservationInput = z.infer<typeof PropertyReservationSchema>;
 export type CreateRentalRequestInput = z.infer<typeof CreateRentalRequestSchema>;

@@ -60,8 +60,22 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
             {p.studentPrice && <p className="mt-1 text-foreground"><span className="font-display text-xl">{formatDT(p.studentPrice)} DT</span> <span className="text-sm text-muted-foreground">/ month (students)</span></p>}
             <p className="mt-3 text-xs text-muted-foreground">Owner contact is shared by our team after your request is confirmed.</p>
             <div className="mt-4 flex flex-col gap-2">
-              {p.summerPrice && <Link href="/request/summer" className="rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground hover:bg-primary-dark">Request for summer</Link>}
-              {p.studentPrice && <Link href="/request/student" className="rounded-md border border-primary px-4 py-2.5 text-center text-sm font-semibold text-primary hover:bg-primary-soft">Request as a student</Link>}
+              {p.summerPrice && (
+                <Link
+                  href={`/request/summer?propertyId=${p.id}`}
+                  className="rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground hover:bg-primary-dark"
+                >
+                  Demander pour l&apos;été
+                </Link>
+              )}
+              {p.studentPrice && (
+                <Link
+                  href={`/request/universe?propertyId=${p.id}`}
+                  className="rounded-md border border-primary px-4 py-2.5 text-center text-sm font-semibold text-primary hover:bg-primary-soft"
+                >
+                  Demander en tant qu&apos;étudiant
+                </Link>
+              )}
             </div>
           </aside>
         </div>

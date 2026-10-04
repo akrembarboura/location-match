@@ -1,7 +1,7 @@
 import { requestRepository } from "../repositories/RequestRepository";
 import { propertyRepository } from "../repositories/PropertyRepository";
 import { notificationService } from "./NotificationService";
-import { HouseModel } from "@/lib/models";
+import { HouseModel, PropertyModel, HousingRequestModel } from "@/lib/models";
 import connectToDatabase from "@/lib/mongoose";
 import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
 import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
@@ -21,59 +21,238 @@ export class RequestService {
     const id = this.generateReferenceId();
     const phone = normalizeTunisianPhone(input.phone) || input.phone;
 
+    // Check if this is a property-specific reservation request
+    const isPropertySpecific = "propertyId" in input && Boolean(input.propertyId);
+
+    if (isPropertySpecific) {
+      await connectToDatabase();
+      const propId = (input as any).propertyId;
+
+      let property: any = await PropertyModel.findOne({
+        $or: [{ id: propId }, { slug: propId }],
+      }).lean().exec();
+
+      if (!property) {
+        property = await HouseModel.findOne({
+          $or: [{ id: propId }, { slug: propId }],
+        }).lean().exec();
+      }
+
+      if (!property) {
+        const err: any = new Error("Logement introuvable.");
+        err.statusCode = 404;
+        throw err;
+      }
+
+      // Verify property is published
+      const isPublished = property.status === "PUBLISHED" || property.isPublished === true;
+      if (!isPublished) {
+        const err: any = new Error("Ce logement n'est pas disponible pour la réservation.");
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Verify rental category matches property
+      const propCategory = (property.rentalCategory || (property.summerPrice ? "summer" : "student")).toLowerCase();
+      const rawCategory = (input.rentalCategory || "summer").toLowerCase();
+      const reqCategory = rawCategory === "universe" ? "student" : rawCategory;
+
+      if (propCategory !== reqCategory) {
+        const err: any = new Error("La catégorie demandée ne correspond pas à ce logement.");
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Validate capacity
+      const maxGuests = property.capacity?.guests || property.guests || property.people || 1;
+      const requestedGuests = (input as any).guests || 1;
+      if (requestedGuests > maxGuests) {
+        const err: any = new Error(
+          `Le nombre de personnes (${requestedGuests}) dépasse la capacité maximale de ce logement (${maxGuests} personnes).`
+        );
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Validate availability date overlap
+      if (input.checkIn && (input as any).checkOut) {
+        const reqStart = new Date(input.checkIn);
+        const reqEnd = new Date((input as any).checkOut);
+
+        if (!isNaN(reqStart.getTime()) && !isNaN(reqEnd.getTime())) {
+          // 1. Check property reservation
+          if (
+            property.availabilityStatus === "RESERVED" &&
+            property.reservation?.from &&
+            property.reservation?.to
+          ) {
+            const resStart = new Date(property.reservation.from);
+            const resEnd = new Date(property.reservation.to);
+            if (reqStart < resEnd && reqEnd > resStart) {
+              const err: any = new Error("Ce logement n'est pas disponible pour ces dates (déjà réservé).");
+              err.statusCode = 409;
+              throw err;
+            }
+          }
+
+          // 2. Check property unavailable periods
+          if (Array.isArray(property.unavailable)) {
+            for (const unav of property.unavailable) {
+              if (unav.from && unav.to) {
+                const uStart = new Date(unav.from);
+                const uEnd = new Date(unav.to);
+                if (reqStart < uEnd && reqEnd > uStart) {
+                  const err: any = new Error("Ce logement n'est pas disponible pour ces dates.");
+                  err.statusCode = 409;
+                  throw err;
+                }
+              }
+            }
+          }
+
+          // 3. Check any confirmed reservation for this property
+          const overlappingConfirmed = await HousingRequestModel.findOne({
+            $or: [{ propertyId: property.id }, { selectedProperty: property.id }],
+            status: "CONFIRMED",
+            checkIn: { $lt: (input as any).checkOut },
+            checkOut: { $gt: input.checkIn },
+          }).lean().exec();
+
+          if (overlappingConfirmed) {
+            const err: any = new Error("Ce logement a déjà une réservation confirmée pour ces dates.");
+            err.statusCode = 409;
+            throw err;
+          }
+        }
+      }
+
+      const propPrice =
+        property.pricing?.price ||
+        property.pricePerNight ||
+        (reqCategory === "summer" ? property.summerPrice : property.studentPrice) ||
+        0;
+      const propPeriod =
+        property.pricing?.pricePeriod || (reqCategory === "summer" ? "week" : "month");
+
+      const data: any = {
+        id,
+        customerId: customerId || undefined,
+        customer: {
+          fullName: input.fullName,
+          phone,
+        },
+        propertyId: property.id,
+        selectedProperty: property.id,
+        rentalCategory: reqCategory,
+        destination: property.city || property.location?.city || "Mahdia",
+        area: property.area || property.location?.area || "",
+        propertyType: property.propertyType || property.type || "Logement",
+        checkIn: input.checkIn,
+        checkOut: (input as any).checkOut,
+        guests: requestedGuests,
+        bedrooms: property.capacity?.bedrooms?.toString() || property.bedrooms?.toString(),
+        budget: propPrice,
+        budgetPeriod: propPeriod,
+        amenities: property.amenities || [],
+        message: (input as any).message || undefined,
+        note: (input as any).message || undefined,
+        status: "PENDING",
+        proposedProperties: [],
+        kind: reqCategory,
+        people: requestedGuests,
+      };
+
+      if (reqCategory === "student" && (input as any).university) {
+        data.university = (input as any).university;
+      }
+
+      const doc = await requestRepository.create(data);
+
+      try {
+        await notificationService.createNotification({
+          type: "NEW_REQUEST",
+          title: "Nouvelle demande de réservation",
+          message: `${input.fullName} a envoyé une demande de réservation pour "${property.title}".`,
+          requestId: doc.id,
+          propertyId: property.id,
+          recipientRole: "ADMIN",
+        });
+      } catch (notifErr) {
+        console.error("Failed to create admin notification:", notifErr);
+      }
+
+      return {
+        id: doc.id,
+        fullName: doc.customer?.fullName,
+        destination: doc.destination,
+        area: doc.area,
+        budgetPeriod: doc.budgetPeriod,
+        rentalCategory: doc.rentalCategory,
+        checkIn: doc.checkIn,
+        checkOut: doc.checkOut,
+        status: doc.status,
+        propertyId: property.id,
+        createdAt: doc.createdAt,
+      };
+    }
+
+    // Generic Request Flow
+    const genericInput = input as any;
+    const reqCategory = (genericInput.rentalCategory === "universe" ? "student" : genericInput.rentalCategory) || "summer";
+
     const data: any = {
       id,
       customerId: customerId || undefined,
       customer: {
-        fullName: input.fullName,
+        fullName: genericInput.fullName,
         phone,
       },
-      rentalCategory: input.rentalCategory,
-      destination: input.destination,
-      amenities: input.amenities || [],
+      rentalCategory: reqCategory,
+      destination: genericInput.destination || "Mahdia",
+      amenities: genericInput.amenities || [],
       status: "PENDING",
       proposedProperties: [],
     };
 
-    if (input.rentalCategory === "summer") {
-      data.area = input.area;
-      data.flexibleLocation = Boolean(input.flexibleLocation);
-      data.propertyType = input.propertyType;
-      data.bedrooms = input.bedrooms;
-      data.checkIn = input.checkIn;
-      data.checkOut = input.checkOut;
-      data.guests = input.guests;
-      data.budget = input.budget;
-      data.budgetPeriod = input.budgetPeriod || "week";
-      // Legacy fields for backward compatibility
+    if (reqCategory === "summer") {
+      data.area = genericInput.area;
+      data.flexibleLocation = Boolean(genericInput.flexibleLocation);
+      data.propertyType = genericInput.propertyType;
+      data.bedrooms = genericInput.bedrooms;
+      data.checkIn = genericInput.checkIn;
+      data.checkOut = genericInput.checkOut;
+      data.guests = genericInput.guests;
+      data.budget = genericInput.budget;
+      data.budgetPeriod = genericInput.budgetPeriod || "week";
+      // Legacy fields
       data.kind = "summer";
-      data.people = input.guests;
-      data.customer_name = input.fullName;
+      data.people = genericInput.guests;
+      data.customer_name = genericInput.fullName;
     } else {
-      data.university = input.university;
-      data.checkIn = input.checkIn;
-      data.checkOut = input.checkOut;
-      data.guests = input.students;
-      data.budget = input.budget;
-      data.budgetPeriod = input.budgetPeriod || "month";
-      data.propertyType = input.propertyType;
-      data.genderPreference = input.genderPreference;
+      data.university = genericInput.university;
+      data.checkIn = genericInput.checkIn;
+      data.checkOut = genericInput.checkOut;
+      data.guests = genericInput.students || genericInput.guests;
+      data.budget = genericInput.budget;
+      data.budgetPeriod = genericInput.budgetPeriod || "month";
+      data.propertyType = genericInput.propertyType;
+      data.genderPreference = genericInput.genderPreference;
       // Legacy fields
       data.kind = "student";
-      data.people = input.students;
+      data.people = genericInput.students || genericInput.guests;
     }
 
     const doc = await requestRepository.create(data);
 
     // Persist real notification for administrators
     try {
-      const categoryLabel = input.rentalCategory === "summer" ? "Été" : "Étudiant";
-      const destArea = input.rentalCategory === "summer" ? input.area : undefined;
-      const destLabel = input.destination || destArea || "Tunisie";
+      const categoryLabel = reqCategory === "summer" ? "Été" : "Étudiant";
+      const destArea = reqCategory === "summer" ? genericInput.area : undefined;
+      const destLabel = genericInput.destination || destArea || "Tunisie";
       await notificationService.createNotification({
         type: "NEW_REQUEST",
         title: "Nouvelle demande reçue",
-        message: `${input.fullName} a envoyé une demande (${categoryLabel}) pour ${destLabel}.`,
+        message: `${genericInput.fullName} a envoyé une demande (${categoryLabel}) pour ${destLabel}.`,
         requestId: doc.id,
         recipientRole: "ADMIN",
       });
@@ -95,8 +274,56 @@ export class RequestService {
     };
   }
 
+  private async attachPropertyDetails(targetPropId: string | undefined) {
+    if (!targetPropId) return null;
+    await connectToDatabase();
+    let selectedPropertyDoc: any = await PropertyModel.findOne({
+      $or: [{ id: targetPropId }, { slug: targetPropId }],
+    }).lean();
+    if (!selectedPropertyDoc) {
+      selectedPropertyDoc = await HouseModel.findOne({
+        $or: [{ id: targetPropId }, { slug: targetPropId }],
+      }).lean();
+    }
+    if (!selectedPropertyDoc) return null;
+
+    return {
+      id: selectedPropertyDoc.id,
+      title: selectedPropertyDoc.title,
+      slug: selectedPropertyDoc.slug,
+      city: selectedPropertyDoc.city || selectedPropertyDoc.location?.city,
+      area: selectedPropertyDoc.area || selectedPropertyDoc.location?.area,
+      propertyType: selectedPropertyDoc.propertyType || selectedPropertyDoc.type,
+      bedrooms: selectedPropertyDoc.capacity?.bedrooms || selectedPropertyDoc.bedrooms,
+      bathrooms: selectedPropertyDoc.capacity?.bathrooms || selectedPropertyDoc.bathrooms,
+      guests: selectedPropertyDoc.capacity?.guests || selectedPropertyDoc.guests || selectedPropertyDoc.people,
+      pricing: selectedPropertyDoc.pricing || {
+        price: selectedPropertyDoc.pricePerNight || selectedPropertyDoc.summerPrice || selectedPropertyDoc.studentPrice,
+        pricePeriod: selectedPropertyDoc.pricing?.pricePeriod || (selectedPropertyDoc.rentalCategory === "student" ? "month" : "week"),
+      },
+      availabilityStatus: selectedPropertyDoc.availabilityStatus || "AVAILABLE",
+      reservation: selectedPropertyDoc.reservation || null,
+      coverImage: selectedPropertyDoc.images?.[0]?.url || (typeof selectedPropertyDoc.images?.[0] === "string" ? selectedPropertyDoc.images?.[0] : null),
+      images: (selectedPropertyDoc.images || []).map((img: any) =>
+        typeof img === "string" ? img : img.url
+      ),
+    };
+  }
+
   async getCustomerRequests(customerId: string) {
-    return await requestRepository.findByCustomerId(customerId);
+    const list = await requestRepository.findByCustomerId(customerId);
+    return await Promise.all(
+      list.map(async (r: any) => {
+        const propId = r.propertyId || r.selectedProperty;
+        const selectedPropertyDetails = propId ? await this.attachPropertyDetails(propId) : null;
+        return {
+          ...r,
+          propertyId: propId,
+          selectedProperty: propId,
+          selectedPropertyDetails,
+        };
+      })
+    );
   }
 
   async getClientRequest(id: string) {
@@ -137,6 +364,9 @@ export class RequestService {
       })
     );
 
+    const targetPropId = req.propertyId || req.selectedProperty;
+    const selectedPropertyDetails = await this.attachPropertyDetails(targetPropId);
+
     // Strip internal adminNotes from client view
     return {
       id: req.id,
@@ -160,7 +390,10 @@ export class RequestService {
       genderPreference: req.genderPreference,
       status: req.status || req.stage || "PENDING",
       proposedProperties: populatedProposals,
-      selectedProperty: req.selectedProperty,
+      propertyId: req.propertyId || req.selectedProperty,
+      selectedProperty: req.selectedProperty || req.propertyId,
+      selectedPropertyDetails,
+      message: req.message || req.note,
       createdAt: req.createdAt,
     };
   }
@@ -198,18 +431,77 @@ export class RequestService {
       })
     );
 
+    const targetPropId = req.propertyId || req.selectedProperty;
+    const selectedPropertyDetails = await this.attachPropertyDetails(targetPropId);
+
     return {
       ...req,
+      propertyId: req.propertyId || req.selectedProperty,
+      selectedProperty: req.selectedProperty || req.propertyId,
+      selectedPropertyDetails,
+      message: req.message || req.note,
       proposedProperties: populatedProposals,
     };
   }
 
   async getAdminRequests(filters?: any) {
-    return await requestRepository.findAll(filters);
+    const list = await requestRepository.findAll(filters);
+    return await Promise.all(
+      list.map(async (r: any) => {
+        const propId = r.propertyId || r.selectedProperty;
+        const selectedPropertyDetails = propId ? await this.attachPropertyDetails(propId) : null;
+        return {
+          ...r,
+          propertyId: propId,
+          selectedProperty: propId,
+          selectedPropertyDetails,
+        };
+      })
+    );
   }
 
-  async updateRequestStatus(id: string, status: string, adminNotes?: string) {
-    return await requestRepository.updateStatus(id, status, adminNotes);
+  async updateRequestStatus(id: string, status: string, adminNotes?: string, adminId = "admin") {
+    const updated = await requestRepository.updateStatus(id, status, adminNotes);
+    if (!updated) return null;
+
+    const targetPropId = updated.propertyId || updated.selectedProperty;
+
+    if (status === "CONFIRMED") {
+      if (targetPropId && updated.checkIn && updated.checkOut) {
+        const fromDate = new Date(updated.checkIn);
+        const toDate = new Date(updated.checkOut);
+        if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
+          try {
+            await propertyRepository.reserve(targetPropId, {
+              from: fromDate,
+              to: toDate,
+              adminId,
+            });
+            await propertyRepository.recordModerationEvent({
+              id: crypto.randomUUID(),
+              propertyId: targetPropId,
+              adminId,
+              action: "RESERVED",
+              previousStatus: "AVAILABLE",
+              newStatus: "RESERVED",
+              reason: `Réservation confirmée suite à la demande ${id} (du ${updated.checkIn} au ${updated.checkOut})`,
+            });
+          } catch (reserveErr) {
+            console.error("Failed to mark property reserved on request confirmation:", reserveErr);
+          }
+        }
+      }
+    } else if (status === "CANCELLED" || status === "REJECTED") {
+      if (targetPropId) {
+        try {
+          await propertyRepository.releaseReservation(targetPropId);
+        } catch (releaseErr) {
+          console.error("Failed to release property reservation on cancel/reject:", releaseErr);
+        }
+      }
+    }
+
+    return updated;
   }
 
   async addProposal(
@@ -222,6 +514,36 @@ export class RequestService {
       adminMessage?: string;
     }
   ) {
+    const request = await requestRepository.findById(id);
+    if (!request) {
+      return null;
+    }
+
+    const property = await propertyRepository.findById(proposal.propertyId);
+
+    if (
+      property &&
+      property.availabilityStatus === "RESERVED" &&
+      property.reservation?.from &&
+      property.reservation?.to
+    ) {
+      const checkInStr = proposal.checkIn || request.checkIn;
+      const checkOutStr = proposal.checkOut || request.checkOut;
+      if (checkInStr && checkOutStr) {
+        const reqStart = new Date(checkInStr);
+        const reqEnd = new Date(checkOutStr);
+        const resStart = new Date(property.reservation.from);
+        const resEnd = new Date(property.reservation.to);
+        if (!isNaN(reqStart.getTime()) && !isNaN(reqEnd.getTime())) {
+          if (reqStart < resEnd && reqEnd > resStart) {
+            const conflictErr: any = new Error("Ce logement est déjà réservé pour cette période.");
+            conflictErr.statusCode = 409;
+            throw conflictErr;
+          }
+        }
+      }
+    }
+
     return await requestRepository.addProposal(id, proposal);
   }
 

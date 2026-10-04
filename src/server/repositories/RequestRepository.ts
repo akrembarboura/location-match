@@ -40,7 +40,7 @@ export class RequestRepository {
     return await HousingRequestModel.findOneAndUpdate(
       { id },
       { $set: update },
-      { new: true }
+      { returnDocument: "after" }
     )
       .lean()
       .exec();
@@ -60,7 +60,7 @@ export class RequestRepository {
         $push: { proposedProperties: proposal },
         $set: { status: "PROPERTY_PROPOSED" },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
       .lean()
       .exec();
@@ -84,7 +84,7 @@ export class RequestRepository {
           ...(proposalStatus === "ACCEPTED" ? { selectedProperty: propertyId } : {}),
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
       .lean()
       .exec();

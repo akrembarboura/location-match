@@ -45,9 +45,15 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    if (error.statusCode) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
     console.error("POST /api/requests error:", error);
     return NextResponse.json(
-      { error: "Une erreur est survenue lors de l'enregistrement de votre demande." },
+      { error: error.message || "Une erreur est survenue lors de l'enregistrement de votre demande." },
       { status: 500 }
     );
   }

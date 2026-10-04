@@ -42,6 +42,8 @@ export async function POST(
   } catch (error: any) {
     if (error.name === "AuthenticationError") return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     if (error.name === "AuthorizationError") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    if (error.statusCode === 409) return NextResponse.json({ error: error.message }, { status: 409 });
+    if (error.statusCode === 404) return NextResponse.json({ error: error.message }, { status: 404 });
+    return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 });
   }
 }

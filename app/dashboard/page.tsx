@@ -130,9 +130,16 @@ export default function CustomerDashboard() {
               return (
                 <div key={r.id} className="rounded-lg border border-border bg-card p-5 shadow-card transition-all hover:border-primary/40">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {r.id} · {r.rentalCategory === "summer" ? "Location d'été" : "Logement étudiant"} · envoyée le {dateStr}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {r.id} · {r.rentalCategory === "summer" ? "Location d'été" : "Logement étudiant"} · envoyée le {dateStr}
+                      </span>
+                      {(r as any).propertyId && (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                          Réservation directe
+                        </span>
+                      )}
+                    </div>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusCfg.className}`}>
                       {statusCfg.label}
                     </span>
@@ -141,12 +148,12 @@ export default function CustomerDashboard() {
                   <div className="mt-3 flex items-start justify-between gap-4">
                     <div>
                       <h2 className="font-display text-lg text-foreground">
-                        {r.propertyType || "Logement"} — {r.destination || r.area || "Tunisie"}
+                        {(r as any).selectedPropertyDetails?.title || r.propertyType || "Logement"} — {(r as any).selectedPropertyDetails?.city || r.destination || r.area || "Tunisie"}
                       </h2>
                       <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                        {(r.destination || r.area) && (
+                        {((r as any).selectedPropertyDetails?.city || r.destination || r.area) && (
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" /> {r.destination} {r.area ? `(${r.area})` : ""}
+                            <MapPin className="h-3.5 w-3.5" /> {(r as any).selectedPropertyDetails?.city || r.destination} {(r as any).selectedPropertyDetails?.area || r.area ? `(${ (r as any).selectedPropertyDetails?.area || r.area})` : ""}
                           </span>
                         )}
                         {(r.checkIn || r.checkOut) && (
@@ -159,9 +166,9 @@ export default function CustomerDashboard() {
                             <Users className="h-3.5 w-3.5" /> {r.guests} {r.guests > 1 ? "personnes" : "personne"}
                           </span>
                         )}
-                        {r.budget && (
+                        {(r.budget || (r as any).selectedPropertyDetails?.pricing?.price) && (
                           <span className="font-medium text-foreground">
-                            Budget : {r.budget} DT {r.budgetPeriod ? `/${r.budgetPeriod}` : ""}
+                            Tarif : {r.budget || (r as any).selectedPropertyDetails?.pricing?.price} DT {r.budgetPeriod ? `/${r.budgetPeriod}` : ""}
                           </span>
                         )}
                       </div>
@@ -170,7 +177,9 @@ export default function CustomerDashboard() {
 
                   <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                     <p className="text-xs text-muted-foreground">
-                      {proposalsCount > 0
+                      {(r as any).propertyId
+                        ? `Demande directe pour "${(r as any).selectedPropertyDetails?.title || (r as any).propertyId}"`
+                        : proposalsCount > 0
                         ? `${proposalsCount} proposition(s) de logement disponible(s)`
                         : "Notre équipe recherche les meilleures options pour votre séjour."}
                     </p>
