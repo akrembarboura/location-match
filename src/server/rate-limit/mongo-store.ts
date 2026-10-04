@@ -24,18 +24,37 @@ export class MongoStore implements RateLimitStore {
     const resetTime = now + windowMs;
     const expireAt = new Date(resetTime);
 
-    const result = await RateLimitModel.findOneAndUpdate(
+    // 1. Try to atomically increment an active window
+    const activeDoc = await RateLimitModel.findOneAndUpdate(
       { key, reset: { $gt: now } },
+      { $inc: { count: 1 } },
+      { new: true }
+    );
+
+    if (activeDoc) {
+      return {
+        count: activeDoc.count,
+        reset: activeDoc.reset,
+      };
+    }
+
+    // 2. If no active window exists (expired or first time),
+    // overwrite or create the window atomically by key alone.
+    const newDoc = await RateLimitModel.findOneAndUpdate(
+      { key },
       {
-        $inc: { count: 1 },
-        $setOnInsert: { key, reset: resetTime, expireAt },
+        $set: {
+          count: 1,
+          reset: resetTime,
+          expireAt: expireAt,
+        },
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     return {
-      count: result.count,
-      reset: result.reset,
+      count: newDoc.count,
+      reset: newDoc.reset,
     };
   }
 }

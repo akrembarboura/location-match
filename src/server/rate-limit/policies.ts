@@ -1,5 +1,7 @@
 import type { RateLimitPolicy } from "./types";
 
+// In local development, relax auth limits to avoid locking developers out during rapid UI testing.
+// In production, conservative limits strictly apply to prevent credential stuffing and brute-force attacks.
 const isDev = process.env.NODE_ENV === "development";
 
 export const POLICIES: Record<string, RateLimitPolicy> = {
