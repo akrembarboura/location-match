@@ -41,7 +41,25 @@ async function connectToDatabase() {
       return connection;
     }).catch((error: unknown) => {
       const errorName = error instanceof Error ? error.name : "UnknownError";
-      console.error("Mongoose connection failed:", errorName);
+      const errorCode =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (typeof error.code === "number" || typeof error.code === "string")
+          ? error.code
+          : undefined;
+      const errorCodeName =
+        typeof error === "object" &&
+        error !== null &&
+        "codeName" in error &&
+        typeof error.codeName === "string"
+          ? error.codeName
+          : undefined;
+      console.error("Mongoose connection failed:", {
+        name: errorName,
+        ...(errorCode !== undefined && { code: errorCode }),
+        ...(errorCodeName && { codeName: errorCodeName }),
+      });
       if (errorName === "MongooseServerSelectionError") {
         console.error("Tip: If using MongoDB Atlas, check if your current IP address is whitelisted under Network Access in MongoDB Atlas dashboard.");
       }
