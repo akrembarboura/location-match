@@ -30,5 +30,7 @@ jobs:
         run: npm audit --audit-level=high || true
 
       - name: Secret Detection
-        uses: trufflesecurity/trufflehog-actions-scan@v3.88.15
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
         continue-on-error: true
