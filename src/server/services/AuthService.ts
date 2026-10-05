@@ -54,12 +54,48 @@ export class AuthService {
   async login(input: LoginInput) {
     const userDoc = await userRepository.findByEmail(input.email);
     if (!userDoc) {
-      throw new Error("Invalid email or password");
+      const err: any = new Error("Invalid email or password");
+      err.code = "INVALID_CREDENTIALS";
+      err.statusCode = 401;
+      throw err;
     }
 
     const isMatch = await bcrypt.compare(input.password, userDoc.passwordHash);
     if (!isMatch) {
-      throw new Error("Invalid email or password");
+      const err: any = new Error("Invalid email or password");
+      err.code = "INVALID_CREDENTIALS";
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const status = userDoc.status || "ACTIVE";
+
+    if (status === "REJECTED") {
+      const err: any = new Error("Votre compte propriétaire a été rejeté. Vous pouvez contacter LOC MAISON pour plus d'informations.");
+      err.code = "ACCOUNT_REJECTED";
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (status === "PENDING") {
+      const err: any = new Error("Votre demande est en cours de vérification par l'équipe LOC MAISON.");
+      err.code = "ACCOUNT_PENDING";
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (status === "SUSPENDED") {
+      const err: any = new Error("Votre compte est temporairement suspendu. Veuillez contacter LOC MAISON.");
+      err.code = "ACCOUNT_SUSPENDED";
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (status === "DISABLED") {
+      const err: any = new Error("Ce compte a été désactivé.");
+      err.code = "ACCOUNT_DISABLED";
+      err.statusCode = 403;
+      throw err;
     }
 
     const dto = mapUserToPrivateDTO(userDoc);
@@ -78,6 +114,11 @@ export class AuthService {
 
     const userDoc = await userRepository.findById(session.sub);
     if (!userDoc) return null;
+
+    const status = userDoc.status || "ACTIVE";
+    if (status !== "ACTIVE") {
+      return null;
+    }
 
     return mapUserToPrivateDTO(userDoc);
   }

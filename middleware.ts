@@ -15,7 +15,11 @@ export async function middleware(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith('/admin');
   const isOwnerRoute = pathname.startsWith('/owner');
-  const isOwnerOnboarding = pathname.startsWith('/owner/list-property') || pathname.startsWith('/owner/onboard');
+  const isOwnerPublicOrOnboarding =
+    pathname === '/owner' ||
+    pathname === '/owner/' ||
+    pathname.startsWith('/owner/list-property') ||
+    pathname.startsWith('/owner/onboard');
 
   if (isAdminRoute || isOwnerRoute) {
     const token = request.cookies.get(AUTH_CONFIG.SESSION_COOKIE_NAME)?.value;
@@ -40,8 +44,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url));
       }
 
-      if (isOwnerRoute && !isOwnerOnboarding && role !== 'OWNER' && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
-        return NextResponse.redirect(new URL('/', request.url));
+      if (isOwnerRoute && !isOwnerPublicOrOnboarding && role !== 'OWNER' && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL('/owner', request.url));
       }
     } catch {
       const loginUrl = new URL('/login', request.url);

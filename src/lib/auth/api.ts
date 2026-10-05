@@ -11,6 +11,10 @@ export type LoginRequest = LoginInput;
 
 export type AuthErrorCode =
   | "INVALID_CREDENTIALS"
+  | "ACCOUNT_PENDING"
+  | "ACCOUNT_REJECTED"
+  | "ACCOUNT_SUSPENDED"
+  | "ACCOUNT_DISABLED"
   | "EMAIL_TAKEN"
   | "VALIDATION"
   | "RATE_LIMITED"
@@ -65,32 +69,51 @@ function formatRetryAfter(seconds: number | undefined): string {
 }
 
 /**
- * Maps the existing backend contract to typed errors:
- *   400 { error: "Validation Error", details }   → VALIDATION
- *   401 { error: "Invalid email or password" }   → INVALID_CREDENTIALS
- *   409 { error: "Email already registered" }    → EMAIL_TAKEN
- *   429 { error: { code: "RATE_LIMITED", … } }   → RATE_LIMITED (+ Retry-After)
- *   5xx / anything else                          → SERVER
+ * Maps backend error responses to typed AuthApiErrors.
  */
 async function toAuthApiError(res: Response): Promise<AuthApiError> {
-  let body: unknown = null;
+  let body: any = null;
   try {
     body = await res.json();
   } catch {
-    // Non-JSON body (proxy error page…) — fall through to a generic message.
+    // Non-JSON body
   }
-  const details = body && typeof body === "object" ? (body as { details?: unknown }).details : undefined;
+  const details = body && typeof body === "object" ? body.details : undefined;
+
+  const serverCode =
+    (typeof body?.error === "object" && body?.error?.code) || body?.code || undefined;
+  const serverMessage =
+    (typeof body?.error === "object" && body?.error?.message) ||
+    (typeof body?.error === "string" && body?.error) ||
+    body?.message;
+
+  if (
+    serverCode &&
+    ["ACCOUNT_REJECTED", "ACCOUNT_PENDING", "ACCOUNT_SUSPENDED", "ACCOUNT_DISABLED"].includes(serverCode)
+  ) {
+    return new AuthApiError(
+      serverCode as AuthErrorCode,
+      serverMessage || "Votre compte ne permet pas la connexion.",
+      res.status
+    );
+  }
 
   switch (res.status) {
     case 400:
       return new AuthApiError(
         "VALIDATION",
-        "Veuillez vérifier les informations saisies.",
+        serverMessage || "Veuillez vérifier les informations saisies.",
         400,
-        extractFieldErrors(details),
+        extractFieldErrors(details)
       );
     case 401:
-      return new AuthApiError("INVALID_CREDENTIALS", "Email ou mot de passe incorrect.", 401);
+      return new AuthApiError("INVALID_CREDENTIALS", serverMessage || "Email ou mot de passe incorrect.", 401);
+    case 403:
+      return new AuthApiError(
+        (serverCode as AuthErrorCode) || "ACCOUNT_REJECTED",
+        serverMessage || "Votre compte propriétaire a été rejeté.",
+        403
+      );
     case 409:
       return new AuthApiError("EMAIL_TAKEN", "Cet email est déjà utilisé.", 409, {
         email: "Cet email est déjà utilisé.",
@@ -102,11 +125,11 @@ async function toAuthApiError(res: Response): Promise<AuthApiError> {
         `Trop de tentatives. Veuillez patienter avant de réessayer.${formatRetryAfter(retryAfter)}`,
         429,
         {},
-        retryAfter,
+        retryAfter
       );
     }
     default:
-      return new AuthApiError("SERVER", GENERIC_SERVER_MESSAGE, res.status);
+      return new AuthApiError("SERVER", serverMessage || GENERIC_SERVER_MESSAGE, res.status);
   }
 }
 

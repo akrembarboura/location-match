@@ -29,12 +29,19 @@ describe("Middleware Tests", () => {
     expect(res.headers.get("location")).toBe("http://localhost/");
   });
 
-  it("J3: Customer cannot enter /owner", async () => {
+  it("J3: Customer can access /owner landing for onboarding", async () => {
     const token = await signJwtToken({ sub: "u", role: "CUSTOMER", email: "e@e.com" });
     const req = createReq("/owner", token);
     const res = await middleware(req);
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("J3b: Customer accessing protected owner subroute is redirected to /owner", async () => {
+    const token = await signJwtToken({ sub: "u", role: "CUSTOMER", email: "e@e.com" });
+    const req = createReq("/owner/reservations", token);
+    const res = await middleware(req);
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("http://localhost/");
+    expect(res.headers.get("location")).toBe("http://localhost/owner");
   });
 
   it("J4: Owner cannot enter /admin", async () => {

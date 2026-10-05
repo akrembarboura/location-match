@@ -9,6 +9,8 @@ import {
   AlertCircle,
   User,
   Phone,
+  MessageSquare,
+  Lock,
   Clock,
   CreditCard,
   Building2,
@@ -43,6 +45,40 @@ export default function OwnerReservationsPage() {
     }
     fetchReservations();
   }, [statusFilter]);
+
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [reportingCashLoading, setReportingCashLoading] = useState(false);
+
+  async function handleReportCash() {
+    if (!selectedRes) return;
+    try {
+      setReportingCashLoading(true);
+      const res = await fetch(`/api/owner/reservations/${selectedRes.id}/report-cash`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: selectedRes.paymentSummary?.remainingAmount || selectedRes.pricing?.total || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Impossible de déclarer le paiement.");
+      setConfirmModalOpen(false);
+      setSelectedRes(null);
+      // Reload list
+      const updatedRes = await fetch(
+        statusFilter !== "ALL"
+          ? `/api/owner/reservations?status=${statusFilter}`
+          : "/api/owner/reservations"
+      );
+      if (updatedRes.ok) {
+        setReservations(await updatedRes.json());
+      }
+    } catch (err: any) {
+      alert(err.message || "Erreur de communication.");
+    } finally {
+      setReportingCashLoading(false);
+    }
+  }
 
   return (
     <OwnerShell
@@ -94,7 +130,8 @@ export default function OwnerReservationsPage() {
           {reservations.map((res) => {
             const checkInStr = new Date(res.checkIn).toLocaleDateString("fr-FR");
             const checkOutStr = new Date(res.checkOut).toLocaleDateString("fr-FR");
-            const isUnpaid = res.paymentSummary?.status !== "PAID";
+            const isPaid = res.paymentSummary?.status === "PAID";
+            const isReported = res.paymentSummary?.status === "REPORTED";
 
             return (
               <div
@@ -139,13 +176,17 @@ export default function OwnerReservationsPage() {
                       {formatDT(res.pricing?.total || 0)} DT
                     </span>
                     <span className={`text-[0.7rem] font-bold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${
-                      !isUnpaid
+                      isPaid
                         ? "bg-emerald-500/10 text-emerald-600"
-                        : res.paymentSummary?.status === "PARTIALLY_PAID"
-                        ? "bg-amber-500/10 text-amber-600"
+                        : isReported
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
                         : "bg-rose-500/10 text-rose-600"
                     }`}>
-                      {!isUnpaid ? "✓ Payé" : res.paymentSummary?.status === "PARTIALLY_PAID" ? `⚠ Reste ${formatDT(res.paymentSummary?.remainingAmount || 0)} DT` : "⚠ Non payé"}
+                      {isPaid
+                        ? "✓ Paiement vérifié"
+                        : isReported
+                        ? "🟡 Paiement déclaré"
+                        : `⚠ En attente (${formatDT(res.paymentSummary?.remainingAmount || res.pricing?.total || 0)} DT)`}
                     </span>
                   </div>
 
@@ -179,21 +220,48 @@ export default function OwnerReservationsPage() {
             </div>
 
             <div className="mt-5 space-y-4 text-sm">
-              <div className="rounded-xl bg-surface p-4 space-y-2">
+              <div className="rounded-xl bg-surface p-4 space-y-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <User className="h-4 w-4 text-primary" />
                   Client
                 </h4>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">{selectedRes.customerName}</span>
-                  <span className="text-xs text-muted-foreground">{selectedRes.guests} client(s)</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-foreground text-sm">{selectedRes.customerName}</span>
+                  <span className="text-muted-foreground font-medium">{selectedRes.guests} personne(s)</span>
                 </div>
-                {selectedRes.customerPhone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-                    <Phone className="h-3.5 w-3.5 text-primary" />
-                    <a href={`tel:${selectedRes.customerPhone}`} className="hover:underline font-mono">
-                      {selectedRes.customerPhone}
-                    </a>
+
+                {selectedRes.contactVisibility === "RELEASED" && selectedRes.customerPhone ? (
+                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 space-y-2 text-xs">
+                    <div className="font-bold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>📞 Contact client disponible</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <a
+                        href={`tel:${selectedRes.customerPhone}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
+                      >
+                        <Phone className="h-3.5 w-3.5" /> Appeler ({selectedRes.customerPhone})
+                      </a>
+                      <a
+                        href={`https://wa.me/${selectedRes.customerPhone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                      <Lock className="h-4 w-4 text-amber-600" />
+                      <span>🔒 Coordonnées masquées</span>
+                    </div>
+                    <p className="text-[0.75rem] text-muted-foreground">
+                      Les coordonnées du client seront disponibles après confirmation de la réservation et validation du paiement par LOC MAISON.
+                    </p>
                   </div>
                 )}
               </div>
@@ -218,31 +286,133 @@ export default function OwnerReservationsPage() {
               <div className="rounded-xl bg-surface p-4 space-y-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <CreditCard className="h-4 w-4 text-primary" />
-                  Montants & Règlement
+                  Paiement & Suivi financier
                 </h4>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                   <div className="rounded-lg border border-border bg-background p-2">
-                    <span className="text-[0.7rem] text-muted-foreground block">Montant total</span>
-                    <span className="font-bold text-foreground text-sm">{formatDT(selectedRes.pricing?.total || 0)} DT</span>
+                    <span className="text-[0.68rem] text-muted-foreground block">Total</span>
+                    <span className="font-bold text-foreground">{formatDT(selectedRes.pricing?.total || 0)} DT</span>
                   </div>
                   <div className="rounded-lg border border-border bg-background p-2">
-                    <span className="text-[0.7rem] text-muted-foreground block">Payé</span>
-                    <span className="font-bold text-emerald-600 text-sm">{formatDT(selectedRes.paymentSummary?.paidAmount || 0)} DT</span>
+                    <span className="text-[0.68rem] text-muted-foreground block">Déclaré</span>
+                    <span className="font-bold text-amber-600">{formatDT(selectedRes.paymentSummary?.reportedAmount || 0)} DT</span>
                   </div>
                   <div className="rounded-lg border border-border bg-background p-2">
-                    <span className="text-[0.7rem] text-muted-foreground block">Restant</span>
-                    <span className="font-bold text-rose-600 text-sm">{formatDT(selectedRes.paymentSummary?.remainingAmount || 0)} DT</span>
+                    <span className="text-[0.68rem] text-muted-foreground block">Vérifié</span>
+                    <span className="font-bold text-emerald-600">{formatDT(selectedRes.paymentSummary?.paidAmount || 0)} DT</span>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background p-2">
+                    <span className="text-[0.68rem] text-muted-foreground block">Reste</span>
+                    <span className="font-bold text-rose-600">{formatDT(selectedRes.paymentSummary?.remainingAmount || 0)} DT</span>
                   </div>
                 </div>
+
+                <div className="pt-2 border-t border-border space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Mode de paiement :</span>
+                    <span className="font-semibold text-foreground">Espèces</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Statut du paiement :</span>
+                    <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                      selectedRes.paymentSummary?.status === "PAID"
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : selectedRes.paymentSummary?.status === "REPORTED"
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                        : "bg-rose-500/10 text-rose-600"
+                    }`}>
+                      {selectedRes.paymentSummary?.status === "PAID"
+                        ? "✓ Paiement vérifié par LOC MAISON"
+                        : selectedRes.paymentSummary?.status === "REPORTED"
+                        ? "🟡 Paiement déclaré par le propriétaire"
+                        : "Paiement en attente"}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedRes.paymentSummary?.status === "REPORTED" && (
+                  <div className="rounded-lg bg-amber-500/10 p-2.5 text-[0.75rem] text-amber-900 dark:text-amber-200">
+                    <p className="font-medium">Paiement déclaré aujourd&apos;hui</p>
+                    <p className="text-muted-foreground mt-0.5">En attente de vérification par LOC MAISON.</p>
+                  </div>
+                )}
+
+                {/* Cash report action button */}
+                {selectedRes.paymentSummary?.status !== "PAID" && selectedRes.paymentSummary?.status !== "REPORTED" && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => setConfirmModalOpen(true)}
+                      className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Confirmer la réception du paiement
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setSelectedRes(null)}
-                className="w-full rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary-dark"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface/80"
               >
                 Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModalOpen && selectedRes && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <h3 className="font-display text-lg font-bold text-foreground">
+              Confirmer le paiement
+            </h3>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Vous confirmez avoir reçu :
+            </p>
+
+            <div className="my-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
+              <p className="font-display text-2xl font-bold text-primary">
+                {formatDT(selectedRes.paymentSummary?.remainingAmount || selectedRes.pricing?.total || 0)} DT
+              </p>
+              <p className="text-xs font-medium text-foreground mt-1">en espèces</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                de la part de <strong className="text-foreground">{selectedRes.customerName}</strong>
+              </p>
+            </div>
+
+            <p className="text-[0.75rem] text-muted-foreground">
+              Cette action sera enregistrée dans l&apos;historique de la réservation et soumise à validation par LOC MAISON.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModalOpen(false)}
+                disabled={reportingCashLoading}
+                className="rounded-lg border border-border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface/80"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleReportCash}
+                disabled={reportingCashLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs hover:bg-primary-dark disabled:opacity-50"
+              >
+                {reportingCashLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Enregistrement…
+                  </>
+                ) : (
+                  "Confirmer la réception"
+                )}
               </button>
             </div>
           </div>

@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Edit,
   Phone,
+  Lock,
   CheckCircle2,
   CalendarDays,
   Clock,
@@ -348,7 +349,18 @@ export default function OwnerPage() {
                     <div key={item.id} className="p-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs">
                       <div>
                         <span className="font-bold text-foreground block">{item.propertyTitle}</span>
-                        <span className="text-muted-foreground">Client: {item.customerName} ({item.guests} pers.)</span>
+                        <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
+                          <span>Client: <strong className="text-foreground">{item.customerName}</strong> ({item.guests} pers.)</span>
+                          {item.contactVisibility === "RELEASED" ? (
+                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                              <CheckCircle2 className="h-3 w-3" /> Contact OK
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-amber-700 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                              <Lock className="h-3 w-3" /> Masqué
+                            </span>
+                          )}
+                        </div>
                         <span className="block font-mono text-[0.7rem] text-primary mt-0.5">{item.formattedRange}</span>
                       </div>
                       <Link
@@ -385,7 +397,18 @@ export default function OwnerPage() {
                     <div key={item.id} className="p-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs">
                       <div>
                         <span className="font-bold text-foreground block">{item.propertyTitle}</span>
-                        <span className="text-muted-foreground">Client: {item.customerName} ({item.guests} pers.)</span>
+                        <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
+                          <span>Client: <strong className="text-foreground">{item.customerName}</strong> ({item.guests} pers.)</span>
+                          {item.contactVisibility === "RELEASED" ? (
+                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                              <CheckCircle2 className="h-3 w-3" /> Contact OK
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-amber-700 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                              <Lock className="h-3 w-3" /> Masqué
+                            </span>
+                          )}
+                        </div>
                         <span className="block font-mono text-[0.7rem] text-primary mt-0.5">{item.formattedRange}</span>
                       </div>
                       <Link

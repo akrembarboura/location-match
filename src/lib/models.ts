@@ -3,11 +3,15 @@ import mongoose, { Schema, Document } from "mongoose";
 export const ROLE_ENUM = ["CUSTOMER", "OWNER", "ADMIN", "SUPER_ADMIN"] as const;
 export type Role = typeof ROLE_ENUM[number];
 
+export const USER_STATUSES = ["ACTIVE", "PENDING", "REJECTED", "SUSPENDED", "DISABLED"] as const;
+export type UserStatus = typeof USER_STATUSES[number];
+
 const UserSchema = new Schema({
   id: { type: String, unique: true }, // We'll keep id for consistency or just use _id
   email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   role: { type: String, enum: ROLE_ENUM, default: "CUSTOMER" },
+  status: { type: String, enum: USER_STATUSES, default: "ACTIVE", index: true },
   firstName: String,
   lastName: String,
   phone: String,
@@ -365,10 +369,11 @@ const ReservationSchema = new Schema(
     },
     paymentSummary: {
       paidAmount: { type: Number, default: 0 },
+      reportedAmount: { type: Number, default: 0 },
       remainingAmount: { type: Number, default: 0 },
       status: {
         type: String,
-        enum: ["UNPAID", "PARTIALLY_PAID", "PAID", "REFUNDED"],
+        enum: ["UNPAID", "REPORTED", "PARTIALLY_PAID", "PAID", "REFUNDED"],
         default: "UNPAID",
         index: true,
       },
@@ -381,26 +386,56 @@ const ReservationSchema = new Schema(
 export const ReservationModel =
   mongoose.models.Reservation || mongoose.model("Reservation", ReservationSchema);
 
-// --- PAYMENTS ---
+export const PAYMENT_METHODS = ["CASH", "BANK_TRANSFER", "D17", "ONLINE", "OTHER"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const PAYMENT_STATUSES = ["PENDING", "REPORTED", "VERIFIED", "REJECTED", "REFUNDED", "CONFIRMED"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
 const PaymentSchema = new Schema(
   {
     id: { type: String, required: true, unique: true },
     reservationId: { type: String, required: true, index: true },
     propertyId: { type: String, required: true, index: true },
     ownerId: { type: String, required: true, index: true },
+    customerId: { type: String, index: true },
     amount: { type: Number, required: true },
+    reportedAmount: { type: Number, default: 0 },
+    verifiedAmount: { type: Number, default: 0 },
     currency: { type: String, default: "TND" },
     method: {
       type: String,
-      enum: ["CASH", "BANK_TRANSFER", "D17", "ONLINE", "OTHER"],
+      enum: PAYMENT_METHODS,
       default: "CASH",
     },
     status: {
       type: String,
-      enum: ["CONFIRMED", "PENDING", "FAILED"],
-      default: "CONFIRMED",
+      enum: PAYMENT_STATUSES,
+      default: "PENDING",
+      index: true,
     },
+    reportedBy: {
+      userId: { type: String },
+      role: { type: String },
+    },
+    reportedAt: { type: Date },
+    verifiedBy: {
+      userId: { type: String },
+      role: { type: String },
+    },
+    verifiedAt: { type: Date },
+    rejectionReason: { type: String },
     reference: { type: String },
+    history: [
+      {
+        action: { type: String },
+        actorId: { type: String },
+        actorRole: { type: String },
+        timestamp: { type: Date, default: Date.now },
+        note: { type: String },
+        _id: false,
+      },
+    ],
     paidAt: { type: Date, default: Date.now },
     recordedBy: { type: String, default: "LOC MAISON" },
   },

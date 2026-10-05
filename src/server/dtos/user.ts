@@ -12,6 +12,7 @@ export function mapUserToPrivateDTO(userDoc: any) {
     id: userDoc.id || userDoc._id.toString(),
     email: userDoc.email,
     role: userDoc.role,
+    status: userDoc.status || "ACTIVE",
     firstName: userDoc.firstName,
     lastName: userDoc.lastName,
     phone: userDoc.phone,

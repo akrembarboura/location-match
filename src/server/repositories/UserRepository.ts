@@ -25,6 +25,13 @@ export class UserRepository {
     await connectToDatabase();
     return OwnerModel.findOneAndUpdate({ id: ownerId }, { userId }, { returnDocument: "after" }).exec();
   }
+
+  async updateStatus(userId: string, status: string) {
+    await connectToDatabase();
+    const isObjectId = mongoose.Types.ObjectId.isValid(userId);
+    const query = isObjectId ? { $or: [{ id: userId }, { _id: userId }] } : { id: userId };
+    return UserModel.findOneAndUpdate(query, { $set: { status } }, { returnDocument: "after" }).exec();
+  }
 }
 
 export const userRepository = new UserRepository();

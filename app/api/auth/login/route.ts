@@ -26,9 +26,24 @@ export async function POST(req: NextRequest) {
     const user = await authService.login(parsed.data);
     return NextResponse.json({ user });
   } catch (error: any) {
-    if (error.message === "Invalid email or password") {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (error.code === "INVALID_CREDENTIALS" || error.message === "Invalid email or password") {
+      return NextResponse.json({ error: "Invalid email or password", code: "INVALID_CREDENTIALS" }, { status: 401 });
     }
+
+    if (["ACCOUNT_REJECTED", "ACCOUNT_PENDING", "ACCOUNT_SUSPENDED", "ACCOUNT_DISABLED"].includes(error.code)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+          code: error.code,
+          message: error.message,
+        },
+        { status: error.statusCode || 403 }
+      );
+    }
+
     console.error("POST /api/auth/login error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

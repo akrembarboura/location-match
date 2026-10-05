@@ -1,7 +1,37 @@
 import { ReservationModel, PropertyModel, HousingRequestModel, PaymentModel } from "@/lib/models";
 import connectToDatabase from "@/lib/mongoose";
 import { calculateNights } from "@/lib/date-utils";
-import crypto from "crypto";
+import crypto from "node:crypto";
+export function formatCustomerContactForOwner(res: {
+  status?: string;
+  paymentSummary?: { status?: string; paidAmount?: number };
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+}) {
+  const isConfirmed = res.status === "CONFIRMED";
+  const isPaymentValidated =
+    res.paymentSummary?.status === "PAID" ||
+    res.paymentSummary?.status === "PARTIALLY_PAID" ||
+    (res.paymentSummary?.paidAmount || 0) > 0;
+
+  const contactVisibility = isConfirmed && isPaymentValidated ? "RELEASED" : "HIDDEN";
+
+  let customerName = res.customerName || "Client LOC MAISON";
+  if (contactVisibility === "HIDDEN" && customerName) {
+    const parts = customerName.trim().split(/\s+/);
+    if (parts.length > 1) {
+      customerName = `${parts[0]} ${parts[parts.length - 1][0]}.`;
+    }
+  }
+
+  return {
+    contactVisibility,
+    customerName,
+    customerPhone: contactVisibility === "RELEASED" ? res.customerPhone || null : null,
+    customerEmail: contactVisibility === "RELEASED" ? res.customerEmail || null : null,
+  };
+}
 
 export class ReservationRepository {
   /**
@@ -146,9 +176,14 @@ export class ReservationRepository {
     return reservations.map((res: any) => {
       const prop = propMap.get(res.propertyId);
       const coverUrl = prop?.images?.[0]?.url || (typeof prop?.images?.[0] === "string" ? prop.images[0] : null) || "/placeholder-property.jpg";
+      const contactInfo = formatCustomerContactForOwner(res);
 
       return {
         ...res,
+        customerName: contactInfo.customerName,
+        customerPhone: contactInfo.customerPhone,
+        customerEmail: contactInfo.customerEmail,
+        contactVisibility: contactInfo.contactVisibility,
         propertyTitle: prop?.title || "Logement",
         propertyCity: prop?.city || prop?.location?.city || "Mahdia",
         propertyCoverImage: coverUrl,
@@ -171,9 +206,14 @@ export class ReservationRepository {
     const payments = await PaymentModel.find({ reservationId: id }).sort({ paidAt: -1 }).lean().exec();
 
     const coverUrl = prop?.images?.[0]?.url || (typeof prop?.images?.[0] === "string" ? prop.images[0] : null) || "/placeholder-property.jpg";
+    const contactInfo = formatCustomerContactForOwner(res);
 
     return {
       ...res,
+      customerName: contactInfo.customerName,
+      customerPhone: contactInfo.customerPhone,
+      customerEmail: contactInfo.customerEmail,
+      contactVisibility: contactInfo.contactVisibility,
       propertyTitle: prop?.title || "Logement",
       propertyCity: prop?.city || prop?.location?.city || "Mahdia",
       propertyCoverImage: coverUrl,
