@@ -337,6 +337,80 @@ const DealSchema = new Schema({
 
 export const DealModel = mongoose.models.Deal || mongoose.model("Deal", DealSchema);
 
+// --- RESERVATIONS ---
+const ReservationSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    requestId: { type: String, index: true },
+    propertyId: { type: String, required: true, index: true },
+    ownerId: { type: String, required: true, index: true },
+    customerId: { type: String, index: true },
+    customerName: { type: String, required: true },
+    customerPhone: { type: String },
+    checkIn: { type: Date, required: true, index: true },
+    checkOut: { type: Date, required: true, index: true },
+    guests: { type: Number, default: 1 },
+    status: {
+      type: String,
+      enum: ["CONFIRMED", "COMPLETED", "CANCELLED"],
+      default: "CONFIRMED",
+      index: true,
+    },
+    pricing: {
+      pricePerNight: { type: Number, default: 0 },
+      totalNights: { type: Number, default: 1 },
+      subtotal: { type: Number, default: 0 },
+      total: { type: Number, default: 0 },
+      currency: { type: String, default: "TND" },
+    },
+    paymentSummary: {
+      paidAmount: { type: Number, default: 0 },
+      remainingAmount: { type: Number, default: 0 },
+      status: {
+        type: String,
+        enum: ["UNPAID", "PARTIALLY_PAID", "PAID", "REFUNDED"],
+        default: "UNPAID",
+        index: true,
+      },
+    },
+    notes: { type: String },
+  },
+  { timestamps: true }
+);
+
+export const ReservationModel =
+  mongoose.models.Reservation || mongoose.model("Reservation", ReservationSchema);
+
+// --- PAYMENTS ---
+const PaymentSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    reservationId: { type: String, required: true, index: true },
+    propertyId: { type: String, required: true, index: true },
+    ownerId: { type: String, required: true, index: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "TND" },
+    method: {
+      type: String,
+      enum: ["CASH", "BANK_TRANSFER", "D17", "ONLINE", "OTHER"],
+      default: "CASH",
+    },
+    status: {
+      type: String,
+      enum: ["CONFIRMED", "PENDING", "FAILED"],
+      default: "CONFIRMED",
+    },
+    reference: { type: String },
+    paidAt: { type: Date, default: Date.now },
+    recordedBy: { type: String, default: "LOC MAISON" },
+  },
+  { timestamps: true }
+);
+
+export const PaymentModel =
+  mongoose.models.Payment || mongoose.model("Payment", PaymentSchema);
+
+
 // --- NOTIFICATIONS ---
 const NotificationSchema = new Schema({
   id: { type: String, required: true, unique: true },

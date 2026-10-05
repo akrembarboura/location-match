@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { PageShell } from "@/components/site/PageShell";
+import { OwnerShell } from "@/components/owner/OwnerShell";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
 import { formatDT } from "@/lib/utils";
@@ -13,72 +12,58 @@ import {
   PlusCircle,
   Loader2,
   AlertCircle,
-  ShieldCheck,
   Users,
   Wallet,
   ArrowRight,
   Edit,
   Phone,
   CheckCircle2,
+  CalendarDays,
+  Clock,
+  TrendingUp,
+  CreditCard,
+  Eye,
+  LogIn,
 } from "lucide-react";
-
-const perks = [
-  {
-    icon: Users,
-    t: "Deux saisons, une annonce",
-    d: "Les estivants de juin à septembre, les étudiants pour l'année universitaire.",
-  },
-  {
-    icon: ShieldCheck,
-    t: "Locataires vérifiés",
-    d: "Nous vérifions chaque profil avant de transmettre votre contact.",
-  },
-  {
-    icon: Wallet,
-    t: "Gratuit pour publier",
-    d: "Ajoutez vos photos et vos prix. Aucuns frais tant que votre bien n'est pas loué.",
-  },
-];
 
 export default function OwnerPage() {
   const { user, isAuthenticated, loading: authLoading, refreshUser } = useAuth();
-  const router = useRouter();
-
-  const [properties, setProperties] = useState<any[]>([]);
+  const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Customer onboarding transition state
+  // Customer onboarding state
   const [onboardingPhone, setOnboardingPhone] = useState("");
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
+
+  // Filter for arrivals / departures
+  const [filterPeriod, setFilterPeriod] = useState<"today" | "tomorrow" | "week">("week");
 
   const isCustomer = user?.role === "CUSTOMER";
   const isOwnerOrAdmin =
     user?.role === "OWNER" || user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
-  // Pre-fill phone if available
   useEffect(() => {
     if (user?.phone) {
       setOnboardingPhone(user.phone);
     }
   }, [user]);
 
-  // Fetch properties only for owners / admins
   useEffect(() => {
     if (!isAuthenticated || !isOwnerOrAdmin) return;
 
-    async function fetchOwnerProperties() {
+    async function fetchDashboard() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch("/api/owner/properties");
+        const res = await fetch("/api/owner/overview");
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || "Impossible de charger vos biens.");
+          throw new Error(errData.error || "Impossible de charger votre tableau de bord.");
         }
-        const data = await res.json();
-        setProperties(data || []);
+        const json = await res.json();
+        setData(json);
       } catch (err: any) {
         setError(err.message || "Erreur de chargement.");
       } finally {
@@ -86,71 +71,56 @@ export default function OwnerPage() {
       }
     }
 
-    fetchOwnerProperties();
+    fetchDashboard();
   }, [isAuthenticated, isOwnerOrAdmin]);
 
-  // Loading state
+  // 1. Loading auth state
   if (authLoading) {
     return (
-      <PageShell>
+      <OwnerShell>
         <div className="flex h-96 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </PageShell>
+      </OwnerShell>
     );
   }
 
-  // =========================================================================
-  // STATE A — Anonymous Visitor
-  // =========================================================================
+  // 2. Anonymous Visitor State
   if (!isAuthenticated) {
     const registerHref = withCallbackUrl("/register", "/owner/list-property");
     const loginHref = withCallbackUrl("/login", "/owner");
 
     return (
-      <PageShell>
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 text-center">
-          <p className="eyebrow">Publier votre bien</p>
-          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Vous avez un logement à louer ?
+      <OwnerShell title="Publier votre bien sur LOC MAISON">
+        <div className="mx-auto max-w-4xl py-12 text-center space-y-8">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+            Vous avez un logement à louer en Tunisie ?
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            Ajoutez votre maison, appartement ou villa sur LOC MAISON.
-            Notre équipe vérifie chaque annonce avant sa publication.
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
+            Rejoignez LOC MAISON pour proposer vos villas, appartements ou maisons aux estivants et étudiants. Notre équipe qualifie et sécurise chaque location.
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href={registerHref}
               className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-lg bg-primary px-8 text-sm font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
             >
-              Créer mon compte
+              Créer mon compte propriétaire
             </Link>
             <Link
               href={loginHref}
               className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-lg border border-border bg-card px-8 text-sm font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-surface"
             >
-              J&apos;ai déjà un compte
+              <LogIn className="h-4 w-4 mr-2" />
+              Se connecter
             </Link>
           </div>
-
-          <div className="mt-16 grid gap-5 sm:grid-cols-3 text-left">
-            {perks.map(({ icon: Icon, t, d }) => (
-              <div key={t} className="rounded-xl border border-border bg-card p-6 shadow-2xs">
-                <Icon className="h-6 w-6 text-primary" />
-                <h3 className="mt-3 font-display text-base font-semibold text-foreground">{t}</h3>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{d}</p>
-              </div>
-            ))}
-          </div>
         </div>
-      </PageShell>
+      </OwnerShell>
     );
   }
 
-  // =========================================================================
-  // STATE F — Logged-in Customer (Owner Onboarding Transition)
-  // =========================================================================
+  // 3. Customer Onboarding Transition State
   if (isCustomer) {
     async function handleCustomerOnboard(e: React.FormEvent) {
       e.preventDefault();
@@ -177,14 +147,12 @@ export default function OwnerPage() {
           }),
         });
 
-        const data = await res.json();
+        const resData = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || "Impossible d'activer votre espace propriétaire.");
+          throw new Error(resData.error || "Impossible d'activer votre espace propriétaire.");
         }
 
-        // Refresh session user so role becomes OWNER in auth context
         await refreshUser();
-        router.push("/owner/list-property");
       } catch (err: any) {
         setOnboardingError(err.message || "Une erreur est survenue.");
       } finally {
@@ -193,23 +161,22 @@ export default function OwnerPage() {
     }
 
     return (
-      <PageShell>
-        <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
-          <div className="rounded-2xl border border-border bg-card p-6 sm:p-10 shadow-xs text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-5">
+      <OwnerShell title="Activer mon espace propriétaire">
+        <div className="mx-auto max-w-xl py-12">
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-10 text-center shadow-2xs">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
               <Building2 className="h-7 w-7" />
             </div>
 
-            <p className="eyebrow">Publier votre bien</p>
-            <h1 className="mt-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
-              Vous souhaitez proposer un logement sur LOC MAISON ?
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Continuez avec votre compte actuel ({user?.email}) pour créer votre annonce.
+            <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+              Proposer un logement sur LOC MAISON
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Continuez avec votre compte ({user?.email}) pour gérer vos logements.
             </p>
 
             {onboardingError && (
-              <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-left text-xs text-destructive">
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive text-left">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <p>{onboardingError}</p>
               </div>
@@ -229,12 +196,9 @@ export default function OwnerPage() {
                     value={onboardingPhone}
                     onChange={(e) => setOnboardingPhone(e.target.value)}
                     required
-                    className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground focus:border-primary focus:outline-none"
                   />
                 </div>
-                <p className="mt-1 text-[0.7rem] text-muted-foreground">
-                  Ce numéro servira à notre équipe pour vérifier votre logement.
-                </p>
               </div>
 
               <button
@@ -245,11 +209,11 @@ export default function OwnerPage() {
                 {onboardingLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Activation en cours…
+                    Activation…
                   </>
                 ) : (
                   <>
-                    Continuer
+                    Activer mon compte propriétaire
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -257,171 +221,240 @@ export default function OwnerPage() {
             </form>
           </div>
         </div>
-      </PageShell>
+      </OwnerShell>
     );
   }
 
-  // =========================================================================
-  // STATE D & E — Logged-in Owner / Admin
-  // =========================================================================
+  // 4. Owner Dashboard State
   const displayName = user?.firstName || "Propriétaire";
+  const kpis = data?.kpis || {};
+  const today = data?.today || {};
+  const upcomingArrivals = data?.upcomingArrivals || [];
+  const upcomingDepartures = data?.upcomingDepartures || [];
+  const propertiesList = data?.properties || [];
 
   return (
-    <PageShell>
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-        {/* Simple Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border">
-          <div>
-            <p className="eyebrow">Mon espace</p>
-            <h1 className="mt-1 font-display text-2xl font-bold text-foreground sm:text-3xl">
-              Bonjour {displayName} 👋
-            </h1>
+    <OwnerShell
+      title={`Bonjour, ${displayName} 👋`}
+      subtitle="Voici l'état de vos locations et activités opérationnelles."
+    >
+      {loading ? (
+        <div className="flex flex-col items-center justify-center p-16 rounded-xl border border-border bg-card">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-3 text-sm text-muted-foreground">Chargement des données en direct…</p>
+        </div>
+      ) : error ? (
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <p className="font-medium">{error}</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* SECTION 22: DASHBOARD TODAY SUMMARY BOX */}
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-card to-card p-5 sm:p-6 shadow-2xs">
+            <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-3">
+              <Clock className="h-5 w-5 text-primary" />
+              Aujourd&apos;hui — État opérationnel
+            </h2>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-semibold">
+              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
+                <span className="text-emerald-600 text-base font-bold">✓ {today.available || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Disponibles</span>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
+                <span className="text-rose-600 text-base font-bold">🔴 {today.rented || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Loués</span>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
+                <span className="text-amber-600 text-base font-bold">🟡 {today.arrivalsToday || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Arrivée(s)</span>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
+                <span className="text-blue-600 text-base font-bold">🔵 {today.departuresToday || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Départ(s)</span>
+              </div>
+              <div className="col-span-2 sm:col-span-1 rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
+                <span className="text-amber-600 text-base font-bold">⚠ {today.paymentsPending || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Solde(s) à recevoir</span>
+              </div>
+            </div>
           </div>
 
-          <Link
-            href="/owner/list-property"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary-dark transition-colors shadow-xs shrink-0"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Ajouter une annonce
-          </Link>
-        </div>
-
-        {/* Content */}
-        <div className="mt-8">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-12 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-3 text-sm text-muted-foreground">Chargement de vos annonces…</p>
-            </div>
-          ) : error ? (
-            <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="font-medium">{error}</p>
-            </div>
-          ) : properties.length === 0 ? (
-            /* STATE D — Empty State */
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center">
-              <div className="rounded-full bg-primary/10 p-3 text-primary mb-3">
-                <Building2 className="h-8 w-8" />
+          {/* SECTION 4: REAL DATABASE KPI CARDS */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Mes biens</span>
+                <p className="text-2xl font-bold font-display text-foreground mt-1">{kpis.totalProperties || 0}</p>
               </div>
-              <h2 className="font-display text-lg font-semibold text-foreground">
-                Vous n&apos;avez pas encore d&apos;annonce.
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Présentez votre logement aux personnes qui cherchent une location en Tunisie.
-              </p>
-              <Link
-                href="/owner/list-property"
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary-dark transition-colors shadow-xs"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Ajouter une annonce
+              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+                <Building2 className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Disponibles</span>
+                <p className="text-2xl font-bold font-display text-emerald-600 mt-1">{kpis.availableProperties || 0}</p>
+              </div>
+              <div className="rounded-lg bg-emerald-500/10 p-2.5 text-emerald-600">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Actuellement loués</span>
+                <p className="text-2xl font-bold font-display text-rose-600 mt-1">{kpis.rentedProperties || 0}</p>
+              </div>
+              <div className="rounded-lg bg-rose-500/10 p-2.5 text-rose-600">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Paiements à recevoir</span>
+                <p className="text-2xl font-bold font-display text-amber-600 mt-1">{formatDT(kpis.paymentsToReceive || 0)} DT</p>
+              </div>
+              <div className="rounded-lg bg-amber-500/10 p-2.5 text-amber-600">
+                <CreditCard className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 11: ARRIVALS / DEPARTURES */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Prochaines arrivées */}
+            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+                  <span className="text-amber-500">🟡</span>
+                  Prochaines arrivées
+                </h3>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface text-muted-foreground">
+                  {upcomingArrivals.length} arrivée(s)
+                </span>
+              </div>
+
+              {upcomingArrivals.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  Aucune arrivée prévue cette semaine.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingArrivals.slice(0, 3).map((item: any) => (
+                    <div key={item.id} className="p-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-bold text-foreground block">{item.propertyTitle}</span>
+                        <span className="text-muted-foreground">Client: {item.customerName} ({item.guests} pers.)</span>
+                        <span className="block font-mono text-[0.7rem] text-primary mt-0.5">{item.formattedRange}</span>
+                      </div>
+                      <Link
+                        href={`/owner/calendar`}
+                        className="rounded bg-primary/10 px-2.5 py-1 font-semibold text-primary hover:bg-primary/20"
+                      >
+                        Voir
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Prochains départs */}
+            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+                  <span className="text-blue-500">🔵</span>
+                  Prochains départs
+                </h3>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface text-muted-foreground">
+                  {upcomingDepartures.length} départ(s)
+                </span>
+              </div>
+
+              {upcomingDepartures.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  Aucun départ prévu cette semaine.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingDepartures.slice(0, 3).map((item: any) => (
+                    <div key={item.id} className="p-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-bold text-foreground block">{item.propertyTitle}</span>
+                        <span className="text-muted-foreground">Client: {item.customerName} ({item.guests} pers.)</span>
+                        <span className="block font-mono text-[0.7rem] text-primary mt-0.5">{item.formattedRange}</span>
+                      </div>
+                      <Link
+                        href={`/owner/calendar`}
+                        className="rounded bg-primary/10 px-2.5 py-1 font-semibold text-primary hover:bg-primary/20"
+                      >
+                        Voir
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SECTION 5: OWNER PROPERTY OVERVIEW */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold text-foreground">Mes biens</h2>
+              <Link href="/owner/properties" className="text-xs font-semibold text-primary hover:underline">
+                Tout voir ({propertiesList.length}) →
               </Link>
             </div>
-          ) : (
-            /* STATE E — Owner with Properties */
-            <div className="space-y-6">
-              <h2 className="font-display text-lg font-semibold text-foreground">
-                {properties.length === 1 ? "Votre annonce" : "Mes annonces"}
-              </h2>
 
-              <div className="space-y-4">
-                {properties.map((property) => {
-                  const cover = property.images?.[0]?.url || "/placeholder-property.jpg";
-                  const isRejected = property.status === "REJECTED";
-                  const isDraft = property.status === "DRAFT";
-
-                  return (
-                    <div
-                      key={property.id}
-                      className="overflow-hidden rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-shadow hover:shadow-card"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        {/* Thumbnail */}
-                        <div className="relative aspect-4/3 w-full sm:w-44 sm:h-32 overflow-hidden rounded-lg border border-border bg-surface shrink-0">
-                          <img
-                            src={cover}
-                            alt={property.title}
-                            className="h-full w-full object-cover"
-                          />
-                          <span className="absolute left-1.5 top-1.5 rounded bg-background/85 px-1.5 py-0.5 text-[0.65rem] font-semibold text-foreground backdrop-blur">
-                            {property.images?.length || 0} photo{(property.images?.length || 0) > 1 ? "s" : ""}
-                          </span>
-                        </div>
-
-                        {/* Property Details */}
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">{property.propertyType}</span>
-                            <span>•</span>
-                            <span>
-                              {property.city} {property.area ? `(${property.area})` : ""}
-                            </span>
-                          </div>
-
-                          <h3 className="font-display text-base font-semibold text-foreground truncate">
-                            {property.title}
-                          </h3>
-
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-                            <span className="font-semibold text-foreground text-sm">
-                              {formatDT(property.pricing?.price || 0)} DT
-                            </span>
-                            <span>
-                              / {property.pricing?.pricePeriod === "month" ? "mois" : "semaine"}
-                            </span>
-                            <span>•</span>
-                            <span>{property.capacity?.bedrooms || 1} ch.</span>
-                            <span>•</span>
-                            <span>{property.capacity?.guests || 1} pers.</span>
-                          </div>
-                        </div>
-
-                        {/* Status & Actions */}
-                        <div className="flex flex-col sm:items-end gap-2 shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
-                          <PropertyModerationBadge status={property.status} />
-
-                          <div className="flex items-center gap-2 mt-1">
-                            <Link
-                              href={`/owner/properties/${property.id}`}
-                              className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80 transition-colors"
-                            >
-                              Voir mon annonce
-                              <ArrowRight className="h-3 w-3" />
-                            </Link>
-
-                            {(isDraft || isRejected) && (
-                              <Link
-                                href={`/owner/properties/${property.id}/edit`}
-                                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary-dark transition-colors"
-                              >
-                                <Edit className="h-3 w-3" />
-                                Modifier
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Rejection Motif Banner */}
-                      {isRejected && property.moderation?.rejectionReason && (
-                        <div className="mt-4 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive flex items-start gap-2">
-                          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <span className="font-semibold">Motif du refus : </span>
-                            <span>{property.moderation.rejectionReason}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            {propertiesList.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-8 text-center bg-card">
+                <p className="text-sm text-muted-foreground">Vous n&apos;avez pas encore de logement enregistré.</p>
+                <Link
+                  href="/owner/list-property"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Ajouter une annonce
+                </Link>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {propertiesList.slice(0, 3).map((prop: any) => (
+                  <div key={prop.id} className="rounded-xl border border-border bg-card p-4 shadow-2xs flex flex-col justify-between space-y-3">
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={prop.coverImage}
+                        alt={prop.title}
+                        className="h-16 w-20 rounded-lg object-cover border border-border shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[0.7rem] text-muted-foreground block">{prop.propertyType} • {prop.city}</span>
+                        <h4 className="font-bold text-sm text-foreground truncate">{prop.title}</h4>
+                        <span className="text-xs font-semibold text-primary mt-1 block">
+                          {formatDT(prop.price)} DT / {prop.pricePeriod}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
+                      <PropertyModerationBadge status={prop.status} />
+                      <div className="flex items-center gap-2">
+                        <Link href={`/owner/properties/${prop.id}/availability`} className="text-xs font-semibold text-primary hover:underline">
+                          Disponibilités
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </PageShell>
+      )}
+    </OwnerShell>
   );
 }
