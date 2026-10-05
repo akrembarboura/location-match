@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,11 +27,8 @@ jobs:
           node-version: 22
 
       - name: Run npm audit
-        run: npm audit --audit-level=high
-        continue-on-error: true
+        run: npm audit --audit-level=high || true
 
-      - name: Secret Detection (TruffleHog / GitGuardian helper)
+      - name: Secret Detection
         uses: trufflesecurity/trufflehog-actions-scan@v3.88.15
-        with:
-          extra_args: --debug --only-verified
         continue-on-error: true
