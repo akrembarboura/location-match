@@ -249,15 +249,35 @@ export function SiteHeader() {
                   <div className="py-1.5 space-y-0.5">
                     {/* Customer Actions */}
                     {user.role === "CUSTOMER" && (
-                      <Link
-                        role="menuitem"
-                        href="/dashboard"
-                        onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                      >
-                        <Inbox className="h-4 w-4 text-muted-foreground" />
-                        Mes demandes
-                      </Link>
+                      <>
+                        <Link
+                          role="menuitem"
+                          href="/dashboard"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                        >
+                          <Inbox className="h-4 w-4 text-muted-foreground" />
+                          Mes demandes
+                        </Link>
+                        <Link
+                          role="menuitem"
+                          href="/owner"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                        >
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          Espace propriétaire
+                        </Link>
+                        <Link
+                          role="menuitem"
+                          href="/owner/list-property"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                        >
+                          <PlusCircle className="h-4 w-4 text-muted-foreground" />
+                          Publier un bien
+                        </Link>
+                      </>
                     )}
 
                     {/* Owner Actions */}
@@ -406,14 +426,32 @@ export function SiteHeader() {
           {/* Mobile Profile Actions */}
           <div className="mt-3 flex flex-col divide-y divide-border">
             {user.role === "CUSTOMER" && (
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileProfileOpen(false)}
-                className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-              >
-                <Inbox className="h-4 w-4 text-primary" />
-                Mes demandes
-              </Link>
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileProfileOpen(false)}
+                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
+                >
+                  <Inbox className="h-4 w-4 text-primary" />
+                  Mes demandes
+                </Link>
+                <Link
+                  href="/owner"
+                  onClick={() => setMobileProfileOpen(false)}
+                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
+                >
+                  <Building2 className="h-4 w-4 text-primary" />
+                  Espace propriétaire
+                </Link>
+                <Link
+                  href="/owner/list-property"
+                  onClick={() => setMobileProfileOpen(false)}
+                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
+                >
+                  <PlusCircle className="h-4 w-4 text-primary" />
+                  Publier un bien
+                </Link>
+              </>
             )}
 
             {user.role === "OWNER" && (

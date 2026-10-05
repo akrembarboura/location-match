@@ -6,6 +6,7 @@ import { Loader2, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { PropertyImageUploader, PropertyImageItem } from "./PropertyImageUploader";
 import { AREAS, PROPERTY_TYPES, SUMMER_AMENITIES } from "@/lib/mock-data";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface OwnerPropertyFormProps {
   initialData?: {
@@ -41,6 +42,7 @@ export function OwnerPropertyForm({
   isEditing = false,
 }: OwnerPropertyFormProps) {
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(initialData?.description || "");
@@ -145,6 +147,7 @@ export function OwnerPropertyForm({
         throw new Error(data.error || "Une erreur est survenue lors de l'enregistrement.");
       }
 
+      await refreshUser().catch(() => {});
       const targetId = data.id || initialData?.id;
       router.push(`/owner/properties/${targetId}`);
       router.refresh();

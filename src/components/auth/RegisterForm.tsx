@@ -33,6 +33,11 @@ export function RegisterForm() {
   const [emailTaken, setEmailTaken] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const isOwnerIntent = callbackUrl?.startsWith("/owner");
+  const [accountRole, setAccountRole] = useState<"CUSTOMER" | "OWNER">(
+    isOwnerIntent ? "OWNER" : "CUSTOMER"
+  );
+
   const busy = register.isPending || isRedirecting;
 
   function validate(next: RegisterFormValues) {
@@ -73,7 +78,6 @@ export function RegisterForm() {
       return;
     }
 
-    // Only the fields the backend accepts. No role: the server always creates a CUSTOMER.
     register.mutate(
       {
         firstName: values.firstName.trim(),
@@ -81,10 +85,9 @@ export function RegisterForm() {
         email: values.email.trim(),
         phone: values.phone.trim() || undefined,
         password: values.password,
-      },
+        role: accountRole,
+      } as any,
       {
-        // On success the server has already opened the session (HttpOnly cookie);
-        // useAuthPageRedirect navigates once the session cache is updated.
         onError: (error) => {
           setFormError(error.message);
           if (error.code === "VALIDATION" || error.code === "EMAIL_TAKEN") {
@@ -101,14 +104,12 @@ export function RegisterForm() {
 
   const loginHref = withCallbackUrl("/login", callbackUrl);
 
-  const isOwnerIntent = callbackUrl?.startsWith("/owner");
-
   return (
     <AuthCard
-      eyebrow={isOwnerIntent ? "Espace Propriétaire" : "Nouveau compte"}
-      title={isOwnerIntent ? "Créer votre compte propriétaire" : "Créer un compte"}
+      eyebrow={accountRole === "OWNER" ? "Espace Propriétaire" : "Nouveau compte"}
+      title={accountRole === "OWNER" ? "Créer votre compte propriétaire" : "Créer un compte"}
       description={
-        isOwnerIntent
+        accountRole === "OWNER"
           ? "Créez votre compte pour publier votre logement sur LOC MAISON."
           : "Créez votre compte LOC MAISON pour gérer vos demandes et locations."
       }
@@ -122,6 +123,36 @@ export function RegisterForm() {
       }
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4" aria-describedby={formError ? "register-form-error" : undefined}>
+        {/* Account Type Selector */}
+        <div className="mb-2">
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+            Vous souhaitez utiliser LOC MAISON en tant que :
+          </label>
+          <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface p-1 border border-border">
+            <button
+              type="button"
+              onClick={() => setAccountRole("CUSTOMER")}
+              className={`rounded-md py-2 text-xs font-semibold transition-all ${
+                accountRole === "CUSTOMER"
+                  ? "bg-card text-foreground shadow-xs border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Locataire / Client
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountRole("OWNER")}
+              className={`rounded-md py-2 text-xs font-semibold transition-all ${
+                accountRole === "OWNER"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Propriétaire
+            </button>
+          </div>
+        </div>
         {formError && (
           <div id="register-form-error">
             <FormAlert>

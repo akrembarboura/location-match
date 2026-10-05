@@ -58,8 +58,6 @@ export const RegisterSchema = z.object({
   firstName: nameField.optional(),
   lastName: nameField.optional(),
   phone: optionalPhoneField,
-  // Accepted for backward compatibility but IGNORED: AuthService.register
-  // always assigns CUSTOMER. Public registration can never pick a role.
-  role: z.enum(ROLE_ENUM).default("CUSTOMER"),
+  role: z.enum(["CUSTOMER", "OWNER"]).default("CUSTOMER"),
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;

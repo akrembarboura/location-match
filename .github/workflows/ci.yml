@@ -1,0 +1,52 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-build:
+    name: Code Quality & Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: Run Unit & Integration Tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-jwt-secret-key-at-least-32-bytes-long
+
+      - name: Test Production Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: mock_cloud
+          MONGODB_URI: mongodb://localhost:27017/build_test
+          JWT_SECRET: build-jwt-secret-key-at-least-32-bytes-long
