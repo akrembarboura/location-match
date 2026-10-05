@@ -112,8 +112,14 @@ const PropertySchema = new Schema({
     default: "summer",
     index: true 
   },
+  rentalCategories: {
+    type: [String],
+    default: ["summer"],
+  },
   propertyType: { type: String, default: "Appartement" },
   type: { type: String }, // Legacy view compatibility
+  features: { type: [String], default: [] },
+  categoryIds: { type: [String], default: [] },
 
   // Location
   location: {

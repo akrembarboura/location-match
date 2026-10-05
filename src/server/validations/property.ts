@@ -3,8 +3,11 @@ import { PROPERTY_STATUSES } from "@/lib/models";
 
 export const PropertySearchSchema = z.object({
   rentalCategory: z.string().optional(),
+  rentalCategories: z.array(z.string()).optional(),
   city: z.string().optional(),
   category: z.string().optional(),
+  type: z.string().optional(),
+  features: z.array(z.string()).optional(),
   guests: z.coerce.number().int().min(1).optional(),
   checkIn: z.string().optional(),
   checkOut: z.string().optional(),
@@ -28,7 +31,11 @@ export const CreateOwnerPropertySchema = z.object({
     .max(120, "Le titre ne peut pas dépasser 120 caractères."),
   description: z.string().trim().optional().default(""),
   rentalCategory: z.enum(["summer", "student"]).default("summer"),
+  rentalCategories: z.array(z.enum(["summer", "student"])).optional().default(["summer"]),
   propertyType: z.string().default("Appartement"),
+  type: z.enum(["villa", "house", "apartment"]).or(z.string()).optional(),
+  features: z.array(z.string()).optional().default([]),
+  categoryIds: z.array(z.string()).optional().default([]),
   city: z.string().trim().min(2, "La ville est obligatoire.").default("Mahdia"),
   area: z.string().trim().min(2, "Le quartier est obligatoire."),
   address: z.string().trim().optional(),

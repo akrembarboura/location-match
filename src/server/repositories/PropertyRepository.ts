@@ -23,22 +23,97 @@ export class PropertyRepository {
     };
 
     if (filters.rentalCategory) {
-      query.rentalCategory = filters.rentalCategory;
+      if (!query.$and) query.$and = [];
+      query.$and.push({
+        $or: [
+          { rentalCategory: filters.rentalCategory },
+          { rentalCategories: filters.rentalCategory },
+        ],
+      });
     }
 
     if (filters.city) {
-      query.$and = [
-        {
-          $or: [
-            { city: { $regex: new RegExp(`^${filters.city}$`, "i") } },
-            { "location.city": { $regex: new RegExp(`^${filters.city}$`, "i") } },
-          ],
-        },
-      ];
+      if (!query.$and) query.$and = [];
+      query.$and.push({
+        $or: [
+          { city: { $regex: new RegExp(`^${filters.city}$`, "i") } },
+          { "location.city": { $regex: new RegExp(`^${filters.city}$`, "i") } },
+        ],
+      });
     }
 
     if (filters.category) {
-      query.categoryIds = filters.category;
+      if (!query.$and) query.$and = [];
+      const cat = filters.category.toLowerCase();
+      if (cat === "villa") {
+        query.$and.push({
+          $or: [
+            { categoryIds: "villa" },
+            { features: "villa" },
+            { propertyType: { $regex: /villa/i } },
+            { type: { $regex: /villa/i } },
+          ],
+        });
+      } else if (cat === "house") {
+        query.$and.push({
+          $or: [
+            { categoryIds: "house" },
+            { features: "house" },
+            { categoryIds: "maison" },
+            { propertyType: { $regex: /maison|house/i } },
+            { type: { $regex: /maison|house/i } },
+          ],
+        });
+      } else if (cat === "apartment") {
+        query.$and.push({
+          $or: [
+            { categoryIds: "apartment" },
+            { features: "apartment" },
+            { categoryIds: "appartement" },
+            { propertyType: { $regex: /appartement|apartment|studio|s\+[1234]/i } },
+            { type: { $regex: /appartement|apartment|studio|s\+[1234]/i } },
+          ],
+        });
+      } else if (cat === "beach") {
+        query.$and.push({
+          $or: [
+            { categoryIds: "beach" },
+            { features: "beach" },
+            { categoryIds: "bord-de-mer" },
+            { amenities: { $regex: /mer|plage|beach|bord-de-mer|pieds dans l'eau/i } },
+            { description: { $regex: /pieds dans l'eau|plage|mer/i } },
+            { title: { $regex: /pieds dans l'eau|plage|mer/i } },
+          ],
+        });
+      } else if (cat === "family") {
+        query.$and.push({
+          $or: [
+            { categoryIds: "family" },
+            { features: "family" },
+            { categoryIds: "familles" },
+            { guests: { $gte: 4 } },
+            { "capacity.guests": { $gte: 4 } },
+          ],
+        });
+      } else if (cat === "pool") {
+        query.$and.push({
+          $or: [
+            { categoryIds: "pool" },
+            { features: "pool" },
+            { categoryIds: "piscine" },
+            { amenities: { $regex: /piscine|pool/i } },
+            { title: { $regex: /piscine|pool/i } },
+            { description: { $regex: /piscine|pool/i } },
+          ],
+        });
+      } else {
+        query.$and.push({
+          $or: [
+            { categoryIds: filters.category },
+            { features: filters.category },
+          ],
+        });
+      }
     }
 
     if (filters.guests) {

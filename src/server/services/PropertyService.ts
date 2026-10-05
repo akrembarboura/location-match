@@ -137,8 +137,11 @@ export class PropertyService {
       title: input.title,
       description: input.description || "",
       rentalCategory: input.rentalCategory,
+      rentalCategories: input.rentalCategories || [input.rentalCategory],
       propertyType: input.propertyType,
-      type: input.propertyType,
+      type: input.type || input.propertyType,
+      features: input.features || [],
+      categoryIds: input.categoryIds || input.features || [input.rentalCategory],
       city: input.city,
       area: input.area,
       location: {
@@ -260,10 +263,14 @@ export class PropertyService {
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined) updateData.description = input.description;
     if (input.rentalCategory !== undefined) updateData.rentalCategory = input.rentalCategory;
+    if (input.rentalCategories !== undefined) updateData.rentalCategories = input.rentalCategories;
     if (input.propertyType !== undefined) {
       updateData.propertyType = input.propertyType;
-      updateData.type = input.propertyType;
+      updateData.type = input.type || input.propertyType;
     }
+    if (input.type !== undefined) updateData.type = input.type;
+    if (input.features !== undefined) updateData.features = input.features;
+    if (input.categoryIds !== undefined) updateData.categoryIds = input.categoryIds;
     if (input.city !== undefined) updateData.city = input.city;
     if (input.area !== undefined) updateData.area = input.area;
     if (input.address !== undefined || input.city !== undefined || input.area !== undefined) {

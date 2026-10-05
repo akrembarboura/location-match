@@ -3,6 +3,21 @@
  * UI components depend only on these types, never on the mock data.
  */
 
+export type PropertyType = "villa" | "house" | "apartment" | string;
+
+export type PropertyFeature =
+  | "beach"
+  | "family"
+  | "pool"
+  | "parking"
+  | "garden"
+  | "sea_view"
+  | "air_conditioning"
+  | "wifi"
+  | "terrace"
+  | "pet_friendly"
+  | string;
+
 export type RentalCategory = "summer" | "student";
 
 export type HouseImage = {
@@ -25,13 +40,16 @@ export type House = {
   city: string;
   governorate: string;
   rentalCategory: RentalCategory;
+  rentalCategories?: RentalCategory[];
   pricePerNight: number;
   currency: "TND";
   guests: number;
   bedrooms: number;
   bathrooms: number;
-  propertyType: string;
+  propertyType: PropertyType;
+  type?: PropertyType;
   categoryIds: string[];
+  features?: PropertyFeature[];
   /** Image id of the cover; falls back to the first image. */
   coverImageId: string | null;
   images: HouseImage[];
