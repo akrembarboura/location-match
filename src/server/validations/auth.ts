@@ -58,6 +58,8 @@ export const RegisterSchema = z.object({
   firstName: nameField.optional(),
   lastName: nameField.optional(),
   phone: optionalPhoneField,
-  role: z.enum(["CUSTOMER", "OWNER"]).default("CUSTOMER"),
+  role: z
+    .preprocess((val) => (val === "OWNER" ? "OWNER" : "CUSTOMER"), z.enum(["CUSTOMER", "OWNER"]))
+    .default("CUSTOMER"),
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
