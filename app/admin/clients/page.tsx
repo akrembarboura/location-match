@@ -4,21 +4,22 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
-  Clock,
-  MapPin,
   Users,
-  Home,
-  Phone,
-  ArrowRight,
   Search,
+  Phone,
+  Home,
+  MapPin,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
 
-export default function AdminRequests() {
+export default function AdminClientsPage() {
   const [requestsList, setRequestsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [filterType, setFilterType] = useState("ALL");
 
   const fetchAdminRequests = async () => {
     try {
@@ -38,7 +39,7 @@ export default function AdminRequests() {
     fetchAdminRequests();
   }, []);
 
-  const filteredRequests = requestsList.filter((q) => {
+  const filtered = requestsList.filter((q) => {
     const customerName = q.customer?.fullName || q.customer || "";
     const phone = q.customer?.phone || q.phone || "";
     const dest = q.destination || q.area || "";
@@ -48,14 +49,15 @@ export default function AdminRequests() {
       phone.includes(searchQuery) ||
       dest.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = statusFilter === "ALL" || (q.status || q.stage) === statusFilter;
-    return matchesSearch && matchesStatus;
+    if (filterType === "DIRECT") return matchesSearch && Boolean(q.propertyId);
+    if (filterType === "GENERAL") return matchesSearch && !q.propertyId;
+    return matchesSearch;
   });
 
   return (
     <AdminShell
-      title="Demandes & Réservations Clients"
-      subtitle={`${requestsList.length} demandes de location enregistrées`}
+      title="Espace Clients & Suivi des Demandes"
+      subtitle="Consultez et gérez l'ensemble des clients et demandes de réservation directes"
     >
       {/* Search & Filter Bar */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -63,7 +65,7 @@ export default function AdminRequests() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Rechercher par ID (REQ-...), nom, téléphone ou ville..."
+            placeholder="Rechercher un client, téléphone, ID ou destination..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-border bg-card pl-9 pr-4 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
@@ -71,40 +73,54 @@ export default function AdminRequests() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-muted-foreground">Statut :</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+          <button
+            onClick={() => setFilterType("ALL")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              filterType === "ALL"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <option value="ALL">Tous les statuts</option>
-            <option value="PENDING">PENDING</option>
-            <option value="UNDER_REVIEW">UNDER_REVIEW</option>
-            <option value="PROPERTY_PROPOSED">PROPERTY_PROPOSED</option>
-            <option value="CLIENT_CONFIRMATION">CLIENT_CONFIRMATION</option>
-            <option value="CONFIRMED">CONFIRMED</option>
-            <option value="COMPLETED">COMPLETED</option>
-            <option value="REJECTED">REJECTED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
+            Tous les clients ({requestsList.length})
+          </button>
+          <button
+            onClick={() => setFilterType("DIRECT")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              filterType === "DIRECT"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Réservations directes ({requestsList.filter((r) => r.propertyId).length})
+          </button>
+          <button
+            onClick={() => setFilterType("GENERAL")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              filterType === "GENERAL"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Recherches libres ({requestsList.filter((r) => !r.propertyId).length})
+          </button>
         </div>
       </div>
 
       {loading ? (
         <div className="p-12 text-center text-sm text-muted-foreground">
-          Chargement des demandes...
+          Chargement de l&apos;espace clients…
         </div>
-      ) : filteredRequests.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
-          <Clock className="mx-auto h-10 w-10 text-muted-foreground" />
-          <h3 className="mt-4 font-display text-lg text-foreground">Aucune demande trouvée</h3>
+          <Users className="mx-auto h-10 w-10 text-muted-foreground" />
+          <h3 className="mt-4 font-display text-lg text-foreground">Aucun client trouvé</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Les demandes des clients s&apos;afficheront ici en temps réel.
+            Les fiches clients apparaîtront automatiquement dès la première demande.
           </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredRequests.map((q) => {
+          {filtered.map((q) => {
             const customerName = q.customer?.fullName || q.customer || "Client inconnu";
             const customerPhone = q.customer?.phone || q.phone;
             const dest = q.destination || q.area || "Non précisé";
@@ -119,9 +135,13 @@ export default function AdminRequests() {
                 <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-primary">{q.id}</span>
-                    {q.propertyId && (
+                    {q.propertyId ? (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                         Réservation directe
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                        Recherche libre
                       </span>
                     )}
                   </div>
@@ -139,9 +159,16 @@ export default function AdminRequests() {
                 </div>
 
                 <div className="mt-3 space-y-2">
-                  <h3 className="font-display text-base font-bold text-foreground group-hover:text-primary transition-colors">
-                    {customerName}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                      {customerName}
+                    </h3>
+                    {customerPhone && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-green-500/10 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:text-green-400">
+                        <Phone className="h-3 w-3" /> {customerPhone}
+                      </span>
+                    )}
+                  </div>
 
                   {q.selectedPropertyDetails?.title && (
                     <div className="rounded-lg bg-surface p-2.5 border border-border/60 flex items-center gap-2 text-xs">
@@ -163,12 +190,6 @@ export default function AdminRequests() {
                       {q.budget ? `${q.budget} DT` : "Budget libre"}
                     </span>
                   </div>
-
-                  {customerPhone && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Phone className="h-3 w-3 text-green-600" /> {customerPhone}
-                    </p>
-                  )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3 text-xs">
@@ -176,7 +197,7 @@ export default function AdminRequests() {
                     Dates : {q.checkIn || q.period} → {q.checkOut || "flexible"}
                   </span>
                   <span className="font-semibold text-primary flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                    Ouvrir la fiche <ArrowRight className="h-3.5 w-3.5" />
+                    Ouvrir la fiche client <ArrowRight className="h-3.5 w-3.5" />
                   </span>
                 </div>
               </Link>

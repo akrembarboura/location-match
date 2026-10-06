@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { LayoutDashboard, Inbox, Building2, BarChart3, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Inbox, Users, Building2, BarChart3, ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import { AdminNotificationBell } from "./AdminNotificationBell";
@@ -10,6 +10,7 @@ import { AdminNotificationBell } from "./AdminNotificationBell";
 const links = [
   { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
   { to: "/admin/requests", label: "Demandes", icon: Inbox, exact: false },
+  { to: "/admin/clients", label: "Clients", icon: Users, exact: false },
   { to: "/admin/properties", label: "Biens", icon: Building2, exact: false },
   { to: "/admin/analytics", label: "Statistiques", icon: BarChart3, exact: false },
 ];
