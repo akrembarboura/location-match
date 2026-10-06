@@ -8,10 +8,13 @@ export function mapUserToPublicDTO(userDoc: any) {
 }
 
 export function mapUserToPrivateDTO(userDoc: any) {
+  const rawRole = typeof userDoc.role === "string" ? userDoc.role.toUpperCase() : "CUSTOMER";
+  const role = ["CUSTOMER", "OWNER", "ADMIN", "SUPER_ADMIN"].includes(rawRole) ? rawRole : "CUSTOMER";
+
   return {
     id: userDoc.id || userDoc._id.toString(),
     email: userDoc.email,
-    role: userDoc.role,
+    role,
     status: userDoc.status || "ACTIVE",
     firstName: userDoc.firstName,
     lastName: userDoc.lastName,
