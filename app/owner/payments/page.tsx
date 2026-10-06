@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { OwnerShell } from "@/components/owner/OwnerShell";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { formatDT } from "@/lib/utils";
+import { withCallbackUrl } from "@/lib/auth/redirect";
 import {
   CreditCard,
   Loader2,
@@ -12,19 +15,33 @@ import {
   CheckCircle2,
   TrendingUp,
   Receipt,
+  LogIn,
 } from "lucide-react";
 
 export default function OwnerPaymentsPage() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isOwnerOrAdmin =
+    user?.role === "OWNER" || user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+
   useEffect(() => {
+    if (!isAuthenticated || !isOwnerOrAdmin) {
+      setLoading(false);
+      return;
+    }
+
     async function fetchPayments() {
       try {
         setLoading(true);
+        setError(null);
         const res = await fetch("/api/owner/payments");
-        if (!res.ok) throw new Error("Erreur de chargement des données financières");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Erreur de chargement des données financières");
+        }
         const json = await res.json();
         setData(json);
       } catch (err: any) {
@@ -34,7 +51,51 @@ export default function OwnerPaymentsPage() {
       }
     }
     fetchPayments();
-  }, []);
+  }, [isAuthenticated, isOwnerOrAdmin]);
+
+  if (authLoading) {
+    return (
+      <OwnerShell>
+        <div className="flex h-96 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  if (!isAuthenticated) {
+    const registerHref = withCallbackUrl("/register", "/owner/list-property");
+    const loginHref = withCallbackUrl("/login", "/owner/payments");
+
+    return (
+      <OwnerShell title="Suivi des paiements & Revenus">
+        <div className="mx-auto max-w-4xl py-12 text-center space-y-6">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Accès à l&apos;espace propriétaire requis
+          </h1>
+          <p className="mx-auto max-w-xl text-sm text-muted-foreground">
+            Veuillez vous connecter avec votre compte propriétaire pour consulter le suivi financier de vos locations.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href={loginHref}
+              className="inline-flex h-11 w-full sm:w-auto items-center justify-center rounded-lg bg-primary px-6 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Se connecter
+            </Link>
+            <Link
+              href={registerHref}
+              className="inline-flex h-11 w-full sm:w-auto items-center justify-center rounded-lg border border-border bg-card px-6 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-surface"
+            >
+              Créer un compte
+            </Link>
+          </div>
+        </div>
+      </OwnerShell>
+    );
+  }
 
   return (
     <OwnerShell
@@ -126,7 +187,7 @@ export default function OwnerPaymentsPage() {
               Répartition par logement
             </h2>
 
-            {data?.propertyBreakdown?.length === 0 ? (
+            {!data?.propertyBreakdown || data.propertyBreakdown.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucun logement trouvé.</p>
             ) : (
               <div className="rounded-xl border border-border bg-card overflow-hidden shadow-2xs">
@@ -142,7 +203,7 @@ export default function OwnerPaymentsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {data?.propertyBreakdown?.map((prop: any) => (
+                      {data.propertyBreakdown.map((prop: any) => (
                         <tr key={prop.id} className="hover:bg-surface/50">
                           <td className="p-3.5 font-semibold text-foreground">{prop.title}</td>
                           <td className="p-3.5 text-muted-foreground">{prop.reservationsCount} séjour(s)</td>

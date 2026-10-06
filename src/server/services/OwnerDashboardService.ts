@@ -172,6 +172,7 @@ export class OwnerDashboardService {
   }
 
   async getCalendarData(ownerId: string, propertyId?: string, month?: number, year?: number) {
+    await connectToDatabase();
     const reservations = await reservationRepository.findByOwnerId(ownerId, { propertyId });
 
     const properties = await PropertyModel.find({ ownerId })
@@ -211,6 +212,7 @@ export class OwnerDashboardService {
   }
 
   async getFinancialSummary(ownerId: string) {
+    await connectToDatabase();
     const reservations = await reservationRepository.findByOwnerId(ownerId);
     const payments = await paymentRepository.findByOwnerId(ownerId);
 
