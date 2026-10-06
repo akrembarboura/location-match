@@ -1,23 +1,23 @@
-export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { propertyService } from "@/server/services/PropertyService";
-import { getClientIp } from "@/server/utils/client-ip";
-import { generateRateLimitKey } from "@/server/rate-limit/key";
 import { POLICIES } from "@/server/rate-limit/policies";
-import { rateLimit, rateLimitResponse } from "@/server/rate-limit";
+import { publicRateLimit } from "@/server/rate-limit/public";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  try {
-    const ip = getClientIp(req);
-    const rlKey = generateRateLimitKey(POLICIES.PUBLIC_API.name, ip);
-    const rlResult = await rateLimit(rlKey, POLICIES.PUBLIC_API);
-    if (!rlResult.success) {
-      return rateLimitResponse(rlResult);
-    }
+  const limited = await publicRateLimit(req, POLICIES.PUBLIC_API);
+  if (limited) return limited;
 
+  try {
     const destinations = await propertyService.getDestinations();
-    return NextResponse.json(destinations);
-  } catch (error: any) {
+    return NextResponse.json(destinations, {
+      headers: {
+        // CDN caches for 5 min and serves stale for 1 h while revalidating
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+      },
+    });
+  } catch (error) {
     console.error("GET /api/destinations error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

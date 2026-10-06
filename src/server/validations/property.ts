@@ -1,17 +1,33 @@
 import { z } from "zod";
 import { PROPERTY_STATUSES } from "@/lib/models";
 
-export const PropertySearchSchema = z.object({
-  rentalCategory: z.string().optional(),
-  rentalCategories: z.array(z.string()).optional(),
-  city: z.string().optional(),
-  category: z.string().optional(),
-  type: z.string().optional(),
-  features: z.array(z.string()).optional(),
-  guests: z.coerce.number().int().min(1).optional(),
-  checkIn: z.string().optional(),
-  checkOut: z.string().optional(),
-});
+const searchDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must use YYYY-MM-DD format.")
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }, "Date must be a valid calendar date.");
+
+export const PropertySearchSchema = z
+  .object({
+    rentalCategory: z.string().max(40).optional(),
+    rentalCategories: z.array(z.string().max(40)).max(10).optional(),
+    city: z.string().trim().min(1).max(100).optional(),
+    category: z.string().max(80).optional(),
+    type: z.string().max(80).optional(),
+    features: z.array(z.string().max(80)).max(20).optional(),
+    guests: z.coerce.number().int().min(1).max(30).optional(),
+    checkIn: searchDateSchema.optional(),
+    checkOut: searchDateSchema.optional(),
+    page: z.coerce.number().int().min(1).max(10_000).optional(),
+    limit: z.coerce.number().int().min(1).max(50).optional(),
+  })
+  .refine(
+    ({ checkIn, checkOut }) =>
+      !checkIn || !checkOut || new Date(checkOut) > new Date(checkIn),
+    { message: "Check-out must be after check-in.", path: ["checkOut"] }
+  );
 export type PropertySearchInput = z.infer<typeof PropertySearchSchema>;
 
 export const PropertyImageSchema = z.object({
@@ -100,4 +116,3 @@ export const PropertyReservationSchema = z
     path: ["to"],
   });
 export type PropertyReservationInput = z.infer<typeof PropertyReservationSchema>;
-

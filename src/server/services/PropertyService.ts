@@ -34,6 +34,15 @@ export class PropertyService {
     return rawProperties.map(mapPropertyToPublicDTO);
   }
 
+  async searchPropertiesPage(filters: PropertySearchInput) {
+    const limit = filters.limit ?? 50;
+    const rawProperties = await propertyRepository.search(filters, true);
+    return {
+      properties: rawProperties.slice(0, limit).map(mapPropertyToPublicDTO),
+      hasMore: rawProperties.length > limit,
+    };
+  }
+
   async getPropertyBySlug(slug: string) {
     const rawProperty = await propertyRepository.findBySlug(slug);
     if (!rawProperty) {

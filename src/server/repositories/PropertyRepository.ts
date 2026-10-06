@@ -8,18 +8,24 @@ import {
 } from "@/lib/models";
 import type { PropertySearchInput } from "../validations/property";
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export class PropertyRepository {
   /**
    * Search for public properties (strictly PUBLISHED only).
    */
-  async search(filters: PropertySearchInput) {
+  async search(filters: PropertySearchInput, includeNextPage = false) {
     await connectToDatabase();
 
     const query: any = {
-      $or: [
+      $and: [{
+        $or: [
         { status: "PUBLISHED" },
         { isPublished: true, status: { $in: ["PUBLISHED", undefined, null] } },
-      ],
+        ],
+      }],
     };
 
     if (filters.rentalCategory) {
@@ -34,10 +40,11 @@ export class PropertyRepository {
 
     if (filters.city) {
       if (!query.$and) query.$and = [];
+      const city = new RegExp(`^${escapeRegex(filters.city)}$`, "i");
       query.$and.push({
         $or: [
-          { city: { $regex: new RegExp(`^${filters.city}$`, "i") } },
-          { "location.city": { $regex: new RegExp(`^${filters.city}$`, "i") } },
+          { city },
+          { "location.city": city },
         ],
       });
     }
@@ -117,10 +124,12 @@ export class PropertyRepository {
     }
 
     if (filters.guests) {
-      query.$or = [
+      query.$and.push({
+        $or: [
         { guests: { $gte: filters.guests } },
         { "capacity.guests": { $gte: filters.guests } },
-      ];
+        ],
+      });
     }
 
     // Availability check
@@ -160,7 +169,17 @@ export class PropertyRepository {
       query.$and.push(...availabilityConditions);
     }
 
-    return await PropertyModel.find(query).sort({ createdAt: -1 }).lean().exec();
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 50;
+    const skip = (page - 1) * limit;
+
+    const results = await PropertyModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit + (includeNextPage ? 1 : 0))
+      .lean()
+      .exec();
+    return results;
   }
 
   async findBySlug(slug: string) {

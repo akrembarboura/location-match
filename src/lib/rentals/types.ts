@@ -95,6 +95,8 @@ export type HouseFilters = {
   checkIn?: string;
   checkOut?: string;
   rentalCategory?: RentalCategory;
+  page?: number;
+  limit?: number;
 };
 
 export function getCoverImage(house: House): HouseImage | undefined {

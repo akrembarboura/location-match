@@ -15,6 +15,7 @@ import type { Category } from "@/lib/rentals/types";
 import { t } from "@/lib/i18n";
 import { trackEvent } from "@/lib/analytics/client";
 const hero = "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889819/location-match/hero.jpg";
+const heroBackground = "/home-hero.png";
 
 
 
@@ -141,8 +142,8 @@ function Home() {
       {/* Hero */}
       <section className="relative isolate">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <img src={hero} alt="" width={1600} height={1008} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-linear-to-b from-foreground/55 via-foreground/35 to-background" />
+          <img src={heroBackground} alt="" width={1265} height={768} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-foreground/35" />
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
           <p className="font-display text-xs font-medium uppercase tracking-[0.16em] text-primary-foreground/85">{t.hero.eyebrow}</p>

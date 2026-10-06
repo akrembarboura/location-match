@@ -97,4 +97,29 @@ describe("LOC MAISON Multi-Category Classification System", () => {
     const studentResults = await propertyService.searchProperties({ rentalCategory: "student" });
     expect(studentResults.some((p) => p.id === "PROP-STUDENT-01")).toBe(true);
   });
+
+  it("never returns unpublished properties when filtering by guest capacity", async () => {
+    await PropertyModel.create({
+      id: "PROP-DRAFT-HIGH-CAPACITY",
+      title: "Brouillon privé",
+      status: "DRAFT",
+      isPublished: false,
+      guests: 10,
+      capacity: { guests: 10 },
+    });
+    await PropertyModel.create({
+      id: "PROP-PUBLISHED-HIGH-CAPACITY",
+      title: "Villa publiée",
+      status: "PUBLISHED",
+      isPublished: true,
+      guests: 10,
+      capacity: { guests: 10 },
+    });
+
+    const results = await propertyService.searchProperties({ guests: 4 });
+    const resultIds = results.map((property) => property.id);
+
+    expect(resultIds).toContain("PROP-PUBLISHED-HIGH-CAPACITY");
+    expect(resultIds).not.toContain("PROP-DRAFT-HIGH-CAPACITY");
+  });
 });

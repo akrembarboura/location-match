@@ -27,10 +27,20 @@ function HousesPage() {
     checkIn: searchParams.get("checkIn") || undefined,
     checkOut: searchParams.get("checkOut") || undefined
   };
-  const filters: HouseFilters = { ...search, rentalCategory: "summer" };
+  const requestedPage = Number.parseInt(searchParams.get("page") ?? "1", 10);
+  const page = Number.isInteger(requestedPage) ? Math.min(Math.max(requestedPage, 1), 10_000) : 1;
+  const pageSize = 24;
+  const filters: HouseFilters = { ...search, rentalCategory: "summer", page, limit: pageSize };
   const houses = useQuery(housesQuery(filters));
   const { data: categories = [] } = useQuery(categoriesQuery());
   const hasFilters = Object.values(search).some(Boolean);
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (targetPage === 1) params.delete("page");
+    else params.set("page", String(targetPage));
+    const query = params.toString();
+    return query ? `/houses?${query}` : "/houses";
+  };
 
   return (
     <PageShell>
@@ -57,10 +67,27 @@ function HousesPage() {
           ))}
         </div>
         <div className="mb-6 mt-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">{houses.data ? t.list.results(houses.data.length) : "\u00a0"}</p>
+          <p className="text-sm text-muted-foreground">
+            {houses.data ? `${t.list.results(houses.data.properties.length)} · Page ${page}` : "\u00a0"}
+          </p>
           {hasFilters && <Link href="/houses" className="text-sm font-medium text-primary hover:underline">{t.list.reset}</Link>}
         </div>
-        <HouseGrid houses={houses.data} isLoading={houses.isLoading} isError={houses.isError} emptyText={t.list.empty} errorText={t.featured.error} />
+        <HouseGrid houses={houses.data?.properties} isLoading={houses.isLoading} isError={houses.isError} emptyText={t.list.empty} errorText={t.featured.error} />
+        {houses.data && (page > 1 || houses.data.hasMore) && (
+          <nav aria-label="Pagination des logements" className="mt-8 flex items-center justify-center gap-4">
+            {page > 1 && (
+              <Link href={pageHref(page - 1)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">
+                Précédent
+              </Link>
+            )}
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            {houses.data.hasMore && (
+              <Link href={pageHref(page + 1)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">
+                Suivant
+              </Link>
+            )}
+          </nav>
+        )}
       </div>
     </PageShell>
   );

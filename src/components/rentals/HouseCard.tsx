@@ -51,15 +51,18 @@ export function HouseCard({ house }: { house: House }) {
   };
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border/75 bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/75 bg-card shadow-sm transition-shadow duration-200 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none">
       <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
-        <Link href={`/houses/${house.slug}`} aria-label={house.title} className="block h-full w-full">
+        <Link
+          href={`/houses/${house.slug}`}
+          aria-label={house.title}
+          className="block h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+        >
           <SafeImage
             src={cover?.url}
             alt={cover?.alt ?? house.title}
-            width={800}
-            height={600}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transition-none"
           />
         </Link>
         <div className="pointer-events-none absolute left-2.5 top-2.5 flex flex-wrap gap-1.5 z-10">
@@ -80,9 +83,9 @@ export function HouseCard({ house }: { house: House }) {
           onClick={handleFavoriteClick}
           aria-pressed={fav}
           aria-label={fav ? t.card.unfavorite : t.card.favorite}
-          className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-card/85 text-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-card hover:scale-105 active:scale-95"
+          className="absolute right-2.5 top-2.5 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-card/95 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-card active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
         >
-          <Heart className={cn("h-4 w-4 transition-colors", fav ? "fill-rose-500 text-rose-500" : "text-muted-foreground")} />
+          <Heart className={cn("h-5 w-5 transition-colors motion-reduce:transition-none", fav ? "fill-rose-500 text-rose-500" : "text-muted-foreground")} />
         </button>
 
         {house.images?.length > 1 && (
@@ -92,55 +95,83 @@ export function HouseCard({ house }: { house: House }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-3.5 sm:p-4">
-        <Link href={`/houses/${house.slug}`} className="flex flex-1 flex-col justify-between gap-2.5">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <Link href={`/houses/${house.slug}`} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset">
           <div>
-            <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground line-clamp-1">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              {house.location ? `${house.location}, ${house.city}` : house.city}
-            </p>
-
-            <h3 className="mt-1 font-display text-[1.05rem] font-semibold leading-snug text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+            {house.propertyType && (
+              <p className="text-xs font-medium text-muted-foreground">
+                {house.propertyType}
+              </p>
+            )}
+            <h3 className="mt-1 line-clamp-2 min-h-11 font-display text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary motion-reduce:transition-none sm:text-xl">
               {house.title}
             </h3>
-
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-muted-foreground">
-              {house.bedrooms > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <BedDouble className="h-3.5 w-3.5 shrink-0" /> {t.card.bedrooms(house.bedrooms)}
+            {(house.city || house.location) && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm leading-snug text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span className="line-clamp-1">
+                  {[house.city, house.location].filter(Boolean).join(" · ")}
                 </span>
-              )}
-              {house.guests > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Users className="h-3.5 w-3.5 shrink-0" /> {t.card.guests(house.guests)}
-                </span>
-              )}
-              {house.bathrooms > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Bath className="h-3.5 w-3.5 shrink-0" /> {house.bathrooms} sdb.
-                </span>
-              )}
-            </div>
+              </p>
+            )}
           </div>
 
-          <div className="mt-auto flex items-end justify-between border-t border-border/60 pt-3">
-            <div>
-              <span className="font-display text-lg font-bold text-foreground">
+          {Number.isFinite(house.pricePerNight) && house.pricePerNight > 0 && (
+            <div className="mt-4">
+              <span className="font-display text-xl font-bold leading-tight text-foreground">
                 {formatPrice(house.pricePerNight)} DT
               </span>{" "}
-              <span className="text-xs text-muted-foreground">/ {t.card.perNight}</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                / {house.rentalCategory === "student" ? "mois" : t.card.perNight}
+              </span>
             </div>
+          )}
 
+          <div className="mt-2.5 flex min-h-6 flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-muted-foreground">
+            {house.guests > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Users className="h-4 w-4 shrink-0" /> {t.card.guests(house.guests)}
+              </span>
+            )}
+            {house.bedrooms > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <BedDouble className="h-4 w-4 shrink-0" /> {t.card.bedrooms(house.bedrooms)}
+              </span>
+            )}
+            {house.bathrooms > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Bath className="h-4 w-4 shrink-0" /> {house.bathrooms} sdb.
+              </span>
+            )}
+          </div>
+
+          {house.amenities?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {house.amenities.slice(0, 2).map((amenity) => (
+                <span key={amenity} className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+                  {amenity}
+                </span>
+              ))}
+              {house.amenities.length > 2 && (
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  +{house.amenities.length - 2}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
+            <span className="text-xs font-medium text-muted-foreground">
+              {house.rentalCategory === "summer" ? "Location d'été" : "Logement étudiant"}
+            </span>
             {house.rating !== null && house.reviewCount > 0 ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
                 <span>{house.rating.toFixed(1)}</span>
-                <span className="text-muted-foreground text-[0.7rem]">({house.reviewCount})</span>
+                <span className="text-xs text-muted-foreground">({house.reviewCount})</span>
               </span>
             ) : (
-              <span className="rounded bg-primary/10 px-2 py-0.5 text-[0.75rem] font-semibold text-primary">
-                {t.card.new}
-              </span>
+              <span className="text-xs font-medium text-primary">{t.card.new}</span>
             )}
           </div>
         </Link>
@@ -179,7 +210,7 @@ export function HouseGrid({
   emptyText: string;
   errorText?: string;
 }) {
-  const grid = "grid gap-x-5 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  const grid = "grid grid-cols-1 gap-x-6 gap-y-7 sm:grid-cols-2 lg:grid-cols-3";
   if (isLoading)
     return <div className={grid}>{Array.from({ length: 8 }, (_, i) => <HouseCardSkeleton key={i} />)}</div>;
   if (isError)

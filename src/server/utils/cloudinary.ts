@@ -39,11 +39,20 @@ export async function uploadToCloudinary(
       {
         folder,
         resource_type: "image",
-        transformation: [{ quality: "auto", fetch_format: "auto" }, { width: 1600, crop: "limit" }],
+        transformation: [{ width: 1600, crop: "limit" }],
       },
       (error, result: UploadApiResponse | undefined) => {
         if (error || !result) {
-          console.error("Cloudinary upload error:", error?.message);
+          console.error(
+            "Cloudinary upload error:",
+            JSON.stringify({
+              name: error?.name ?? null,
+              message: error?.message ?? null,
+              httpCode: error?.http_code ?? null,
+              requestId: error?.request_id ?? null,
+              resultReceived: Boolean(result),
+            })
+          );
           return reject(new Error("Échec du téléversement de l'image vers Cloudinary."));
         }
         resolve({
@@ -70,4 +79,3 @@ export async function deleteFromCloudinary(publicId: string): Promise<void> {
     console.error(`Failed to delete Cloudinary asset ${publicId}:`, error);
   }
 }
-

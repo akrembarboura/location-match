@@ -20,10 +20,15 @@ async function fetchHouses(filters: HouseFilters = {}) {
   if (filters.guests) params.append("guests", filters.guests.toString());
   if (filters.checkIn) params.append("checkIn", filters.checkIn);
   if (filters.checkOut) params.append("checkOut", filters.checkOut);
+  if (filters.page) params.append("page", filters.page.toString());
+  if (filters.limit) params.append("limit", filters.limit.toString());
 
   const res = await fetch(`${getBaseUrl()}/api/properties?${params.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch properties");
-  return res.json();
+  return {
+    properties: await res.json(),
+    hasMore: res.headers.get("X-Has-More") === "true",
+  };
 }
 
 export const housesQuery = (filters: HouseFilters = {}) =>
@@ -71,4 +76,3 @@ export const categoriesQuery = () =>
       return res.json();
     } 
   });
-
