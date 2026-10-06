@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" fill="none">
+  <rect width="800" height="600" fill="#F1F5F9"/>
+  <path d="M400 220L280 320V420H340V360H460V420H520V320L400 220Z" fill="#94A3B8"/>
+  <text x="400" y="465" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#64748B">LOC MAISON</text>
+</svg>
