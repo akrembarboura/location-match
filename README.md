@@ -1,786 +1,264 @@
-# LOC MAISON
+# LOC MAISON — Tunisian Rental Marketplace
 
-### Tunisian Rental Marketplace
-
-LOC MAISON is a Tunisian rental marketplace designed to make property discovery and rental requests simpler, safer, and more human.
-
-The platform connects **customers, property owners, and the LOC MAISON team** through a structured rental workflow covering property discovery, owner listings, customer requests, proposals, reservation coordination, and concierge support.
-
-The initial market focus is **Mahdia, Tunisia**, with an architecture designed to scale progressively to additional cities and regions.
-
-**Developed by [Micro Edition](https://microedition.tn/)**
-**Founder & Project Lead — Akrem Barboura**
+> **Managed Rental Marketplace for Summer Vacation & Student Housing in Tunisia**  
+> *Developed by [Micro Edition](https://microedition.tn/) · Founder & Lead: Akrem Barboura*
 
 ---
 
-## Overview
+## 🌟 Overview
 
-LOC MAISON is built around a **human-assisted rental marketplace model** rather than a fully automated instant-booking platform.
+**LOC MAISON** is a managed, human-assisted rental marketplace built for the Tunisian real estate market (initiating in **Mahdia, Tunisia**). Unlike unmoderated instant-booking platforms, LOC MAISON integrates a structured operational layer where properties are verified, customer requests are matched, payments are audited, and contact details are released strictly under controlled business invariants.
 
-The platform allows customers to:
-
-* Discover verified rental properties.
-* Search and filter properties according to their needs.
-* View detailed property information, photos, pricing, and availability.
-* Submit rental requests.
-* Receive property proposals from the LOC MAISON team.
-* Confirm a rental through the platform's reservation workflow.
-* Communicate with the LOC MAISON concierge through supported channels.
-
-Property owners can:
-
-* Create and manage property listings.
-* Submit properties for review.
-* Upload property photographs.
-* Manage property information and pricing.
-* Monitor their listings and rental activity.
-
-The LOC MAISON team manages the operational layer between customers and owners, including property review, matching, proposals, reservation coordination, and customer support.
+The platform provides dedicated, role-scoped experiences for:
+- **Customers**: Property discovery, structured rental requests, proposal comparison, live payment tracking, and concierge support.
+- **Property Owners**: Listing submission, availability calendars, cash payment declarations, operational check-in/check-out schedules, and masked customer communications.
+- **Administrators**: Moderation, user lifecycle review, payment verification, request proposals, and platform analytics.
 
 ---
 
-# Business Model
+## 🔐 Controlled Customer Contact Release Policy
 
-LOC MAISON initially focuses on two major rental markets in Mahdia.
-
-### Summer Rentals
-
-The primary marketplace category focuses on seasonal vacation rentals.
-
-Customers can discover:
-
-* Villas
-* Houses
-* Apartments
-* Studios
-* Beachfront properties
-* Properties near tourist areas
-* Properties suitable for families and groups
-
-Listings are presented with pricing in **Tunisian Dinars (TND)** and authentic property photography.
-
-### Student Housing
-
-LOC MAISON also provides a dedicated category for students looking for practical and affordable accommodation during the academic year.
-
-The student housing model can later support additional features such as:
-
-* Long-term rental requests
-* Student-specific filters
-* Monthly pricing
-* University-area search
-* Student payment options
-* Dedicated student workflows
-
-### Property Owners
-
-Property owners receive a dedicated portal where they can:
-
-* Create property listings.
-* Upload property images.
-* Edit property information.
-* Submit properties for review.
-* Monitor listing status.
-* Manage their rental inventory.
-
----
-
-# Marketplace Workflow
-
-LOC MAISON uses a structured workflow designed to keep the marketplace controlled and reduce fraudulent or conflicting reservations.
+To protect marketplace integrity and prevent off-platform bypass before reservation and payment validation, LOC MAISON enforces a **Server-Side Contact Masking & Release Engine** (`ContactReleasePolicy`).
 
 ```text
-Property Owner
-      │
-      ▼
-Create Property Listing
-      │
-      ▼
-LOC MAISON Review
-      │
-      ├── Rejected
-      │
-      └── Approved
+               Customer Contact Data (Phone, Email, WhatsApp)
+                                    │
+                                    ▼
+                ┌───────────────────────────────────────┐
+                │   Server-Side Evaluation Policy       │
+                └───────────────────┬───────────────────┘
+                                    │
+               ┌────────────────────┴────────────────────┐
+               │  Is Authorized Owner?                   │
+               │  Is Reservation Status CONFIRMED?       │
+               │  Is Payment State VERIFIED / REPORTED?  │
+               └────────────────────┬────────────────────┘
+                                    │
+                   ┌────────────────┴────────────────┐
+                   │                                 │
+                   ▼                                 ▼
+             NO (Default)                        YES (Satisfied)
+   ┌──────────────────────────────┐  ┌──────────────────────────────┐
+   │ Contact Status: HIDDEN       │  │ Contact Status: RELEASED     │
+   │ Phone: null                  │  │ Phone: +216 22 123 456       │
+   │ Name: "Mohamed A."           │  │ Name: "Mohamed Ben Ali"      │
+   └──────────────────────────────┘  └──────────────────────────────┘
+```
+
+> **Security Invariant**: Unreleased contact data is stripped at the **API & Repository level**. It is never transferred to the browser or hidden via CSS, eliminating client-side inspection vulnerabilities.
+
+---
+
+## 💳 Dynamic Payment Workflow & Single Source of Truth
+
+LOC MAISON implements a domain-driven payment state machine (`PaymentModel`) to track cash, bank transfer, D17, and online transactions with full audit trails.
+
+### Conceptual Payment Model
+
+```typescript
+type PaymentMethod = "CASH" | "BANK_TRANSFER" | "D17" | "ONLINE" | "OTHER";
+
+type PaymentStatus =
+  | "PENDING"
+  | "AWAITING_OWNER_CONFIRMATION"
+  | "REPORTED"
+  | "VERIFIED"
+  | "CONFIRMED"
+  | "REJECTED"
+  | "REFUNDED";
+```
+
+### Owner Cash Confirmation & Audit Flow (`REPORTED` ≠ `VERIFIED`)
+
+```text
+Customer selects Cash Payment
              │
              ▼
-        Published Property
+Physical Cash Paid to Owner
              │
              ▼
-          Customer
+Owner Clicks "Paiement reçu"  ──►  Payment.status = REPORTED (Owner Audit)
              │
              ▼
-       Rental Request
+LOC MAISON Admin Audit        ──►  Payment.status = VERIFIED / CONFIRMED
              │
              ▼
-     LOC MAISON Matching
-             │
-             ▼
-          Proposal
-             │
-             ▼
-     Customer Acceptance
-             │
-             ▼
- Reservation Confirmation
-             │
-             ▼
- LOC MAISON Concierge Support
+Contact Released to Owner & Customer Sees "Paiement confirmé"
 ```
 
-This approach allows the platform to maintain operational control while the marketplace is being established.
+1. **Single Source of Truth**: Payment state is saved in MongoDB (`PaymentModel` + `ReservationModel.paymentSummary`) and synced to `HousingRequestModel`. Both Customer and Owner views consume the identical server state via [src/lib/payment-status.ts](file:///c:/Users/Akrem/Desktop/location_match/src/lib/payment-status.ts).
+2. **Auditability**: When an owner confirms physical receipt of cash, `Payment.status` transitions to `REPORTED`. LOC MAISON platform admins verify the record to set `VERIFIED`, preserving a full audit log (`reportedBy`, `reportedAt`, `verifiedBy`, `verifiedAt`, `history`).
 
 ---
 
-# Core Features
-
-## Property Discovery
-
-Customers can browse rental properties through a dedicated property discovery experience.
-
-Supported capabilities include:
-
-* Property categories
-* Location filtering
-* Guest capacity
-* Rental dates
-* Property type
-* Pricing
-* Property details
-* Property photography
-* Availability status
-
-The primary public property route is:
+## 🔄 End-to-End Marketplace Workflow
 
 ```text
-/houses
-```
-
-Individual properties are accessible through SEO-friendly slugs:
-
-```text
-/houses/[slug]
-```
-
----
-
-## Property Listings
-
-Each property can contain structured information such as:
-
-* Title
-* Description
-* Location
-* Property type
-* Capacity
-* Bedrooms
-* Bathrooms
-* Amenities
-* Pricing
-* Availability
-* Property images
-* Cover image
-* Publication status
-
-Property lifecycle:
-
-```text
-DRAFT
-   ↓
-PENDING_REVIEW
-   ↓
-PUBLISHED
-   ↓
-ARCHIVED
-
-or
-
-PENDING_REVIEW
-   ↓
-REJECTED
-```
-
-Availability is handled independently from publication status to prevent mixing content moderation with reservation state.
-
----
-
-# User Roles
-
-LOC MAISON uses role-based access control with four roles.
-
-### CUSTOMER
-
-Customers can:
-
-* Create an account.
-* Browse properties.
-* Submit rental requests.
-* View their requests.
-* View received proposals.
-* Manage their customer dashboard.
-
-### OWNER
-
-Property owners can:
-
-* Manage their properties.
-* Create new listings.
-* Upload property images.
-* Edit existing listings.
-* Monitor listing status.
-* Access their owner dashboard.
-
-### ADMIN
-
-Administrators manage the marketplace operationally.
-
-Admin capabilities include:
-
-* Property moderation
-* Customer management
-* Owner management
-* Rental request management
-* Proposal management
-* Marketplace monitoring
-* Operational workflows
-
-### SUPER_ADMIN
-
-Super administrators have the administrative permissions required for platform-level operations.
-
----
-
-# Application Routes
-
-The platform follows a role-based route structure.
-
-## Public
-
-```text
-/
- /houses
- /houses/[slug]
- /properties
- /properties/[id]
- /summer
- /student
- /request/summer
- /request/student
- /login
- /register
-```
-
-Both `/houses` and `/properties` currently have public listing pages. `/houses/[slug]`
-and `/properties/[id]` are separate detail routes; `/properties` does not redirect to `/houses`.
-
-## Customer
-
-```text
-/dashboard
-/request/[id]
-```
-
-## Owner
-
-```text
-/owner
-/owner/list-property
-/owner/properties/[id]
-/owner/properties/new
-/owner/properties/[id]/edit
-```
-
-## Admin
-
-```text
-/admin
-/admin/analytics
-/admin/properties
-/admin/requests
-/admin/properties/[id]
+ Property Owner               LOC MAISON Platform             Customer
+───────────────              ─────────────────────           ──────────
+       │                               │                         │
+       ├──► Create Listing (DRAFT) ───►│                         │
+       │    Submit for Review          │                         │
+       │                               ├──► Moderation & Publish │
+       │                               │    (/houses)            │
+       │                               │                         │
+       │                               │◄── Submit Request ──────┤
+       │                               │    (Summer/Student)     │
+       │                               │                         │
+       │◄── View Reservation (Masked) ─┤                         │
+       │    Receive Physical Cash      │                         │
+       ├──► Report Cash Payment ──────►│                         │
+       │    (Status: REPORTED)         ├──► Admin Verification   │
+       │                               │    (Status: VERIFIED)   │
+       │                               │                         │
+       │◄── Release Customer Contact ──┤                         │
+       │    (Status: RELEASED)         ├──► Paiement confirmé ──►│
 ```
 
 ---
 
-# Technology Stack
+## 🏛️ Application Architecture & Tech Stack
 
-LOC MAISON is built with a modern TypeScript-based web stack.
+LOC MAISON is built on the **Next.js 15 App Router** using TypeScript, React 19, and Tailwind CSS v4.
 
-| Layer            | Technology                                          |
-| ---------------- | --------------------------------------------------- |
-| Framework        | [Next.js 15](https://nextjs.org/)                   |
-| UI Library       | [React 19](https://react.dev/)                      |
-| Language         | [TypeScript](https://www.typescriptlang.org/)       |
-| Styling          | [Tailwind CSS v4](https://tailwindcss.com/)         |
-| UI Architecture  | Radix UI / shadcn-style components                  |
-| Animations       | [Framer Motion](https://motion.dev/)                |
-| Database         | MongoDB                                             |
-| ODM              | Mongoose                                            |
-| Data Fetching    | [TanStack Query](https://tanstack.com/query/latest) |
-| Validation       | [Zod](https://zod.dev/)                             |
-| Forms            | [React Hook Form](https://react-hook-form.com/)     |
-| Authentication   | JWT / `jose`                                        |
-| Password Hashing | `bcryptjs`                                          |
-| Image Storage    | Cloudinary                                          |
-| Icons            | Lucide React                                        |
-| Carousel         | Embla Carousel                                      |
-| Testing          | Vitest / Testing Library                            |
+| Layer | Technology / Tool |
+| :--- | :--- |
+| **Framework** | [Next.js 15](https://nextjs.org/) (App Router) |
+| **UI Library** | [React 19](https://react.dev/) |
+| **Language** | [TypeScript](https://www.typescriptlang.org/) (Strict Mode) |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) (Canonical Utility Classes) |
+| **Icons & Motion** | Lucide React, Framer Motion |
+| **Database & ODM** | MongoDB Atlas, Mongoose |
+| **Data Fetching** | [TanStack Query v5](https://tanstack.com/query/latest) |
+| **Validation & Forms**| [Zod](https://zod.dev/), React Hook Form |
+| **Authentication** | Signed JWT HTTP-Only Cookies (`jose`, `bcryptjs`) |
+| **Media Hosting** | Cloudinary API |
+| **Testing** | [Vitest](https://vitest.dev/) (26 Test Suites, 162 Tests) |
+| **CI/CD** | GitHub Actions (`ci.yml`, `security.yml`) |
 
 ---
 
-# Architecture
+## 👥 User Roles & Access Control
 
-The application uses the **Next.js App Router** with a separation between presentation, application logic, and server-side business logic.
-
-A simplified architecture:
-
-```text
-Next.js Application
-│
-├── App Router
-│   ├── Public Routes
-│   ├── Customer Routes
-│   ├── Owner Routes
-│   └── Admin Routes
-│
-├── Components
-│   ├── UI
-│   ├── Forms
-│   ├── Property
-│   ├── Dashboard
-│   └── Site
-│
-├── Client Data Layer
-│   └── TanStack Query
-│
-├── Server Layer
-│   ├── Authentication
-│   ├── Properties
-│   ├── Requests
-│   ├── Proposals
-│   ├── Notifications
-│   └── Rate Limiting
-│
-├── Database
-│   └── MongoDB / Mongoose
-│
-└── External Services
-    ├── Cloudinary
-    └── Communication / Concierge Services
-```
-
-The architecture is intentionally designed so the marketplace can evolve without coupling the user interface directly to database operations.
+- **`CUSTOMER`**: Default role for public registration. Can browse listings, submit requests, view proposals, track payment status, and access `/dashboard`.
+- **`OWNER`**: Can list properties, manage availability calendars, declare received cash payments, view operational check-in/check-out schedules, and manage `/owner`.
+- **`ADMIN`**: Platform operators who review property listings, generate proposals, audit payment reports, and manage user lifecycles.
+- **`SUPER_ADMIN`**: Full platform management and administrative override capabilities.
 
 ---
 
-# Authentication & Security
+## 🛣️ Application Routes
 
-Authentication is implemented using signed JWT sessions stored in secure HTTP-only cookies.
+### Public Routes
+- `/` — Marketplace landing page & search
+- `/houses` — Verified property listings catalog
+- `/houses/[slug]` — Individual property details & reservation request
+- `/summer` — Seasonal vacation rental discovery
+- `/student` — Dedicated student housing catalog
+- `/request/summer` & `/request/student` — Structured rental request wizards
+- `/login` & `/register` — Authentication forms
 
-### Session Cookie
+### Customer Routes
+- `/dashboard` — Customer request dashboard & tracking
+- `/request/[id]` — Detailed request tracking & payment status
 
-```text
-loc_maison_session
-```
+### Owner Routes
+- `/owner` — Owner overview & operational KPI summary
+- `/owner/properties` — Property listing management
+- `/owner/properties/new` — Listing creation wizard
+- `/owner/properties/[id]/edit` — Property editing
+- `/owner/calendar` — Availability calendar & check-in schedule
+- `/owner/reservations` — Reservation list & cash payment declaration
+- `/owner/payments` — Financial summaries & transaction logs
 
-Production configuration includes:
-
-* HTTP-only cookies
-* `SameSite=Lax`
-* `Secure` cookies in production
-* Server-side session verification
-* JWT expiration
-* Role-based authorization
-
-JWT claims include information required to identify the authenticated session, such as:
-
-```text
-sub
-role
-email
-iat
-exp
-```
-
-Passwords are never stored in plaintext and are hashed using `bcryptjs`.
-
----
-
-# Rate Limiting
-
-Sensitive endpoints are protected by server-side rate limiting.
-
-Rate limiting is used for areas such as:
-
-* Authentication
-* Login attempts
-* Session-related endpoints
-* Abuse-sensitive API operations
-
-Rate-limit state is stored in MongoDB and uses expiration mechanisms to prevent permanent accumulation.
+### Admin Routes
+- `/admin` — Operational overview
+- `/admin/properties` — Moderation queue (Approve / Review / Reject)
+- `/admin/requests` — Customer request matching & proposal engine
+- `/admin/analytics` — Marketplace performance metrics
 
 ---
 
-# Database
+## 🚦 Security & Protection Mechanisms
 
-LOC MAISON uses **MongoDB with Mongoose**.
+### 1. HTTP-Only Cookie Authentication
+Signed JWT sessions stored in `loc_maison_session` HTTP-Only, `SameSite=Lax`, `Secure` (production) cookies.
 
-The current core domain model includes collections for:
+### 2. MongoDB MongoStore Rate Limiting
+Abuse protection enforced via server-side rate-limiting policies (`AUTH_LOGIN`, `AUTH_REGISTER`, `PUBLIC_API`, `OWNER_API`, `ADMIN_API`).
 
-```text
-users
-properties
-requests
-proposals
-notifications
-rate_limits
-```
+### 3. Role-Based Route Guards
+Authorization guards (`requireOwnerAccess()`, `requireAdminAccess()`) prevent unauthorized role escalation.
 
-The database design separates marketplace entities so that future functionality can be introduced without restructuring the entire application.
-
----
-
-# Property Media
-
-Property images are stored and delivered through **Cloudinary**.
-
-Property media supports:
-
-* Multiple images per property
-* Cover image selection
-* Responsive image delivery
-* Image optimization
-* WebP / JPEG / PNG formats
-* Upload size restrictions
-* Cloud-hosted media delivery
-
-Property records store Cloudinary references rather than relying on local filesystem storage.
+### 4. Continuous Integration & Security Workflows
+Automated testing and vulnerability scanning via GitHub Actions:
+- **`.github/workflows/ci.yml`**: Runs `npx tsc --noEmit`, `npm run lint`, and `npm test` (Vitest).
+- **`.github/workflows/security.yml`**: Dependency audit & secret scanning.
 
 ---
 
-# Validation
+## 🛠️ Development & Environment Setup
 
-User input is validated using **Zod**.
+### 1. Prerequisites
+- **Node.js**: v20+
+- **MongoDB**: Local MongoDB instance or Atlas connection
+- **Cloudinary Account**: For property image hosting
 
-Validation is applied across important application boundaries, including:
-
-* Authentication
-* Registration
-* Property creation
-* Property editing
-* Rental requests
-* Proposals
-* API inputs
-
-React Hook Form is used on the client side for structured form handling while server-side validation remains authoritative.
-
----
-
-# Data Fetching & Client State
-
-LOC MAISON uses **TanStack Query** for server-state management.
-
-This provides:
-
-* Query caching
-* Request deduplication
-* Loading states
-* Error handling
-* Query invalidation
-* Mutation management
-* Controlled client/server data synchronization
-
-The application avoids treating server data as ordinary global UI state.
-
----
-
-# Internationalization
-
-The initial customer-facing experience is designed primarily in **French**.
-
-The application uses structured translation dictionaries, allowing additional languages to be introduced later without rebuilding the UI architecture.
-
-Current localization direction:
-
-```text
-French
-  ↓
-Future multilingual support
-  ├── English
-  └── Arabic
-```
-
-The initial focus remains a clear French experience for the Tunisian market and Tunisian diaspora.
-
----
-
-# Responsive Design
-
-LOC MAISON follows a mobile-first design approach.
-
-The interface is designed for:
-
-* Smartphones
-* Tablets
-* Desktop browsers
-
-The marketplace experience prioritizes mobile usability because property discovery, communication, and rental requests are expected to occur frequently through mobile devices.
-
----
-
-# Project Structure
-
-The Next.js App Router is at the repository root. Shared components and server-side
-application code live under `src/`.
-
-```text
-app/
-├── admin/
-├── api/
-├── houses/
-├── owner/
-├── properties/
-├── request/
-└── ...
-
-src/
-├── components/
-├── hooks/
-├── lib/
-├── server/
-└── ...
-```
-
-The exact structure may evolve as the marketplace domains grow.
-
----
-
-# Development
-
-## Requirements
-
-Before starting development, make sure the environment includes:
-
-* Node.js
-* npm, pnpm, or Yarn
-* MongoDB
-* Cloudinary account for media functionality
-
----
-
-## Installation
-
-Clone the repository and install dependencies:
+### 2. Installation & Setup
 
 ```bash
+# Clone repository
+git clone https://github.com/akrembarboura/location-match.git
+cd location-match
+
+# Install dependencies
 npm install
-```
 
-Or:
-
-```bash
-pnpm install
-```
-
-Or:
-
-```bash
-yarn install
-```
-
----
-
-## Environment Variables
-
-For local development, create an environment file:
-
-```bash
+# Copy environment template
 cp .env.example .env.local
 ```
 
-Configure the required values locally. For Vercel, add production values under
-**Project Settings → Environment Variables** and select the **Production** environment:
+### 3. Environment Variables (`.env.local`)
 
 ```env
-MONGODB_URI=<full Atlas connection string>
-JWT_SECRET=<random secret of at least 32 bytes>
-NEXT_PUBLIC_APP_URL=https://your-production-domain
-CLOUDINARY_URL=<Cloudinary URL containing API credentials>
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=<Cloudinary cloud name>
+MONGODB_URI=mongodb://127.0.0.1:27017/location_match
+JWT_SECRET=your_super_secret_jwt_key_at_least_32_bytes
+NEXT_PUBLIC_APP_URL=http://localhost:3002
+
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 ```
 
-`MONGODB_URI` must be a complete Atlas connection string using a MongoDB database
-user's credentials, not only the password. URL-encode special characters in the password.
-Keep `JWT_SECRET` stable between deployments so existing sessions remain valid.
-`CLOUDINARY_URL` contains private credentials and must be stored as a secret; the cloud
-name is public configuration.
-
-After changing environment variables in Vercel, redeploy so the new deployment receives
-the updated values. Local MongoDB data is separate from Atlas and is not copied to production.
-
-### Initial Production Admin
-
-Public registration assigns new accounts the `CUSTOMER` role. To grant admin access,
-register the trusted account on the production site, then have an authorized database
-operator update only that account's `role` field to `ADMIN` in the production database's
-`users` collection. Sign out and back in after the change so a fresh session receives the
-updated role. Never promote an account you do not control.
-
-Do not use `create-admin.ts` against production: it contains hard-coded default admin
-credentials intended only for local development.
-
-### Security
-
-Never commit:
-
-* Database credentials
-* JWT secrets
-* Cloudinary private credentials
-* API keys
-* Production tokens
-* User credentials
-
-Production secrets must be configured through the hosting provider's secure environment-variable system.
-
----
-
-# Development Server
-
-Start the development server:
+### 4. Running Development Server
 
 ```bash
 npm run dev
 ```
 
-The application will normally be available at:
+The application will start at `http://localhost:3002`.
 
-```text
-http://localhost:3000
-```
-
----
-
-# Quality & Testing
-
-Before deploying changes, run the project's verification commands:
+### 5. Running Quality & Verification Checks
 
 ```bash
-npm test
+# Type check TypeScript
+npx tsc --noEmit
+
+# Run Linter
 npm run lint
+
+# Run Unit & Integration Tests (Vitest)
+npm test
+
+# Build for Production
 npm run build
 ```
 
-The production build should pass TypeScript and ESLint validation before deployment.
-
-The project also includes automated tests covering important application and domain behavior.
-
 ---
 
-# Production Considerations
+## 📜 License & Intellectual Property
 
-LOC MAISON is designed with production deployment in mind.
-
-Before a public launch, production infrastructure should include:
-
-* MongoDB Atlas with appropriate backups
-* Secure production environment variables
-* HTTPS
-* Cloudinary production configuration
-* Authentication security controls
-* API rate limiting
-* Error monitoring
-* Application logging
-* Analytics
-* Cookie/privacy compliance
-* Database backup strategy
-* Operational communication channels
-
-Production infrastructure should be configured separately from local development environments.
-
----
-
-# Roadmap
-
-LOC MAISON is being developed incrementally.
-
-### Current Focus
-
-* Property marketplace
-* Customer rental requests
-* Owner property management
-* Admin moderation
-* Proposal workflow
-* Authentication and authorization
-* Property media management
-* Marketplace analytics
-* Concierge communication
-
-### Planned Improvements
-
-* Reservation confirmation workflow
-* Owner availability calendar
-* Property verification badges
-* Advanced marketplace analytics
-* Online payment support
-* D17 / local payment integrations
-* Improved student housing workflows
-* Additional locations across Tunisia
-* Mobile application
-* Advanced notification infrastructure
-* Expanded multilingual support
-
----
-
-# Product Vision
-
-LOC MAISON aims to become a trusted digital rental marketplace built specifically around the realities of the Tunisian market.
-
-The long-term vision is not simply to provide another property listing website.
-
-The platform aims to combine:
-
-```text
-Property Discovery
-        +
-Verified Listings
-        +
-Structured Rental Requests
-        +
-Human Concierge
-        +
-Secure Digital Infrastructure
-```
-
-The objective is to make renting property in Tunisia **clearer, safer, and easier for both customers and owners**.
-
----
-
-# Company
-
-**Micro Edition**
-
-Website: [microedition.tn](https://microedition.tn/)
-
-**LOC MAISON**
-Tunisian Rental Marketplace
-
-**Founder & Project Lead:** Akrem Barboura
-
----
-
-# License & Intellectual Property
-
-LOC MAISON is a **proprietary and confidential commercial project** developed by Micro Edition.
-
-The source code, business logic, product architecture, branding, database structure, design system, and associated assets are not licensed for redistribution, resale, or unauthorized commercial use.
-
-Unless explicitly authorized in writing by the project owner, no part of this project may be:
-
-* Reproduced
-* Distributed
-* Resold
-* Modified for commercial redistribution
-* Rebranded
-* Republished
-* Used as the foundation of another commercial marketplace
-
+**LOC MAISON** is a proprietary commercial application developed by **Micro Edition**.  
 © 2026 Micro Edition. All rights reserved.
+
+- **Developer**: Micro Edition ([microedition.tn](https://microedition.tn/))
+- **Founder & Lead**: Akrem Barboura
