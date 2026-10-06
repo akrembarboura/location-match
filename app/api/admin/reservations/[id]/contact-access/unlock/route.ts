@@ -127,6 +127,12 @@ export async function POST(
 
     await reservation.save();
 
+    const { HousingRequestModel } = await import("@/lib/models");
+    await HousingRequestModel.updateOne(
+      { $or: [{ id: id }, { id: reservation.requestId }, { requestId: reservation.requestId }] },
+      { $set: { contactAccessOverride: reservation.contactAccessOverride } }
+    ).exec();
+
     // Audit Log Creation
     await AuditLogModel.create({
       id: `audit-${crypto.randomBytes(8).toString("hex")}`,

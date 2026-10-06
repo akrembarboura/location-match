@@ -317,6 +317,12 @@ const HousingRequestSchema = new Schema({
   selectedProperty: { type: String },
   propertyId: { type: String, index: true },
   message: { type: String },
+  contactAccessOverride: {
+    enabled: { type: Boolean, default: false },
+    grantedBy: { type: String },
+    grantedAt: { type: Date },
+    reason: { type: String },
+  },
   // Legacy / Prototype Compatibility Fields
   kind: { type: String },
   people: { type: Number },

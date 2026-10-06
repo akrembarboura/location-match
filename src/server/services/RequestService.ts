@@ -482,6 +482,8 @@ export class RequestService {
       selectedPropertyDetails,
       payment: paymentInfo,
       paymentSummary,
+      reservationId: linkedRes?.id || req.id,
+      contactAccessOverride: linkedRes?.contactAccessOverride || req.contactAccessOverride || null,
       message: req.message || req.note,
       createdAt: req.createdAt,
     };
