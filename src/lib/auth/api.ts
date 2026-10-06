@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { z } from "zod";
-import type { LoginInput, RegisterSchema } from "@/server/validations/auth";
+import { RegisterSchema, type LoginInput } from "@/server/validations/auth";
 import type { User } from "./types";
 
 export type { User, UserRole } from "./types";
