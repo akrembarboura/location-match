@@ -64,12 +64,12 @@ export default function OwnerPaymentsPage() {
             </div>
           </div>
 
-          {/* Financial KPI Cards */}
+          {/* Unified Financial KPI Cards */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Chiffre d&apos;affaires brut</span>
-                <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                   <TrendingUp className="h-5 w-5" />
                 </div>
               </div>
@@ -82,11 +82,11 @@ export default function OwnerPaymentsPage() {
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Déjà encaissé</span>
-                <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600">
+                <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                   <Wallet className="h-5 w-5" />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold font-display text-emerald-600">
+              <p className="mt-3 text-2xl font-bold font-display text-foreground">
                 {formatDT(data?.summary?.totalPaid || 0)} DT
               </p>
               <p className="mt-1 text-[0.7rem] text-muted-foreground">Acomptes & paiements validés</p>
@@ -95,11 +95,11 @@ export default function OwnerPaymentsPage() {
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">À recevoir</span>
-                <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600">
+                <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                   <CreditCard className="h-5 w-5" />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold font-display text-amber-600">
+              <p className="mt-3 text-2xl font-bold font-display text-foreground">
                 {formatDT(data?.summary?.totalToReceive || 0)} DT
               </p>
               <p className="mt-1 text-[0.7rem] text-muted-foreground">Solde restant à l&apos;arrivée</p>
@@ -108,7 +108,7 @@ export default function OwnerPaymentsPage() {
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Locations confirmées</span>
-                <div className="rounded-lg bg-blue-500/10 p-2 text-blue-600">
+                <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                   <Receipt className="h-5 w-5" />
                 </div>
               </div>
@@ -147,8 +147,8 @@ export default function OwnerPaymentsPage() {
                           <td className="p-3.5 font-semibold text-foreground">{prop.title}</td>
                           <td className="p-3.5 text-muted-foreground">{prop.reservationsCount} séjour(s)</td>
                           <td className="p-3.5 font-bold text-foreground">{formatDT(prop.gross)} DT</td>
-                          <td className="p-3.5 font-semibold text-emerald-600">{formatDT(prop.paid)} DT</td>
-                          <td className="p-3.5 font-semibold text-amber-600">{formatDT(prop.remaining)} DT</td>
+                          <td className="p-3.5 font-medium text-foreground">{formatDT(prop.paid)} DT</td>
+                          <td className="p-3.5 font-medium text-muted-foreground">{formatDT(prop.remaining)} DT</td>
                         </tr>
                       ))}
                     </tbody>
