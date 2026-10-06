@@ -229,27 +229,47 @@ export default function OwnerReservationsPage() {
                   <span className="text-muted-foreground font-medium">{selectedRes.guests} personne(s)</span>
                 </div>
 
-                {selectedRes.contactVisibility === "RELEASED" && selectedRes.customerPhone ? (
+                {selectedRes.contactVisibility === "RELEASED" && (selectedRes.customerPhone || selectedRes.customerEmail) ? (
                   <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 space-y-2 text-xs">
-                    <div className="font-semibold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Contact client disponible</span>
+                    <div className="font-semibold flex items-center justify-between gap-1.5 text-emerald-700 dark:text-emerald-400">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>
+                          {selectedRes.reason === "ADMIN_OVERRIDE" || selectedRes.contactAccessOverride?.enabled
+                            ? "Coordonnées déverrouillées par l'administration"
+                            : "Contact client disponible"}
+                        </span>
+                      </div>
+                      {(selectedRes.reason === "ADMIN_OVERRIDE" || selectedRes.contactAccessOverride?.enabled) && (
+                        <span className="text-[0.68rem] bg-amber-500/20 text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded">
+                          Dérogation Admin
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <a
-                        href={`tel:${selectedRes.customerPhone}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
-                      >
-                        <Phone className="h-3.5 w-3.5" /> Appeler ({selectedRes.customerPhone})
-                      </a>
-                      <a
-                        href={`https://wa.me/${selectedRes.customerPhone.replace(/[^0-9]/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700"
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
-                      </a>
+                      {selectedRes.customerPhone && (
+                        <>
+                          <a
+                            href={`tel:${selectedRes.customerPhone}`}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
+                          >
+                            <Phone className="h-3.5 w-3.5" /> Appeler ({selectedRes.customerPhone})
+                          </a>
+                          <a
+                            href={`https://wa.me/${selectedRes.customerPhone.replace(/[^0-9]/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                          </a>
+                        </>
+                      )}
+                      {selectedRes.customerEmail && (
+                        <span className="text-xs text-muted-foreground font-mono block w-full mt-1">
+                          Email : {selectedRes.customerEmail}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ) : (

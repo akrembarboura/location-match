@@ -2,23 +2,29 @@ import { ReservationModel, PropertyModel, HousingRequestModel, PaymentModel } fr
 import connectToDatabase from "@/lib/mongoose";
 import { calculateNights } from "@/lib/date-utils";
 import crypto from "node:crypto";
-export function formatCustomerContactForOwner(res: {
-  status?: string;
-  paymentSummary?: { status?: string; paidAmount?: number };
-  customerName?: string;
-  customerPhone?: string;
-  customerEmail?: string;
-}) {
-  const isConfirmed = res.status === "CONFIRMED";
-  const isPaymentValidated =
-    res.paymentSummary?.status === "PAID" ||
-    res.paymentSummary?.status === "PARTIALLY_PAID" ||
-    (res.paymentSummary?.paidAmount || 0) > 0;
+import { ContactReleasePolicy } from "../services/ContactReleasePolicy";
 
-  const contactVisibility = isConfirmed && isPaymentValidated ? "RELEASED" : "HIDDEN";
+export function formatCustomerContactForOwner(
+  res: {
+    status?: string;
+    paymentSummary?: { status?: string; paidAmount?: number };
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    contactAccessOverride?: { enabled?: boolean; grantedBy?: string; grantedAt?: Date | string; reason?: string };
+  },
+  isAuthorizedOwner: boolean = true
+) {
+  const evalResult = ContactReleasePolicy.evaluate({
+    reservationStatus: res.status,
+    paymentStatus: res.paymentSummary?.status,
+    paidAmount: res.paymentSummary?.paidAmount,
+    isAuthorizedOwner,
+    hasAdminOverride: Boolean(res.contactAccessOverride?.enabled),
+  });
 
   let customerName = res.customerName || "Client LOC MAISON";
-  if (contactVisibility === "HIDDEN" && customerName) {
+  if (!evalResult.visible && customerName) {
     const parts = customerName.trim().split(/\s+/);
     if (parts.length > 1) {
       customerName = `${parts[0]} ${parts[parts.length - 1][0]}.`;
@@ -26,10 +32,13 @@ export function formatCustomerContactForOwner(res: {
   }
 
   return {
-    contactVisibility,
+    contactVisibility: evalResult.contactVisibility,
+    visible: evalResult.visible,
+    reason: evalResult.reason,
     customerName,
-    customerPhone: contactVisibility === "RELEASED" ? res.customerPhone || null : null,
-    customerEmail: contactVisibility === "RELEASED" ? res.customerEmail || null : null,
+    customerPhone: evalResult.visible ? res.customerPhone || null : null,
+    customerEmail: evalResult.visible ? res.customerEmail || null : null,
+    contactAccessOverride: res.contactAccessOverride || null,
   };
 }
 
@@ -218,6 +227,85 @@ export class ReservationRepository {
       propertyCity: prop?.city || prop?.location?.city || "Mahdia",
       propertyCoverImage: coverUrl,
       payments: payments || [],
+    };
+  }
+
+  async findByCustomerId(customerId: string): Promise<any[]> {
+    await connectToDatabase();
+    const reservations = await ReservationModel.find({ customerId }).sort({ checkIn: -1 }).lean().exec();
+
+    const propIds = Array.from(new Set(reservations.map((r: any) => r.propertyId)));
+    const properties = await PropertyModel.find({ id: { $in: propIds } }).select("id title city location images coverImageId").lean().exec();
+    const propMap = new Map(properties.map((p: any) => [p.id, p]));
+
+    return await Promise.all(
+      reservations.map(async (res: any) => {
+        const prop = propMap.get(res.propertyId);
+        const coverUrl = prop?.images?.[0]?.url || (typeof prop?.images?.[0] === "string" ? prop.images[0] : null) || "/placeholder-property.jpg";
+        const payments = await PaymentModel.find({ reservationId: res.id }).sort({ createdAt: -1 }).lean().exec();
+        const latestPayment = payments[0] || null;
+
+        return {
+          ...res,
+          propertyTitle: prop?.title || "Logement",
+          propertyCity: prop?.city || prop?.location?.city || "Mahdia",
+          propertyCoverImage: coverUrl,
+          payments: payments || [],
+          payment: latestPayment
+            ? {
+                id: latestPayment.id,
+                status: latestPayment.status,
+                method: latestPayment.method || "CASH",
+                amount: latestPayment.amount,
+                currency: latestPayment.currency || "TND",
+                confirmedAt: latestPayment.verifiedAt || latestPayment.reportedAt || null,
+              }
+            : {
+                id: null,
+                status: res.paymentSummary?.status || "UNPAID",
+                method: "CASH",
+                amount: res.pricing?.total || 0,
+                currency: "TND",
+                confirmedAt: null,
+              },
+        };
+      })
+    );
+  }
+
+  async findCustomerReservationById(id: string, customerId: string): Promise<any | null> {
+    await connectToDatabase();
+    const res = await ReservationModel.findOne({ id, customerId }).lean().exec();
+    if (!res) return null;
+
+    const prop = await PropertyModel.findOne({ id: res.propertyId }).select("id title city location images").lean().exec();
+    const payments = await PaymentModel.find({ reservationId: id }).sort({ createdAt: -1 }).lean().exec();
+    const latestPayment = payments[0] || null;
+    const coverUrl = prop?.images?.[0]?.url || (typeof prop?.images?.[0] === "string" ? prop.images[0] : null) || "/placeholder-property.jpg";
+
+    return {
+      ...res,
+      propertyTitle: prop?.title || "Logement",
+      propertyCity: prop?.city || prop?.location?.city || "Mahdia",
+      propertyCoverImage: coverUrl,
+      payments: payments || [],
+      payment: latestPayment
+        ? {
+            id: latestPayment.id,
+            status: latestPayment.status,
+            method: latestPayment.method || "CASH",
+            amount: latestPayment.amount,
+            currency: latestPayment.currency || "TND",
+            confirmedAt: latestPayment.verifiedAt || latestPayment.reportedAt || null,
+          }
+        : {
+            id: null,
+            status: res.paymentSummary?.status || "UNPAID",
+            method: "CASH",
+            amount: res.pricing?.total || 0,
+            currency: "TND",
+            confirmedAt: null,
+          },
     };
   }
 

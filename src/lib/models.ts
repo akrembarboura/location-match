@@ -378,6 +378,12 @@ const ReservationSchema = new Schema(
         index: true,
       },
     },
+    contactAccessOverride: {
+      enabled: { type: Boolean, default: false },
+      grantedBy: { type: String },
+      grantedAt: { type: Date },
+      reason: { type: String },
+    },
     notes: { type: String },
   },
   { timestamps: true }
@@ -385,6 +391,28 @@ const ReservationSchema = new Schema(
 
 export const ReservationModel =
   mongoose.models.Reservation || mongoose.model("Reservation", ReservationSchema);
+
+const AuditLogSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    action: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    actorId: { type: String, required: true },
+    actorRole: { type: String, required: true },
+    targetType: { type: String, default: "RESERVATION" },
+    targetId: { type: String, required: true, index: true },
+    reason: { type: String },
+    details: { type: Schema.Types.Mixed, default: {} },
+    occurredAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+export const AuditLogModel =
+  mongoose.models.AuditLog || mongoose.model("AuditLog", AuditLogSchema);
 
 export const PAYMENT_METHODS = ["CASH", "BANK_TRANSFER", "D17", "ONLINE", "OTHER"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];

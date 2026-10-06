@@ -368,6 +368,48 @@ export class RequestService {
     const targetPropId = req.propertyId || req.selectedProperty;
     const selectedPropertyDetails = await this.attachPropertyDetails(targetPropId);
 
+    // Fetch linked ReservationModel & PaymentModel to get the authoritative payment state
+    const { ReservationModel, PaymentModel } = await import("@/lib/models");
+    const linkedRes = await ReservationModel.findOne({
+      $or: [{ requestId: req.id }, { id: req.id }],
+    }).lean().exec();
+
+    let paymentInfo = null;
+    let paymentSummary = req.paymentSummary || null;
+
+    if (linkedRes) {
+      paymentSummary = linkedRes.paymentSummary || paymentSummary;
+      const latestPayment = await PaymentModel.findOne({ reservationId: linkedRes.id })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+
+      paymentInfo = {
+        id: latestPayment?.id || null,
+        reservationId: linkedRes.id,
+        status: latestPayment?.status || linkedRes.paymentSummary?.status || "UNPAID",
+        method: latestPayment?.method || "CASH",
+        amount: linkedRes.pricing?.total || req.budget || 0,
+        currency: linkedRes.pricing?.currency || "TND",
+        paidAmount: linkedRes.paymentSummary?.paidAmount || 0,
+        reportedAmount: linkedRes.paymentSummary?.reportedAmount || 0,
+        remainingAmount: linkedRes.paymentSummary?.remainingAmount ?? (linkedRes.pricing?.total || 0),
+        confirmedAt: latestPayment?.verifiedAt || latestPayment?.reportedAt || null,
+      };
+    } else if (req.paymentSummary) {
+      paymentInfo = {
+        id: null,
+        status: req.paymentSummary.status || "UNPAID",
+        method: "CASH",
+        amount: req.budget || 0,
+        currency: "TND",
+        paidAmount: req.paymentSummary.paidAmount || 0,
+        reportedAmount: req.paymentSummary.reportedAmount || 0,
+        remainingAmount: req.paymentSummary.remainingAmount || 0,
+        confirmedAt: null,
+      };
+    }
+
     // Strip internal adminNotes from client view
     return {
       id: req.id,
@@ -394,6 +436,8 @@ export class RequestService {
       propertyId: req.propertyId || req.selectedProperty,
       selectedProperty: req.selectedProperty || req.propertyId,
       selectedPropertyDetails,
+      payment: paymentInfo,
+      paymentSummary,
       message: req.message || req.note,
       createdAt: req.createdAt,
     };

@@ -64,6 +64,24 @@ export class PaymentRepository {
       status: payStatus,
     };
     await reservation.save();
+
+    // Sync authoritative paymentSummary to linked HousingRequestModel if applicable
+    if (reservation.requestId) {
+      const { HousingRequestModel } = await import("@/lib/models");
+      await HousingRequestModel.updateOne(
+        { id: reservation.requestId },
+        {
+          $set: {
+            paymentSummary: {
+              paidAmount: safePaid,
+              reportedAmount: reportedPaid,
+              remainingAmount: remaining,
+              status: payStatus,
+            },
+          },
+        }
+      );
+    }
   }
 
   async reportCashPayment(

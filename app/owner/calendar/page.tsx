@@ -222,13 +222,21 @@ export default function OwnerCalendarPage() {
                     <div className="text-right">
                       <span className="block text-sm font-semibold text-foreground">{formatDT(e.totalAmount)} DT</span>
                       <span className={`text-[0.7rem] font-medium px-2.5 py-0.5 rounded-md inline-block mt-0.5 ${
-                        e.paymentStatus === "PAID"
+                        ["PAID", "VERIFIED", "CONFIRMED"].includes(e.paymentStatus)
                           ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                          : e.paymentStatus === "PARTIALLY_PAID"
+                          : e.paymentStatus === "REPORTED"
                           ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                          : e.paymentStatus === "PARTIALLY_PAID"
+                          ? "bg-blue-500/10 text-blue-700 dark:text-blue-400"
                           : "bg-rose-500/10 text-rose-700 dark:text-rose-400"
                       }`}>
-                        {e.paymentStatus === "PAID" ? "Payé" : e.paymentStatus === "PARTIALLY_PAID" ? `Reste ${formatDT(e.remainingAmount)} DT` : "Non payé"}
+                        {["PAID", "VERIFIED", "CONFIRMED"].includes(e.paymentStatus)
+                          ? "Payé"
+                          : e.paymentStatus === "REPORTED"
+                          ? "Paiement déclaré"
+                          : e.paymentStatus === "PARTIALLY_PAID"
+                          ? `Reste ${formatDT(e.remainingAmount)} DT`
+                          : "Non payé"}
                       </span>
                     </div>
                     <span className="text-xs font-semibold text-primary inline-flex items-center gap-1">
@@ -439,14 +447,18 @@ export default function OwnerCalendarPage() {
                 <div className="pt-2 flex items-center justify-between border-t border-border text-xs">
                   <span className="text-muted-foreground">Statut du paiement :</span>
                   <span className={`font-medium px-2.5 py-0.5 rounded-md ${
-                    selectedReservation.paymentStatus === "PAID"
+                    ["PAID", "VERIFIED", "CONFIRMED"].includes(selectedReservation.paymentStatus)
                       ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : selectedReservation.paymentStatus === "PARTIALLY_PAID"
+                      : selectedReservation.paymentStatus === "REPORTED"
                       ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      : selectedReservation.paymentStatus === "PARTIALLY_PAID"
+                      ? "bg-blue-500/10 text-blue-700 dark:text-blue-400"
                       : "bg-rose-500/10 text-rose-700 dark:text-rose-400"
                   }`}>
-                    {selectedReservation.paymentStatus === "PAID"
+                    {["PAID", "VERIFIED", "CONFIRMED"].includes(selectedReservation.paymentStatus)
                       ? "Payé"
+                      : selectedReservation.paymentStatus === "REPORTED"
+                      ? "Paiement déclaré (En attente)"
                       : selectedReservation.paymentStatus === "PARTIALLY_PAID"
                       ? "Paiement partiel"
                       : "Non payé"}
