@@ -285,9 +285,18 @@ export default function AdminRequests() {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Dates : {q.checkIn || q.period} → {q.checkOut || "flexible"}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/60">
+                    <p className="text-xs text-muted-foreground">
+                      Dates : {q.checkIn || q.period} → {q.checkOut || "flexible"}
+                    </p>
+                    <a
+                      href={`/admin/requests/${q.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Ouvrir la fiche complète ↗
+                    </a>
+                  </div>
                 </button>
               );
             })}

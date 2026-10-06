@@ -160,7 +160,7 @@ export function AdminNotificationBell() {
                       <span>{dateStr}</span>
                       {n.requestId && (
                         <Link
-                          href="/admin/requests"
+                          href={`/admin/requests/${n.requestId}`}
                           onClick={() => {
                             if (!n.read) handleMarkAsRead(n.id);
                             setOpen(false);
