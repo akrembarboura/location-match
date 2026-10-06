@@ -120,7 +120,7 @@ export default function OwnerPaymentsPage() {
             <div>
               <p className="font-semibold text-sm">Suivi et confirmation des paiements</p>
               <p className="text-muted-foreground mt-0.5">
-                Les règlements et acomptes sont vérifiés et confirmés directement par l&apos;équipe LOC MAISON. Vos revenus bruts s&apos;actualisent au fur et à mesure des encaissements.
+                Les règlements et acomptes sont suivis et enregistrés en temps réel. Vos revenus bruts s&apos;actualisent au fur et à mesure des encaissements.
               </p>
             </div>
           </div>

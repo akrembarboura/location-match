@@ -46,8 +46,10 @@ export class OwnerDashboardService {
       const checkOutDate = new Date(res.checkOut);
 
       // Revenue tracking
-      const paid = res.paymentSummary?.paidAmount || 0;
-      const remaining = res.paymentSummary?.remainingAmount || 0;
+      const paid = (res.paymentSummary?.paidAmount || 0) + (res.paymentSummary?.reportedAmount || 0);
+      const remaining = res.paymentSummary?.remainingAmount !== undefined
+        ? res.paymentSummary.remainingAmount
+        : Math.max(0, (res.pricing?.total || 0) - paid);
       totalPaidRevenue += paid;
 
       if (remainingInfo.status === "ACTIVE" || remainingInfo.status === "UPCOMING") {
@@ -240,8 +242,10 @@ export class OwnerDashboardService {
 
     for (const res of reservations) {
       const total = res.pricing?.total || 0;
-      const paid = res.paymentSummary?.paidAmount || 0;
-      const remaining = res.paymentSummary?.remainingAmount || 0;
+      const paid = (res.paymentSummary?.paidAmount || 0) + (res.paymentSummary?.reportedAmount || 0);
+      const remaining = res.paymentSummary?.remainingAmount !== undefined
+        ? res.paymentSummary.remainingAmount
+        : Math.max(0, total - paid);
 
       grossRevenue += total;
       totalPaid += paid;
