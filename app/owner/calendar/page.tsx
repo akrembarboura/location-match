@@ -106,7 +106,7 @@ export default function OwnerCalendarPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="px-3 text-sm font-semibold text-foreground min-w-[120px] text-center">
+            <span className="px-3 text-sm font-semibold text-foreground min-w-30 text-center">
               {monthNames[month]} {year}
             </span>
             <button
@@ -258,10 +258,10 @@ export default function OwnerCalendarPage() {
           </div>
 
           {/* Days Cells */}
-          <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-border bg-background min-h-[480px]">
+          <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-border bg-background min-h-120">
             {daysGrid.map((day, idx) => {
               if (day === null) {
-                return <div key={`empty-${idx}`} className="bg-surface/30 min-h-[90px]" />;
+                return <div key={`empty-${idx}`} className="bg-surface/30 min-h-22.5" />;
               }
 
               const dayEvents = getEventsForDay(day);
@@ -273,7 +273,7 @@ export default function OwnerCalendarPage() {
               return (
                 <div
                   key={`day-${day}`}
-                  className={`p-1.5 min-h-[90px] flex flex-col justify-start overflow-hidden transition-colors ${
+                  className={`p-1.5 min-h-22.5 flex flex-col justify-start overflow-hidden transition-colors ${
                     isToday ? "bg-primary/5" : ""
                   }`}
                 >

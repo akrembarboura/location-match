@@ -105,7 +105,7 @@ export function OwnerShell({ children, title, subtitle, actions }: OwnerShellPro
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center p-1.5 min-w-[3.5rem] rounded-lg text-[0.65rem] transition-colors ${
+                className={`flex flex-col items-center justify-center p-1.5 min-w-14 rounded-lg text-[0.65rem] transition-colors ${
                   isActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                 }`}
               >

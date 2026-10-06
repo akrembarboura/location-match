@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight, Building2, Castle, Check, Droplets, GraduationCap, Home as HomeIcon,
-  KeyRound, MessageCircle, Search, ShieldCheck, Camera, Receipt, Phone, Users, Waves,
+  KeyRound, MessageCircle, Search, ShieldCheck, Camera, Receipt, Phone, Users, Waves, MapPin,
 } from "lucide-react";
 import { PageShell, SectionHeading } from "@/components/site/PageShell";
 import { SearchBar } from "@/components/rentals/SearchBar";
@@ -32,10 +32,71 @@ function CategoryChip({ c }: { c: Category }) {
   return <Link href={`/houses?category=${c.id }`} className={cls}><Icon className="h-4 w-4" /> {c.label}</Link>;
 }
 
+const CURATED_DESTINATIONS = [
+  {
+    id: "zone-touristique",
+    name: "Zone Touristique",
+    city: "Mahdia",
+    tag: "Bord de mer",
+    tagline: "Villas pieds dans l'eau et résidences balnéaires de standing",
+    imageUrl: "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889819/location-match/hero.jpg",
+  },
+  {
+    id: "hiboun",
+    name: "Hiboun & Corniche",
+    city: "Mahdia",
+    tag: "Familial & Calme",
+    tagline: "Grandes villas avec jardin à quelques pas des plages de sable fin",
+    imageUrl: "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889822/location-match/prop-1.jpg",
+  },
+  {
+    id: "medina",
+    name: "Médina & Skifa",
+    city: "Mahdia",
+    tag: "Charme & Tradition",
+    tagline: "Dars traditionnelles rénovées au cœur du patrimoine historique",
+    imageUrl: "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889824/location-match/prop-3.jpg",
+  },
+  {
+    id: "rejiche",
+    name: "Rejiche & Salakta",
+    city: "Mahdia",
+    tag: "Nature & Tranquillité",
+    tagline: "Criques sauvages, sérénité et cadre maritime authentique",
+    imageUrl: "https://res.cloudinary.com/kyiccgx3/image/upload/v1790889823/location-match/prop-2.jpg",
+  },
+];
+
 function Home() {
   const featured = useQuery(featuredHousesQuery());
   const { data: destinations = [] } = useQuery(destinationsQuery());
   const { data: categories = [] } = useQuery(categoriesQuery());
+
+  // Merge API destinations with curated zones to ensure a balanced, information-rich 4-card grid
+  const displayDestinations = (() => {
+    if (!destinations || destinations.length === 0) return CURATED_DESTINATIONS;
+    if (destinations.length >= 4) {
+      return destinations.map((d: any) => ({
+        id: d.id || d.slug || d.name,
+        name: d.name,
+        city: d.city || "Mahdia",
+        tag: d.tag || "Destination phare",
+        tagline: d.tagline || "Sélection de logements d'exception",
+        imageUrl: d.imageUrl || d.image || hero,
+      }));
+    }
+    const existingNames = new Set(destinations.map((d: any) => d.name?.toLowerCase()));
+    const additional = CURATED_DESTINATIONS.filter((c) => !existingNames.has(c.name.toLowerCase()));
+    const adaptedApi = destinations.map((d: any) => ({
+      id: d.id || d.slug || d.name,
+      name: d.name,
+      city: d.city || "Mahdia",
+      tag: "Top destination",
+      tagline: d.tagline || "Sélection de logements d'exception",
+      imageUrl: d.imageUrl || d.image || hero,
+    }));
+    return [...adaptedApi, ...additional].slice(0, 4);
+  })();
 
   return (
     <PageShell>
@@ -77,24 +138,66 @@ function Home() {
         />
       </section>
 
-      {/* Destinations */}
-      <section className="border-y border-border bg-sand">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <SectionHeading eyebrow={t.destinations.eyebrow} title={t.destinations.title} />
-          <div className="-mx-4 mt-8 flex snap-x gap-4 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-4">
-            {destinations.map((d: any, i: number) => (
+      {/* Destinations & Top Neighborhoods */}
+      <section className="border-y border-border/70 bg-sand/60 py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <SectionHeading
+              eyebrow="Destinations & Quartiers"
+              title="Où poser vos valises à Mahdia ?"
+              description="Explorez les quartiers côtiers et les zones les plus recherchées pour vos vacances d'été ou vos études."
+            />
+            <Link
+              href="/houses"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+            >
+              Voir tous les logements <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {displayDestinations.map((d: any) => (
               <Link
                 key={d.id}
-                href={{ pathname: "/houses", query: { city: d.name } }}
-                className={`group relative block w-[70%] shrink-0 snap-start overflow-hidden rounded-lg sm:w-auto ${i === 0 ? "sm:col-span-2 sm:row-span-2" : ""}`}
+                href={{ pathname: "/houses", query: { city: d.city || d.name } }}
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-raised"
               >
-                <div className={`${i === 0 ? "aspect-3/4 sm:aspect-auto sm:h-full" : "aspect-3/4 sm:aspect-4/3"}`}>
-                  <SafeImage src={d.imageUrl ?? ""} alt={d.name} className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+                {/* Image Container with high-density card styling */}
+                <div className="relative aspect-16/11 w-full overflow-hidden bg-muted">
+                  <SafeImage
+                    src={d.imageUrl || d.image || hero}
+                    alt={d.name}
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/25 to-transparent" />
+
+                  {d.tag && (
+                    <span className="absolute left-3 top-3 rounded-md bg-card/90 backdrop-blur-sm px-2.5 py-0.5 text-[0.7rem] font-semibold text-foreground shadow-xs">
+                      {d.tag}
+                    </span>
+                  )}
+
+                  <div className="absolute inset-x-0 bottom-0 p-3.5 text-white">
+                    <p className="flex items-center gap-1 text-[0.72rem] font-medium text-white/80">
+                      <MapPin className="h-3 w-3 shrink-0 text-primary-soft" />
+                      {d.city ? `${d.city} · Tunisie` : "Mahdia · Tunisie"}
+                    </p>
+                    <h3 className="mt-0.5 font-display text-[1.1rem] font-bold leading-tight text-white group-hover:text-primary-soft transition-colors">
+                      {d.name}
+                    </h3>
+                  </div>
                 </div>
-                <div className="absolute inset-0 bg-linear-to-t from-foreground/70 via-transparent to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <p className="font-display text-lg text-primary-foreground">{d.name}</p>
-                  <p className="text-sm text-primary-foreground/85">{d.tagline}</p>
+
+                {/* Card Body */}
+                <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-4">
+                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">
+                    {d.tagline || "Sélection de villas et appartements vérifiés par l'équipe LOC MAISON."}
+                  </p>
+
+                  <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5 text-xs font-semibold text-primary">
+                    <span>Explorer les offres</span>
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
                 </div>
               </Link>
             ))}

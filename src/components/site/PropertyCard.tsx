@@ -38,7 +38,7 @@ export function PropertyCard({ property, compact }: { property: any; compact?: b
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border/75 bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
         <Link href={targetLink} aria-label={property.title} className="block h-full w-full">
           <img
             src={coverImg}
@@ -147,5 +147,22 @@ export function PropertyCard({ property, compact }: { property: any; compact?: b
         </Link>
       </div>
     </article>
+  );
+}
+
+export function PropertyCardSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border/75 bg-card shadow-card animate-pulse">
+      <div className="aspect-4/3 w-full bg-muted" />
+      <div className="p-3.5 sm:p-4 space-y-2.5">
+        <div className="h-3 w-1/2 rounded bg-muted" />
+        <div className="h-4 w-5/6 rounded bg-muted" />
+        <div className="h-3 w-2/3 rounded bg-muted" />
+        <div className="mt-auto pt-3 border-t border-border/60 flex justify-between items-center">
+          <div className="h-5 w-24 rounded bg-muted" />
+          <div className="h-4 w-14 rounded bg-muted" />
+        </div>
+      </div>
+    </div>
   );
 }

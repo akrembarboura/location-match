@@ -39,7 +39,7 @@ function HousesPage() {
         <div className="mt-5">
           <SearchBar key={JSON.stringify(search)} initial={search} />
         </div>
-        <div className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+        <div className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:px-0">
           <Link href="/houses"
             
             className={cn("shrink-0 rounded-full border px-4 py-2 text-sm", !search.category ? "border-primary bg-primary-soft font-medium text-primary" : "border-border bg-card text-muted-foreground")}

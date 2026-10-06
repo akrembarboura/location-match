@@ -210,7 +210,7 @@ export function SiteHeader() {
                 )}
               >
                 <UserAvatar user={user} size="sm" />
-                <span className="max-w-[120px] truncate text-xs font-medium text-foreground">
+                <span className="max-w-30 truncate text-xs font-medium text-foreground">
                   {displayName}
                 </span>
                 <ChevronDown

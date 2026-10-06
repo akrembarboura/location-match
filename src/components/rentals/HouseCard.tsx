@@ -52,7 +52,7 @@ export function HouseCard({ house }: { house: House }) {
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border/75 bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
         <Link href={`/houses/${house.slug}`} aria-label={house.title} className="block h-full w-full">
           <SafeImage
             src={cover?.url}
@@ -152,7 +152,7 @@ export function HouseCard({ house }: { house: House }) {
 export function HouseCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm animate-pulse">
-      <div className="aspect-[4/3] w-full bg-muted" />
+      <div className="aspect-4/3 w-full bg-muted" />
       <div className="p-4 space-y-2.5">
         <div className="h-3 w-1/2 rounded bg-muted" />
         <div className="h-4 w-5/6 rounded bg-muted" />

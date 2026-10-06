@@ -252,7 +252,7 @@ export default function OwnerPage() {
       ) : (
         <div className="space-y-8">
           {/* SECTION 22: DASHBOARD TODAY SUMMARY BOX */}
-          <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-card to-card p-5 sm:p-6 shadow-2xs">
+          <div className="rounded-2xl border border-primary/20 bg-linear-to-r from-primary/10 via-card to-card p-5 sm:p-6 shadow-2xs">
             <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-3">
               <Clock className="h-5 w-5 text-primary" />
               Aujourd&apos;hui — État opérationnel
