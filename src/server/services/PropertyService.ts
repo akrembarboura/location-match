@@ -95,12 +95,25 @@ export class PropertyService {
 
   async getDestinations() {
     const rawDestinations = await propertyRepository.getAllDestinations();
-    return rawDestinations.map((d) => ({
+    if (!rawDestinations || rawDestinations.length === 0) {
+      const { mockDestinations } = await import("@/lib/rentals/mock");
+      return mockDestinations;
+    }
+    return rawDestinations.map((d: any) => ({
       id: d.id,
       slug: d.slug,
       name: d.name,
-      propertyCount: d.propertyCount,
+      governorate: d.governorate || "Mahdia",
+      propertyCount: d.propertyCount ?? 0,
       image: d.image || d.imageUrl,
+      imageUrl: d.imageUrl || d.image,
+      tagline: d.tagline || "",
+      startingPrice: d.startingPrice,
+      pricePeriod: d.pricePeriod || "nuit",
+      propertyTypes: d.propertyTypes,
+      badge: d.badge,
+      tags: d.tags,
+      href: d.href,
     }));
   }
 

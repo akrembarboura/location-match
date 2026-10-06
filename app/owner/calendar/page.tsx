@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { OwnerShell } from "@/components/owner/OwnerShell";
 import { formatDT } from "@/lib/utils";
 import {
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -15,9 +14,7 @@ import {
   Lock,
   Clock,
   CreditCard,
-  Building2,
   CheckCircle2,
-  AlertTriangle,
   X,
   Eye,
 } from "lucide-react";
@@ -119,7 +116,7 @@ export default function OwnerCalendarPage() {
 
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80"
+            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80 transition-colors"
           >
             Aujourd&apos;hui
           </button>
@@ -164,28 +161,28 @@ export default function OwnerCalendarPage() {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground mb-6 p-3 rounded-lg bg-surface border border-border">
+      {/* Legend - Clean Single Dot Per Category */}
+      <div className="flex flex-wrap items-center gap-5 text-xs font-medium text-muted-foreground mb-6 p-3.5 rounded-xl bg-surface border border-border">
         <span className="font-semibold text-foreground mr-1">Légende :</span>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
-          <span>🟢 Disponible</span>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+          <span>Disponible</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-rose-500"></span>
-          <span>🔴 Louée / Réservée</span>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
+          <span>Louée / Réservée</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-amber-500"></span>
-          <span>🟡 Arrivée prochaine</span>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
+          <span>Arrivée prochaine</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-blue-500"></span>
-          <span>🔵 Départ prochain</span>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-sky-500 shrink-0" />
+          <span>Départ prochain</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-amber-600"></span>
-          <span>⚠ Paiement partiel / en attente</span>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-600 shrink-0" />
+          <span>Paiement en attente</span>
         </div>
       </div>
 
@@ -224,14 +221,14 @@ export default function OwnerCalendarPage() {
                   <div className="flex items-center justify-between sm:justify-end gap-4">
                     <div className="text-right">
                       <span className="block text-sm font-semibold text-foreground">{formatDT(e.totalAmount)} DT</span>
-                      <span className={`text-[0.7rem] font-semibold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                      <span className={`text-[0.7rem] font-medium px-2.5 py-0.5 rounded-md inline-block mt-0.5 ${
                         e.paymentStatus === "PAID"
-                          ? "bg-emerald-500/10 text-emerald-600"
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                           : e.paymentStatus === "PARTIALLY_PAID"
-                          ? "bg-amber-500/10 text-amber-600"
-                          : "bg-rose-500/10 text-rose-600"
+                          ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                          : "bg-rose-500/10 text-rose-700 dark:text-rose-400"
                       }`}>
-                        {e.paymentStatus === "PAID" ? "✓ Payé" : e.paymentStatus === "PARTIALLY_PAID" ? `⚠ Reste ${formatDT(e.remainingAmount)} DT` : "⚠ Non payé"}
+                        {e.paymentStatus === "PAID" ? "Payé" : e.paymentStatus === "PARTIALLY_PAID" ? `Reste ${formatDT(e.remainingAmount)} DT` : "Non payé"}
                       </span>
                     </div>
                     <span className="text-xs font-semibold text-primary inline-flex items-center gap-1">
@@ -288,8 +285,9 @@ export default function OwnerCalendarPage() {
                       {day}
                     </span>
                     {dayEvents.length > 0 && (
-                      <span className="text-[0.65rem] font-bold text-rose-600 bg-rose-50 px-1 rounded">
-                        🔴 {dayEvents.length}
+                      <span className="inline-flex items-center gap-1 text-[0.65rem] font-medium text-rose-700 bg-rose-500/10 px-1.5 py-0.5 rounded-md">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
+                        {dayEvents.length}
                       </span>
                     )}
                   </div>
@@ -301,16 +299,16 @@ export default function OwnerCalendarPage() {
                         <div
                           key={evt.id}
                           onClick={() => setSelectedReservation(evt)}
-                          className={`p-1 rounded text-[0.7rem] leading-tight cursor-pointer font-medium transition-opacity hover:opacity-90 shadow-3xs ${
+                          className={`p-1.5 rounded-md text-[0.7rem] leading-tight cursor-pointer font-medium transition-opacity hover:opacity-90 shadow-2xs ${
                             isUnpaid
-                              ? "bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200"
-                              : "bg-rose-100 text-rose-900 border border-rose-300 dark:bg-rose-950 dark:text-rose-200"
+                              ? "bg-amber-500/10 text-amber-900 border border-amber-500/20 dark:text-amber-200"
+                              : "bg-rose-500/10 text-rose-900 border border-rose-500/20 dark:text-rose-200"
                           }`}
                         >
                           <div className="font-semibold truncate">{evt.propertyTitle}</div>
-                          <div className="truncate text-[0.65rem] opacity-90">{evt.customerName}</div>
+                          <div className="truncate text-[0.65rem] text-muted-foreground">{evt.customerName}</div>
                           <div className="font-bold text-[0.65rem] mt-0.5">
-                            {formatDT(evt.totalAmount)} DT {isUnpaid && `(⚠ Reste ${formatDT(evt.remainingAmount)})`}
+                            {formatDT(evt.totalAmount)} DT {isUnpaid && `(Reste ${formatDT(evt.remainingAmount)})`}
                           </div>
                         </div>
                       );
@@ -323,7 +321,7 @@ export default function OwnerCalendarPage() {
         </div>
       )}
 
-      {/* Reservation Details Side Modal / Drawer */}
+      {/* Reservation Details Modal */}
       {selectedReservation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn">
           <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -348,7 +346,7 @@ export default function OwnerCalendarPage() {
             {/* Content Details */}
             <div className="mt-5 space-y-5 text-sm">
               {/* Client section */}
-              <div className="rounded-xl bg-surface p-4 space-y-3">
+              <div className="rounded-xl bg-surface p-4 space-y-3 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <User className="h-4 w-4 text-primary" />
                   Client
@@ -360,9 +358,9 @@ export default function OwnerCalendarPage() {
 
                 {selectedReservation.contactVisibility === "RELEASED" && selectedReservation.customerPhone ? (
                   <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 space-y-2 text-xs">
-                    <div className="font-bold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                    <div className="font-semibold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span>📞 Contact client disponible</span>
+                      <span>Contact client disponible</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <a
@@ -383,9 +381,9 @@ export default function OwnerCalendarPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                    <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                    <div className="font-semibold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
                       <Lock className="h-4 w-4 text-amber-600" />
-                      <span>🔒 Coordonnées masquées</span>
+                      <span>Coordonnées masquées</span>
                     </div>
                     <p className="text-[0.75rem] text-muted-foreground">
                       Les coordonnées du client seront disponibles après confirmation de la réservation et validation du paiement par LOC MAISON.
@@ -395,7 +393,7 @@ export default function OwnerCalendarPage() {
               </div>
 
               {/* Stay section */}
-              <div className="rounded-xl bg-surface p-4 space-y-2">
+              <div className="rounded-xl bg-surface p-4 space-y-2 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-primary" />
                   Séjour & Temps restant
@@ -411,51 +409,51 @@ export default function OwnerCalendarPage() {
                   </div>
                 </div>
                 <div className="pt-2 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                     {selectedReservation.remainingInfo?.label || "Séjour actif"}
                   </span>
                 </div>
               </div>
 
               {/* Payment section */}
-              <div className="rounded-xl bg-surface p-4 space-y-3">
+              <div className="rounded-xl bg-surface p-4 space-y-3 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <CreditCard className="h-4 w-4 text-primary" />
                   Suivi financier & Paiement
                 </h4>
                 <div className="grid grid-cols-3 gap-2 text-center pt-1">
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.7rem] text-muted-foreground block">Total</span>
                     <span className="font-bold text-foreground text-sm">{formatDT(selectedReservation.totalAmount)} DT</span>
                   </div>
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.7rem] text-muted-foreground block">Payé</span>
-                    <span className="font-bold text-emerald-600 text-sm">{formatDT(selectedReservation.paidAmount)} DT</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">{formatDT(selectedReservation.paidAmount)} DT</span>
                   </div>
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.7rem] text-muted-foreground block">Reste</span>
-                    <span className="font-bold text-rose-600 text-sm">{formatDT(selectedReservation.remainingAmount)} DT</span>
+                    <span className="font-bold text-foreground text-sm">{formatDT(selectedReservation.remainingAmount)} DT</span>
                   </div>
                 </div>
 
                 <div className="pt-2 flex items-center justify-between border-t border-border text-xs">
                   <span className="text-muted-foreground">Statut du paiement :</span>
-                  <span className={`font-semibold px-2.5 py-0.5 rounded-full ${
+                  <span className={`font-medium px-2.5 py-0.5 rounded-md ${
                     selectedReservation.paymentStatus === "PAID"
-                      ? "bg-emerald-500/10 text-emerald-600"
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       : selectedReservation.paymentStatus === "PARTIALLY_PAID"
-                      ? "bg-amber-500/10 text-amber-600"
-                      : "bg-rose-500/10 text-rose-600"
+                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      : "bg-rose-500/10 text-rose-700 dark:text-rose-400"
                   }`}>
                     {selectedReservation.paymentStatus === "PAID"
-                      ? "✓ Payé"
+                      ? "Payé"
                       : selectedReservation.paymentStatus === "PARTIALLY_PAID"
-                      ? "⚠ Paiement partiel"
-                      : "⚠ Non payé"}
+                      ? "Paiement partiel"
+                      : "Non payé"}
                   </span>
                 </div>
 
-                <div className="rounded-lg bg-background p-2.5 text-[0.75rem] text-muted-foreground flex items-center gap-2">
+                <div className="rounded-lg bg-card border border-border/50 p-2.5 text-[0.75rem] text-muted-foreground flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                   <span>Paiements confirmés et sécurisés par LOC MAISON.</span>
                 </div>

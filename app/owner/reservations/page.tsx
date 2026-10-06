@@ -13,7 +13,6 @@ import {
   Lock,
   Clock,
   CreditCard,
-  Building2,
   CheckCircle2,
   X,
   Filter,
@@ -175,18 +174,18 @@ export default function OwnerReservationsPage() {
                     <span className="block text-base font-bold text-foreground">
                       {formatDT(res.pricing?.total || 0)} DT
                     </span>
-                    <span className={`text-[0.7rem] font-bold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${
+                    <span className={`text-[0.7rem] font-medium px-2.5 py-0.5 rounded-md inline-block mt-0.5 ${
                       isPaid
-                        ? "bg-emerald-500/10 text-emerald-600"
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                         : isReported
-                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                        : "bg-rose-500/10 text-rose-600"
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        : "bg-rose-500/10 text-rose-700 dark:text-rose-400"
                     }`}>
                       {isPaid
-                        ? "✓ Paiement vérifié"
+                        ? "Paiement vérifié"
                         : isReported
-                        ? "🟡 Paiement déclaré"
-                        : `⚠ En attente (${formatDT(res.paymentSummary?.remainingAmount || res.pricing?.total || 0)} DT)`}
+                        ? "Paiement déclaré"
+                        : `En attente (${formatDT(res.paymentSummary?.remainingAmount || res.pricing?.total || 0)} DT)`}
                     </span>
                   </div>
 
@@ -220,7 +219,7 @@ export default function OwnerReservationsPage() {
             </div>
 
             <div className="mt-5 space-y-4 text-sm">
-              <div className="rounded-xl bg-surface p-4 space-y-3">
+              <div className="rounded-xl bg-surface p-4 space-y-3 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <User className="h-4 w-4 text-primary" />
                   Client
@@ -232,9 +231,9 @@ export default function OwnerReservationsPage() {
 
                 {selectedRes.contactVisibility === "RELEASED" && selectedRes.customerPhone ? (
                   <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 space-y-2 text-xs">
-                    <div className="font-bold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                    <div className="font-semibold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span>📞 Contact client disponible</span>
+                      <span>Contact client disponible</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <a
@@ -255,9 +254,9 @@ export default function OwnerReservationsPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                    <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                    <div className="font-semibold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
                       <Lock className="h-4 w-4 text-amber-600" />
-                      <span>🔒 Coordonnées masquées</span>
+                      <span>Coordonnées masquées</span>
                     </div>
                     <p className="text-[0.75rem] text-muted-foreground">
                       Les coordonnées du client seront disponibles après confirmation de la réservation et validation du paiement par LOC MAISON.
@@ -266,7 +265,7 @@ export default function OwnerReservationsPage() {
                 )}
               </div>
 
-              <div className="rounded-xl bg-surface p-4 space-y-2">
+              <div className="rounded-xl bg-surface p-4 space-y-2 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-primary" />
                   Dates de séjour
@@ -283,27 +282,27 @@ export default function OwnerReservationsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl bg-surface p-4 space-y-3">
+              <div className="rounded-xl bg-surface p-4 space-y-3 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <CreditCard className="h-4 w-4 text-primary" />
                   Paiement & Suivi financier
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.68rem] text-muted-foreground block">Total</span>
                     <span className="font-bold text-foreground">{formatDT(selectedRes.pricing?.total || 0)} DT</span>
                   </div>
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.68rem] text-muted-foreground block">Déclaré</span>
-                    <span className="font-bold text-amber-600">{formatDT(selectedRes.paymentSummary?.reportedAmount || 0)} DT</span>
+                    <span className="font-bold text-amber-700 dark:text-amber-400">{formatDT(selectedRes.paymentSummary?.reportedAmount || 0)} DT</span>
                   </div>
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.68rem] text-muted-foreground block">Vérifié</span>
-                    <span className="font-bold text-emerald-600">{formatDT(selectedRes.paymentSummary?.paidAmount || 0)} DT</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatDT(selectedRes.paymentSummary?.paidAmount || 0)} DT</span>
                   </div>
-                  <div className="rounded-lg border border-border bg-background p-2">
+                  <div className="rounded-lg border border-border bg-card p-2">
                     <span className="text-[0.68rem] text-muted-foreground block">Reste</span>
-                    <span className="font-bold text-rose-600">{formatDT(selectedRes.paymentSummary?.remainingAmount || 0)} DT</span>
+                    <span className="font-bold text-foreground">{formatDT(selectedRes.paymentSummary?.remainingAmount || 0)} DT</span>
                   </div>
                 </div>
 
@@ -314,17 +313,17 @@ export default function OwnerReservationsPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Statut du paiement :</span>
-                    <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                    <span className={`font-medium px-2.5 py-0.5 rounded-md ${
                       selectedRes.paymentSummary?.status === "PAID"
-                        ? "bg-emerald-500/10 text-emerald-600"
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                         : selectedRes.paymentSummary?.status === "REPORTED"
-                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                        : "bg-rose-500/10 text-rose-600"
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        : "bg-muted text-muted-foreground"
                     }`}>
                       {selectedRes.paymentSummary?.status === "PAID"
-                        ? "✓ Paiement vérifié par LOC MAISON"
+                        ? "Paiement vérifié par LOC MAISON"
                         : selectedRes.paymentSummary?.status === "REPORTED"
-                        ? "🟡 Paiement déclaré par le propriétaire"
+                        ? "Paiement déclaré par le propriétaire"
                         : "Paiement en attente"}
                     </span>
                   </div>

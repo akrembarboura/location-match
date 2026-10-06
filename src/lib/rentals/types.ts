@@ -71,6 +71,13 @@ export type Destination = {
   governorate: string;
   imageUrl: string | null;
   tagline: string;
+  propertyCount?: number;
+  startingPrice?: number;
+  pricePeriod?: string;
+  propertyTypes?: string;
+  badge?: string;
+  tags?: string[];
+  href?: string;
 };
 
 export type Category = {

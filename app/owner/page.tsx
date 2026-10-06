@@ -12,19 +12,14 @@ import {
   PlusCircle,
   Loader2,
   AlertCircle,
-  Users,
-  Wallet,
-  ArrowRight,
-  Edit,
   Phone,
   Lock,
   CheckCircle2,
   CalendarDays,
   Clock,
-  TrendingUp,
   CreditCard,
-  Eye,
   LogIn,
+  ArrowRight,
 } from "lucide-react";
 
 export default function OwnerPage() {
@@ -37,9 +32,6 @@ export default function OwnerPage() {
   const [onboardingPhone, setOnboardingPhone] = useState("");
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
-
-  // Filter for arrivals / departures
-  const [filterPeriod, setFilterPeriod] = useState<"today" | "tomorrow" | "week">("week");
 
   const isCustomer = user?.role === "CUSTOMER";
   const isOwnerOrAdmin =
@@ -98,7 +90,7 @@ export default function OwnerPage() {
             Vous avez un logement à louer en Tunisie ?
           </h1>
           <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
-            Rejoignez LOC MAISON pour proposer vos villas, appartements ou maisons aux estivants et étudiants. Notre équipe qualifie et sécurise chaque location.
+            Proposez vos villas, appartements ou maisons aux estivants et étudiants. Notre équipe qualifie et sécurise chaque location.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -236,7 +228,7 @@ export default function OwnerPage() {
 
   return (
     <OwnerShell
-      title={`Bonjour, ${displayName} 👋`}
+      title={`Bonjour, ${displayName}`}
       subtitle="Voici l'état de vos locations et activités opérationnelles."
     >
       {loading ? (
@@ -252,74 +244,74 @@ export default function OwnerPage() {
       ) : (
         <div className="space-y-8">
           {/* SECTION 22: DASHBOARD TODAY SUMMARY BOX */}
-          <div className="rounded-2xl border border-primary/20 bg-linear-to-r from-primary/10 via-card to-card p-5 sm:p-6 shadow-2xs">
-            <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-3">
-              <Clock className="h-5 w-5 text-primary" />
-              Aujourd&apos;hui — État opérationnel
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xs">
+            <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-4">
+              <Clock className="h-4 w-4 text-primary" />
+              Aujourd&apos;hui — Aperçu rapide
             </h2>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-semibold">
-              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
-                <span className="text-emerald-600 text-base font-bold">✓ {today.available || 0}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-medium">
+              <div className="rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center">
+                <span className="text-emerald-700 dark:text-emerald-400 text-lg font-bold font-display">{today.available || 0}</span>
                 <span className="text-muted-foreground mt-0.5">Disponibles</span>
               </div>
-              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
-                <span className="text-rose-600 text-base font-bold">🔴 {today.rented || 0}</span>
+              <div className="rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center">
+                <span className="text-foreground text-lg font-bold font-display">{today.rented || 0}</span>
                 <span className="text-muted-foreground mt-0.5">Loués</span>
               </div>
-              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
-                <span className="text-amber-600 text-base font-bold">🟡 {today.arrivalsToday || 0}</span>
-                <span className="text-muted-foreground mt-0.5">Arrivée(s)</span>
+              <div className="rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center">
+                <span className="text-amber-700 dark:text-amber-400 text-lg font-bold font-display">{today.arrivalsToday || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Arrivées</span>
               </div>
-              <div className="rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
-                <span className="text-blue-600 text-base font-bold">🔵 {today.departuresToday || 0}</span>
-                <span className="text-muted-foreground mt-0.5">Départ(s)</span>
+              <div className="rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center">
+                <span className="text-sky-700 dark:text-sky-400 text-lg font-bold font-display">{today.departuresToday || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Départs</span>
               </div>
-              <div className="col-span-2 sm:col-span-1 rounded-xl border border-border bg-card p-3 flex flex-col items-center text-center">
-                <span className="text-amber-600 text-base font-bold">⚠ {today.paymentsPending || 0}</span>
-                <span className="text-muted-foreground mt-0.5">Solde(s) à recevoir</span>
+              <div className="col-span-2 sm:col-span-1 rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center">
+                <span className="text-amber-700 dark:text-amber-400 text-lg font-bold font-display">{today.paymentsPending || 0}</span>
+                <span className="text-muted-foreground mt-0.5">Soldes en attente</span>
               </div>
             </div>
           </div>
 
           {/* SECTION 4: REAL DATABASE KPI CARDS */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+            <div className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-muted-foreground">Mes biens</span>
+                <span className="text-xs font-medium text-muted-foreground">Mes biens</span>
                 <p className="text-2xl font-bold font-display text-foreground mt-1">{kpis.totalProperties || 0}</p>
               </div>
-              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+              <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                 <Building2 className="h-5 w-5" />
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+            <div className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-muted-foreground">Disponibles</span>
-                <p className="text-2xl font-bold font-display text-emerald-600 mt-1">{kpis.availableProperties || 0}</p>
+                <span className="text-xs font-medium text-muted-foreground">Disponibles</span>
+                <p className="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400 mt-1">{kpis.availableProperties || 0}</p>
               </div>
-              <div className="rounded-lg bg-emerald-500/10 p-2.5 text-emerald-600">
+              <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-600">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+            <div className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-muted-foreground">Actuellement loués</span>
-                <p className="text-2xl font-bold font-display text-rose-600 mt-1">{kpis.rentedProperties || 0}</p>
+                <span className="text-xs font-medium text-muted-foreground">Actuellement loués</span>
+                <p className="text-2xl font-bold font-display text-foreground mt-1">{kpis.rentedProperties || 0}</p>
               </div>
-              <div className="rounded-lg bg-rose-500/10 p-2.5 text-rose-600">
+              <div className="rounded-xl bg-muted p-2.5 text-muted-foreground">
                 <CalendarDays className="h-5 w-5" />
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-4 shadow-2xs flex items-center justify-between">
+            <div className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-muted-foreground">Paiements à recevoir</span>
-                <p className="text-2xl font-bold font-display text-amber-600 mt-1">{formatDT(kpis.paymentsToReceive || 0)} DT</p>
+                <span className="text-xs font-medium text-muted-foreground">Paiements à recevoir</span>
+                <p className="text-2xl font-bold font-display text-foreground mt-1">{formatDT(kpis.paymentsToReceive || 0)} DT</p>
               </div>
-              <div className="rounded-lg bg-amber-500/10 p-2.5 text-amber-600">
+              <div className="rounded-xl bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-400">
                 <CreditCard className="h-5 w-5" />
               </div>
             </div>
@@ -331,10 +323,10 @@ export default function OwnerPage() {
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-                  <span className="text-amber-500">🟡</span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
                   Prochaines arrivées
                 </h3>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface text-muted-foreground">
+                <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-surface text-muted-foreground border border-border/50">
                   {upcomingArrivals.length} arrivée(s)
                 </span>
               </div>
@@ -346,26 +338,26 @@ export default function OwnerPage() {
               ) : (
                 <div className="space-y-3">
                   {upcomingArrivals.slice(0, 3).map((item: any) => (
-                    <div key={item.id} className="p-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs">
+                    <div key={item.id} className="p-3.5 rounded-xl border border-border/70 bg-surface/50 flex items-center justify-between text-xs">
                       <div>
                         <span className="font-bold text-foreground block">{item.propertyTitle}</span>
-                        <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-                          <span>Client: <strong className="text-foreground">{item.customerName}</strong> ({item.guests} pers.)</span>
+                        <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+                          <span>Client : <strong className="text-foreground">{item.customerName}</strong> ({item.guests} pers.)</span>
                           {item.contactVisibility === "RELEASED" ? (
-                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                              <CheckCircle2 className="h-3 w-3" /> Contact OK
+                            <span className="inline-flex items-center gap-1 text-[0.68rem] font-medium text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                              <CheckCircle2 className="h-3 w-3" /> Contact dispo
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-amber-700 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            <span className="inline-flex items-center gap-1 text-[0.68rem] font-medium text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-md">
                               <Lock className="h-3 w-3" /> Masqué
                             </span>
                           )}
                         </div>
-                        <span className="block font-mono text-[0.7rem] text-primary mt-0.5">{item.formattedRange}</span>
+                        <span className="block font-mono text-[0.7rem] text-primary mt-1">{item.formattedRange}</span>
                       </div>
                       <Link
-                        href={`/owner/calendar`}
-                        className="rounded bg-primary/10 px-2.5 py-1 font-semibold text-primary hover:bg-primary/20"
+                        href="/owner/calendar"
+                        className="rounded-lg bg-primary/10 px-3 py-1.5 font-semibold text-primary hover:bg-primary/20 transition-colors"
                       >
                         Voir
                       </Link>
@@ -379,10 +371,10 @@ export default function OwnerPage() {
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-                  <span className="text-blue-500">🔵</span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-sky-500 shrink-0" />
                   Prochains départs
                 </h3>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface text-muted-foreground">
+                <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-surface text-muted-foreground border border-border/50">
                   {upcomingDepartures.length} départ(s)
                 </span>
               </div>
@@ -394,26 +386,26 @@ export default function OwnerPage() {
               ) : (
                 <div className="space-y-3">
                   {upcomingDepartures.slice(0, 3).map((item: any) => (
-                    <div key={item.id} className="p-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs">
+                    <div key={item.id} className="p-3.5 rounded-xl border border-border/70 bg-surface/50 flex items-center justify-between text-xs">
                       <div>
                         <span className="font-bold text-foreground block">{item.propertyTitle}</span>
-                        <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-                          <span>Client: <strong className="text-foreground">{item.customerName}</strong> ({item.guests} pers.)</span>
+                        <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+                          <span>Client : <strong className="text-foreground">{item.customerName}</strong> ({item.guests} pers.)</span>
                           {item.contactVisibility === "RELEASED" ? (
-                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                              <CheckCircle2 className="h-3 w-3" /> Contact OK
+                            <span className="inline-flex items-center gap-1 text-[0.68rem] font-medium text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                              <CheckCircle2 className="h-3 w-3" /> Contact dispo
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-amber-700 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            <span className="inline-flex items-center gap-1 text-[0.68rem] font-medium text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-md">
                               <Lock className="h-3 w-3" /> Masqué
                             </span>
                           )}
                         </div>
-                        <span className="block font-mono text-[0.7rem] text-primary mt-0.5">{item.formattedRange}</span>
+                        <span className="block font-mono text-[0.7rem] text-primary mt-1">{item.formattedRange}</span>
                       </div>
                       <Link
-                        href={`/owner/calendar`}
-                        className="rounded bg-primary/10 px-2.5 py-1 font-semibold text-primary hover:bg-primary/20"
+                        href="/owner/calendar"
+                        className="rounded-lg bg-primary/10 px-3 py-1.5 font-semibold text-primary hover:bg-primary/20 transition-colors"
                       >
                         Voir
                       </Link>
@@ -438,7 +430,7 @@ export default function OwnerPage() {
                 <p className="text-sm text-muted-foreground">Vous n&apos;avez pas encore de logement enregistré.</p>
                 <Link
                   href="/owner/list-property"
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary-dark transition-colors"
                 >
                   <PlusCircle className="h-4 w-4" />
                   Ajouter une annonce
