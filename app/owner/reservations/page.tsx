@@ -241,11 +241,6 @@ export default function OwnerReservationsPage() {
                             : "Contact client disponible"}
                         </span>
                       </div>
-                      {(selectedRes.reason === "ADMIN_OVERRIDE" || selectedRes.contactAccessOverride?.enabled) && (
-                        <span className="text-[0.68rem] bg-amber-500/20 text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded">
-                          Dérogation Admin
-                        </span>
-                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       {selectedRes.customerPhone && (
@@ -342,20 +337,13 @@ export default function OwnerReservationsPage() {
                         : "bg-muted text-muted-foreground"
                     }`}>
                       {selectedRes.paymentSummary?.status === "PAID"
-                        ? "Paiement vérifié par LOC MAISON"
+                        ? "Paiement vérifié"
                         : selectedRes.paymentSummary?.status === "REPORTED"
-                        ? "Paiement déclaré par le propriétaire"
+                        ? "Paiement déclaré"
                         : "Paiement en attente"}
                     </span>
                   </div>
                 </div>
-
-                {selectedRes.paymentSummary?.status === "REPORTED" && (
-                  <div className="rounded-lg bg-amber-500/10 p-2.5 text-[0.75rem] text-amber-900 dark:text-amber-200">
-                    <p className="font-medium">Paiement déclaré aujourd&apos;hui</p>
-                    <p className="text-muted-foreground mt-0.5">En attente de vérification par LOC MAISON.</p>
-                  </div>
-                )}
 
                 {/* Owner Payment Status Control (Full Access) */}
                 <div className="pt-3 border-t border-border space-y-2">
@@ -434,7 +422,7 @@ export default function OwnerReservationsPage() {
             </div>
 
             <p className="text-[0.75rem] text-muted-foreground">
-              Cette action sera enregistrée dans l&apos;historique de la réservation et soumise à validation par LOC MAISON.
+              Cette action sera enregistrée dans l&apos;historique de la réservation.
             </p>
 
             <div className="mt-6 flex items-center justify-end gap-3">

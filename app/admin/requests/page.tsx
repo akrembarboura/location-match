@@ -42,6 +42,7 @@ export default function AdminRequests() {
   const [unlockReason, setUnlockReason] = useState("");
   const [unlockingLoading, setUnlockingLoading] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [relockingLoading, setRelockingLoading] = useState(false);
 
   const fetchAdminRequests = async () => {
     try {
@@ -182,6 +183,30 @@ export default function AdminRequests() {
       setUnlockError(err.message || "Erreur de communication.");
     } finally {
       setUnlockingLoading(false);
+    }
+  };
+
+  const handleAdminRelockContact = async () => {
+    if (!selectedReq) return;
+
+    try {
+      setRelockingLoading(true);
+      const res = await fetch(`/api/admin/reservations/${selectedReq.reservationId || selectedReq.id}/contact-access/relock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Échec du verrouillage des coordonnées.");
+      }
+
+      setStatusMessage("Coordonnées verrouillées à nouveau pour le propriétaire !");
+      await fetchAdminRequests();
+    } catch (err: any) {
+      setStatusMessage(err.message || "Erreur de communication.");
+    } finally {
+      setRelockingLoading(false);
     }
   };
 
@@ -403,7 +428,7 @@ export default function AdminRequests() {
 
                   <div className="text-xs text-muted-foreground">
                     {selectedReq.contactAccessOverride?.enabled ? (
-                      <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 space-y-1 text-emerald-900 dark:text-emerald-200">
+                      <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 space-y-2 text-emerald-900 dark:text-emerald-200">
                         <div className="font-semibold flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
                           <Unlock className="h-4 w-4 text-emerald-600" />
                           <span>Coordonnées déverrouillées</span>
@@ -411,6 +436,15 @@ export default function AdminRequests() {
                         <p className="text-[0.72rem] text-muted-foreground">
                           Motif : « {selectedReq.contactAccessOverride.reason} »
                         </p>
+                        <button
+                          type="button"
+                          onClick={handleAdminRelockContact}
+                          disabled={relockingLoading}
+                          className="mt-1 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-amber-600/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-900 dark:text-amber-200 shadow-xs hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+                        >
+                          <Lock className="h-3.5 w-3.5 text-amber-600" />
+                          {relockingLoading ? "Verrouillage…" : "Verrouiller à nouveau"}
+                        </button>
                       </div>
                     ) : (
                       <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-2 text-amber-900 dark:text-amber-200">
