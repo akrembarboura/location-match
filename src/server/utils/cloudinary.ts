@@ -1,9 +1,12 @@
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 
-// Initialize Cloudinary with environment variables
-if (process.env.CLOUDINARY_URL) {
-  // cloudinary automatically reads CLOUDINARY_URL, but we ensure it's explicitly parsed
-  cloudinary.config();
+// Initialize Cloudinary safely if a valid cloudinary:// URL is provided
+if (process.env.CLOUDINARY_URL && process.env.CLOUDINARY_URL.trim().startsWith("cloudinary://")) {
+  try {
+    cloudinary.config();
+  } catch (error) {
+    console.warn("Cloudinary initialization warning:", error);
+  }
 }
 
 export interface CloudinaryUploadResult {
