@@ -121,15 +121,13 @@ export class ReservationRepository {
     // 3. Also check properties with availabilityStatus === "RESERVED" that don't have a HousingRequest
     for (const prop of properties) {
       if (prop.availabilityStatus === "RESERVED" && prop.reservation?.from && prop.reservation?.to) {
-        const checkInDate = new Date(prop.reservation.from);
-        const checkOutDate = new Date(prop.reservation.to);
-
         const existingRes = await ReservationModel.findOne({
           propertyId: prop.id,
-          checkIn: checkInDate,
         }).exec();
 
         if (!existingRes) {
+          const checkInDate = new Date(prop.reservation.from);
+          const checkOutDate = new Date(prop.reservation.to);
           const nights = calculateNights(checkInDate, checkOutDate);
           const nightlyRate = prop.pricePerNight || prop.pricing?.price || prop.summerPrice || 150;
           const total = nightlyRate * nights;
@@ -160,6 +158,18 @@ export class ReservationRepository {
             },
           });
         }
+      }
+    }
+
+    // Clean up duplicate fallback reservations for properties that already have a real request reservation
+    for (const prop of properties) {
+      const realRes = await ReservationModel.findOne({ propertyId: prop.id, requestId: { $exists: true, $ne: null } }).exec();
+      if (realRes) {
+        await ReservationModel.deleteMany({
+          propertyId: prop.id,
+          customerName: "Client Confirmé",
+          requestId: { $exists: false },
+        }).exec();
       }
     }
   }
