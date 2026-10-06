@@ -48,7 +48,7 @@ export default function OwnerReservationsPage() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [reportingCashLoading, setReportingCashLoading] = useState(false);
 
-  async function handleReportCash() {
+  async function handleReportCash(targetStatus: "REPORTED" | "UNPAID" = "REPORTED") {
     if (!selectedRes) return;
     try {
       setReportingCashLoading(true);
@@ -56,11 +56,12 @@ export default function OwnerReservationsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          status: targetStatus,
           amount: selectedRes.paymentSummary?.remainingAmount || selectedRes.pricing?.total || 0,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Impossible de déclarer le paiement.");
+      if (!res.ok) throw new Error(data.error || "Impossible de modifier le statut du paiement.");
       setConfirmModalOpen(false);
       setSelectedRes(null);
       // Reload list
@@ -356,18 +357,45 @@ export default function OwnerReservationsPage() {
                   </div>
                 )}
 
-                {/* Cash report action button */}
-                {selectedRes.paymentSummary?.status !== "PAID" && selectedRes.paymentSummary?.status !== "REPORTED" && (
-                  <div className="pt-2">
+                {/* Owner Payment Status Control (Full Access) */}
+                <div className="pt-3 border-t border-border space-y-2">
+                  <span className="text-xs font-semibold text-foreground block">
+                    Gérer le statut de paiement :
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => setConfirmModalOpen(true)}
-                      className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
+                      type="button"
+                      onClick={() => handleReportCash("REPORTED")}
+                      disabled={reportingCashLoading || selectedRes.paymentSummary?.status === "PAID"}
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition-colors ${
+                        selectedRes.paymentSummary?.status === "REPORTED" || selectedRes.paymentSummary?.status === "PAID"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-surface border border-border text-foreground hover:bg-emerald-500/10 hover:text-emerald-700"
+                      }`}
                     >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Confirmer la réception du paiement
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      {selectedRes.paymentSummary?.status === "REPORTED" || selectedRes.paymentSummary?.status === "PAID"
+                        ? "Payé (Enregistré)"
+                        : "Marquer comme Payé"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleReportCash("UNPAID")}
+                      disabled={reportingCashLoading || selectedRes.paymentSummary?.status === "PAID"}
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition-colors ${
+                        selectedRes.paymentSummary?.status === "UNPAID" || !selectedRes.paymentSummary?.status
+                          ? "bg-rose-600 text-white"
+                          : "bg-surface border border-border text-foreground hover:bg-rose-500/10 hover:text-rose-700"
+                      }`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      {selectedRes.paymentSummary?.status === "UNPAID" || !selectedRes.paymentSummary?.status
+                        ? "Non payé"
+                        : "Marquer comme Non payé"}
                     </button>
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -420,7 +448,7 @@ export default function OwnerReservationsPage() {
               </button>
               <button
                 type="button"
-                onClick={handleReportCash}
+                onClick={() => handleReportCash("REPORTED")}
                 disabled={reportingCashLoading}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs hover:bg-primary-dark disabled:opacity-50"
               >

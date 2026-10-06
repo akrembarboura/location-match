@@ -48,13 +48,69 @@ export async function POST(
 
     await connectToDatabase();
 
-    const reservation = await ReservationModel.findOne({
-      $or: [{ id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }],
+    let reservation = await ReservationModel.findOne({
+      $or: [
+        { id },
+        { requestId: id },
+        { propertyId: id },
+        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+      ],
     }).exec();
 
     if (!reservation) {
+      const { HousingRequestModel, PropertyModel } = await import("@/lib/models");
+      const { calculateNights } = await import("@/lib/date-utils");
+
+      const housingReq = await HousingRequestModel.findOne({
+        $or: [{ id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }],
+      }).lean().exec();
+
+      if (housingReq) {
+        const propId = housingReq.propertyId || housingReq.selectedProperty;
+        if (propId) {
+          const prop = await PropertyModel.findOne({ id: propId }).lean().exec();
+          if (prop) {
+            const checkInDate = housingReq.checkIn ? new Date(housingReq.checkIn) : new Date();
+            const checkOutDate = housingReq.checkOut ? new Date(housingReq.checkOut) : new Date(Date.now() + 3 * 86400000);
+            const nights = calculateNights(checkInDate, checkOutDate);
+            const nightlyRate = prop.pricePerNight || prop.pricing?.price || 150;
+            const total = nightlyRate * nights;
+
+            const resId = `LM-${new Date().getFullYear()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+
+            reservation = await ReservationModel.create({
+              id: resId,
+              requestId: housingReq.id,
+              propertyId: propId,
+              ownerId: prop.ownerId,
+              customerId: housingReq.customerId || undefined,
+              customerName: housingReq.customer?.fullName || housingReq.customer?.name || "Client LOC MAISON",
+              customerPhone: housingReq.customer?.phone || housingReq.phone || "",
+              checkIn: checkInDate,
+              checkOut: checkOutDate,
+              guests: housingReq.guests || housingReq.people || 1,
+              status: "CONFIRMED",
+              pricing: {
+                pricePerNight: nightlyRate,
+                totalNights: nights,
+                subtotal: total,
+                total,
+                currency: "TND",
+              },
+              paymentSummary: {
+                paidAmount: 0,
+                remainingAmount: total,
+                status: "UNPAID",
+              },
+            });
+          }
+        }
+      }
+    }
+
+    if (!reservation) {
       return NextResponse.json(
-        { error: "Réservation introuvable." },
+        { error: "Réservation introuvable pour cet identifiant." },
         { status: 404 }
       );
     }

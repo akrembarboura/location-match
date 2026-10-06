@@ -84,11 +84,12 @@ export class PaymentRepository {
     }
   }
 
-  async reportCashPayment(
+  async updatePaymentStatusByOwner(
     ownerId: string,
     reservationId: string,
-    reportedAmountInput?: number
-  ): Promise<{ success: boolean; message: string; payment?: any }> {
+    targetStatus: "PAID" | "REPORTED" | "UNPAID",
+    amountInput?: number
+  ): Promise<{ success: boolean; message: string; payment?: any; paymentSummary?: any }> {
     await connectToDatabase();
 
     const reservation = await ReservationModel.findOne({ id: reservationId, ownerId }).exec();
@@ -97,72 +98,110 @@ export class PaymentRepository {
     }
 
     const totalAmount = reservation.pricing?.total || 0;
-    const remainingAmount = reservation.paymentSummary?.remainingAmount ?? totalAmount;
 
-    const amountToReport = reportedAmountInput && reportedAmountInput > 0
-      ? Math.min(reportedAmountInput, remainingAmount > 0 ? remainingAmount : totalAmount)
-      : remainingAmount > 0 ? remainingAmount : totalAmount;
+    if (targetStatus === "UNPAID") {
+      await PaymentModel.deleteMany({ reservationId, ownerId }).exec();
+      reservation.paymentSummary = {
+        paidAmount: 0,
+        reportedAmount: 0,
+        remainingAmount: totalAmount,
+        status: "UNPAID",
+      };
+      await reservation.save();
 
-    if (amountToReport <= 0) {
-      throw new Error("Le montant du paiement doit être supérieur à 0 DT.");
-    }
-
-    // Check if a payment record already exists for this reservation
-    let payment = await PaymentModel.findOne({ reservationId, ownerId }).exec();
-
-    if (payment) {
-      if (payment.status === "REPORTED" || payment.status === "VERIFIED" || payment.status === "CONFIRMED") {
-        throw new Error("Ce paiement a déjà été déclaré ou confirmé et ne peut pas être soumis à nouveau.");
-      }
-      payment.method = "CASH";
-      payment.status = "REPORTED";
-      payment.amount = amountToReport;
-      payment.reportedAmount = amountToReport;
-      payment.reportedBy = { userId: ownerId, role: "OWNER" };
-      payment.reportedAt = new Date();
-      payment.history = payment.history || [];
-      payment.history.push({
-        action: "CASH_REPORTED",
-        actorId: ownerId,
-        actorRole: "OWNER",
-        timestamp: new Date(),
-        note: `Paiement de ${amountToReport} DT déclaré reçu en espèces par le propriétaire.`,
-      });
-      await payment.save();
-    } else {
-      const payId = `PAY-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      payment = await PaymentModel.create({
-        id: payId,
-        reservationId,
-        propertyId: reservation.propertyId,
-        ownerId,
-        customerId: reservation.customerId,
-        amount: amountToReport,
-        reportedAmount: amountToReport,
-        currency: "TND",
-        method: "CASH",
-        status: "REPORTED",
-        reportedBy: { userId: ownerId, role: "OWNER" },
-        reportedAt: new Date(),
-        history: [
+      if (reservation.requestId) {
+        const { HousingRequestModel } = await import("@/lib/models");
+        await HousingRequestModel.updateOne(
+          { id: reservation.requestId },
           {
-            action: "CASH_REPORTED",
-            actorId: ownerId,
-            actorRole: "OWNER",
-            timestamp: new Date(),
-            note: `Paiement de ${amountToReport} DT déclaré reçu en espèces par le propriétaire.`,
-          },
-        ],
-      });
+            $set: {
+              paymentSummary: {
+                paidAmount: 0,
+                reportedAmount: 0,
+                remainingAmount: totalAmount,
+                status: "UNPAID",
+              },
+            },
+          }
+        );
+      }
+
+      return {
+        success: true,
+        message: "Le statut du paiement a été mis à jour à 'Non payé'.",
+        payment: null,
+        paymentSummary: reservation.paymentSummary,
+      };
+    } else {
+      const amountToReport = amountInput && amountInput > 0 ? amountInput : totalAmount;
+
+      let payment = await PaymentModel.findOne({ reservationId, ownerId }).exec();
+      if (payment) {
+        payment.method = "CASH";
+        payment.status = "REPORTED";
+        payment.amount = amountToReport;
+        payment.reportedAmount = amountToReport;
+        payment.reportedBy = { userId: ownerId, role: "OWNER" };
+        payment.reportedAt = new Date();
+        payment.history = payment.history || [];
+        payment.history.push({
+          action: "CASH_REPORTED",
+          actorId: ownerId,
+          actorRole: "OWNER",
+          timestamp: new Date(),
+          note: `Paiement de ${amountToReport} DT mis à jour comme reçu en espèces par le propriétaire.`,
+        });
+        await payment.save();
+      } else {
+        const payId = `PAY-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        payment = await PaymentModel.create({
+          id: payId,
+          reservationId,
+          propertyId: reservation.propertyId,
+          ownerId,
+          customerId: reservation.customerId,
+          amount: amountToReport,
+          reportedAmount: amountToReport,
+          currency: "TND",
+          method: "CASH",
+          status: "REPORTED",
+          reportedBy: { userId: ownerId, role: "OWNER" },
+          reportedAt: new Date(),
+          history: [
+            {
+              action: "CASH_REPORTED",
+              actorId: ownerId,
+              actorRole: "OWNER",
+              timestamp: new Date(),
+              note: `Paiement de ${amountToReport} DT déclaré reçu en espèces par le propriétaire.`,
+            },
+          ],
+        });
+      }
+
+      await this.syncReservationPaymentSummary(reservationId);
+      const updatedRes = await ReservationModel.findOne({ id: reservationId }).lean().exec();
+
+      return {
+        success: true,
+        message: "Paiement en espèces enregistré avec succès.",
+        payment: payment.toObject(),
+        paymentSummary: updatedRes?.paymentSummary,
+      };
     }
+  }
 
-    await this.syncReservationPaymentSummary(reservationId);
-
-    return {
-      success: true,
-      message: "Le paiement en espèces a été déclaré reçu. En attente de vérification par LOC MAISON.",
-      payment: payment.toObject(),
-    };
+  async reportCashPayment(
+    ownerId: string,
+    reservationId: string,
+    reportedAmountInput?: number
+  ): Promise<{ success: boolean; message: string; payment?: any }> {
+    await connectToDatabase();
+    const existing = await PaymentModel.findOne({ reservationId, ownerId }).exec();
+    if (existing && (existing.status === "REPORTED" || existing.status === "VERIFIED" || existing.status === "CONFIRMED")) {
+      throw new Error("Ce paiement a déjà été déclaré ou confirmé et ne peut pas être soumis à nouveau.");
+    }
+    return this.updatePaymentStatusByOwner(ownerId, reservationId, "REPORTED", reportedAmountInput);
   }
 
   async verifyPayment(

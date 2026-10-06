@@ -20,9 +20,12 @@ export async function POST(
       // Empty body is allowed
     }
 
-    const result = await paymentRepository.reportCashPayment(
+    const targetStatus = body?.status === "UNPAID" ? "UNPAID" : "REPORTED";
+
+    const result = await paymentRepository.updatePaymentStatusByOwner(
       user.id,
       reservationId,
+      targetStatus,
       body?.amount ? Number(body.amount) : undefined
     );
 
