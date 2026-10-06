@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Bath, BedDouble, Check, Heart, MapPin, Star, Users } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { HouseGallery } from "@/components/rentals/HouseGallery";
@@ -12,7 +12,25 @@ import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useTrackPropertyView, trackEvent } from "@/lib/analytics/client";
 
-
+function HouseDetailSkeleton() {
+  return (
+    <PageShell>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="h-6 w-32 animate-pulse rounded bg-muted" />
+        <div className="mt-4 h-10 w-2/3 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-2 h-5 w-48 animate-pulse rounded bg-muted" />
+        <div className="mt-6 aspect-16/9 w-full animate-pulse rounded-2xl bg-muted" />
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
+          <div className="space-y-4">
+            <div className="h-24 animate-pulse rounded-xl bg-muted" />
+            <div className="h-40 animate-pulse rounded-xl bg-muted" />
+          </div>
+          <div className="h-64 animate-pulse rounded-xl bg-muted" />
+        </div>
+      </div>
+    </PageShell>
+  );
+}
 
 function NotFound() {
   return (
@@ -43,13 +61,14 @@ function formatReservationRange(from?: string, to?: string) {
 
 function HouseDetail() {
   const { slug } = useParams() as { slug: string };
-  const { data: house } = useSuspenseQuery(houseBySlugQuery(slug));
+  const { data: house, isLoading, isError } = useQuery(houseBySlugQuery(slug));
   const [fav, toggleFav] = useFavorite(house?.id ?? "");
 
   // Real Property View tracking (deduplicated against re-renders)
   useTrackPropertyView(house);
 
-  if (!house) return <NotFound />;
+  if (isLoading) return <HouseDetailSkeleton />;
+  if (isError || !house) return <NotFound />;
 
   const isReserved = house.availabilityStatus === "RESERVED";
 
