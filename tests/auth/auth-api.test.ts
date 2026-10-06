@@ -23,6 +23,26 @@ describe("API Security Tests (Registration & Login)", () => {
     expect(data.user.role).toBe("CUSTOMER");
   });
 
+  it("C1-OWNER: Valid registration with OWNER role creates an owner account", async () => {
+    const req = new NextRequest("http://localhost/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "owner-registration@example.com",
+        password: "securepassword",
+        role: "OWNER",
+        firstName: "Sami",
+        lastName: "Ben",
+      }),
+    });
+
+    const res = await registerPost(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+
+    expect(data.user.email).toBe("owner-registration@example.com");
+    expect(data.user.role).toBe("OWNER");
+  });
+
   it("C2 & C3: Invalid email or password fails validation", async () => {
     const req = new NextRequest("http://localhost/api/auth/register", {
       method: "POST",

@@ -5,7 +5,12 @@ import { UserModel, OwnerModel } from "@/lib/models";
 export class UserRepository {
   async findByEmail(email: string) {
     await connectToDatabase();
-    return UserModel.findOne({ email }).lean().exec();
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    // Search exact match or case-insensitive regex for database resilience
+    return UserModel.findOne({
+      $or: [{ email: cleanEmail }, { email: new RegExp(`^${cleanEmail.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")}$`, "i") }],
+    }).lean().exec();
   }
 
   async findById(id: string) {

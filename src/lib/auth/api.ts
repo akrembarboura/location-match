@@ -5,8 +5,8 @@ import type { User } from "./types";
 
 export type { User, UserRole } from "./types";
 
-/** What the browser is allowed to send to /api/auth/register — never a role. */
-export type RegisterRequest = Omit<z.input<typeof RegisterSchema>, "role">;
+/** What the browser is allowed to send to /api/auth/register. */
+export type RegisterRequest = z.input<typeof RegisterSchema>;
 export type LoginRequest = LoginInput;
 
 export type AuthErrorCode =
@@ -186,9 +186,8 @@ export function useAuthMutations() {
   });
 
   const registerMutation = useMutation<{ user: User }, AuthApiError, RegisterRequest>({
-    // Explicit allow-list: even if a caller passes extra keys, `role` is never sent.
-    mutationFn: ({ email, password, firstName, lastName, phone }) =>
-      postJson<{ user: User }>("/api/auth/register", { email, password, firstName, lastName, phone }),
+    mutationFn: ({ email, password, firstName, lastName, phone, role }) =>
+      postJson<{ user: User }>("/api/auth/register", { email, password, firstName, lastName, phone, role }),
     onSuccess: (data) => {
       // Registration logs the user in server-side (session cookie already set).
       queryClient.setQueryData(currentUserQueryKey, data.user);
