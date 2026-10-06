@@ -312,16 +312,60 @@ export class RequestService {
   }
 
   async getCustomerRequests(customerId: string) {
+    const { ReservationModel, PaymentModel } = await import("@/lib/models");
     const list = await requestRepository.findByCustomerId(customerId);
     return await Promise.all(
       list.map(async (r: any) => {
         const propId = r.propertyId || r.selectedProperty;
         const selectedPropertyDetails = propId ? await this.attachPropertyDetails(propId) : null;
+
+        const linkedRes = await ReservationModel.findOne({
+          $or: [{ requestId: r.id }, { id: r.id }],
+        }).lean().exec();
+
+        let paymentInfo = null;
+        let paymentSummary = r.paymentSummary || null;
+
+        if (linkedRes) {
+          paymentSummary = linkedRes.paymentSummary || paymentSummary;
+          const latestPayment = await PaymentModel.findOne({ reservationId: linkedRes.id })
+            .sort({ createdAt: -1 })
+            .lean()
+            .exec();
+
+          paymentInfo = {
+            id: latestPayment?.id || null,
+            reservationId: linkedRes.id,
+            status: latestPayment?.status || linkedRes.paymentSummary?.status || "UNPAID",
+            method: latestPayment?.method || "CASH",
+            amount: linkedRes.pricing?.total || r.budget || 0,
+            currency: linkedRes.pricing?.currency || "TND",
+            paidAmount: linkedRes.paymentSummary?.paidAmount || 0,
+            reportedAmount: linkedRes.paymentSummary?.reportedAmount || 0,
+            remainingAmount: linkedRes.paymentSummary?.remainingAmount ?? (linkedRes.pricing?.total || 0),
+            confirmedAt: latestPayment?.verifiedAt || latestPayment?.reportedAt || null,
+          };
+        } else if (r.paymentSummary) {
+          paymentInfo = {
+            id: null,
+            status: r.paymentSummary.status || "UNPAID",
+            method: "CASH",
+            amount: r.budget || 0,
+            currency: "TND",
+            paidAmount: r.paymentSummary.paidAmount || 0,
+            reportedAmount: r.paymentSummary.reportedAmount || 0,
+            remainingAmount: r.paymentSummary.remainingAmount || 0,
+            confirmedAt: null,
+          };
+        }
+
         return {
           ...r,
           propertyId: propId,
           selectedProperty: propId,
           selectedPropertyDetails,
+          payment: paymentInfo,
+          paymentSummary,
         };
       })
     );

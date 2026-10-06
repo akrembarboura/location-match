@@ -140,9 +140,29 @@ export default function CustomerDashboard() {
                         </span>
                       )}
                     </div>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusCfg.className}`}>
-                      {statusCfg.label}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusCfg.className}`}>
+                        {statusCfg.label}
+                      </span>
+
+                      {((r as any).payment || (r as any).paymentSummary) && (() => {
+                        const payStatus = (r as any).payment?.status || (r as any).paymentSummary?.status || "UNPAID";
+                        const isConfirmed = ["CONFIRMED", "VERIFIED", "PAID"].includes(payStatus);
+                        const isReported = ["REPORTED", "AWAITING_OWNER_CONFIRMATION"].includes(payStatus);
+
+                        return (
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                            isConfirmed
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400"
+                              : isReported
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                          }`}>
+                            {isConfirmed ? "✓ Paiement confirmé" : isReported ? "🟡 Paiement déclaré" : "Non payé"}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   <div className="mt-3 flex items-start justify-between gap-4">
