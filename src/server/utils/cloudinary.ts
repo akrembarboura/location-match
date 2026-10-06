@@ -58,3 +58,16 @@ export async function uploadToCloudinary(
     uploadStream.end(fileBuffer);
   });
 }
+
+/**
+ * Deletes an image asset from Cloudinary by its public ID.
+ */
+export async function deleteFromCloudinary(publicId: string): Promise<void> {
+  try {
+    const cloudinary = await getCloudinary();
+    await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+  } catch (error) {
+    console.error(`Failed to delete Cloudinary asset ${publicId}:`, error);
+  }
+}
+
