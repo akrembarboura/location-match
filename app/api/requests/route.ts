@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { CreateRentalRequestSchema } from "@/lib/rentals/request-schema";
 import { requestService } from "@/server/services/RequestService";

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { notificationService } from "@/server/services/NotificationService";
 import { requireRole } from "@/server/utils/auth-guards";

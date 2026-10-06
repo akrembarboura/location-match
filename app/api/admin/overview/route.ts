@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/server/utils/auth-guards";
 import connectToDatabase from "@/lib/mongoose";

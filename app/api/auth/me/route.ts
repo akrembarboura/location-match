@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { authService } from "@/server/services/AuthService";
 import { generateUserRateLimitKey } from "@/server/rate-limit/key";

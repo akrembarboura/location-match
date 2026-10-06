@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { propertyService } from "@/server/services/PropertyService";
 import { getClientIp } from "@/server/utils/client-ip";
