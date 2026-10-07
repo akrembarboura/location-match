@@ -42,3 +42,5 @@ scripts/
 diagnose-admin.ts
 test-admin-api.ts
 create-admin.ts
+
+*.tsbuildinfo
