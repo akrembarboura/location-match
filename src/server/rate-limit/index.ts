@@ -27,7 +27,10 @@ export async function rateLimit(key: string, policy: RateLimitPolicy): Promise<R
     };
   } catch {
     // Fail-closed for sensitive endpoints in production/test, Fail-open in development
-    const isSensitive = policy.name.startsWith("AUTH_") || policy.name === "ADMIN_API";
+    const isSensitive =
+      policy.name.startsWith("AUTH_") ||
+      policy.name === "ADMIN_API" ||
+      policy.name === "OWNER_UPLOAD";
     const failClosed = isSensitive && process.env.NODE_ENV !== "development";
     const logMessage = failClosed
       ? "Rate limit store unavailable; blocking request:"

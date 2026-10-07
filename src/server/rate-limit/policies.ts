@@ -4,7 +4,7 @@ import type { RateLimitPolicy } from "./types";
 // In production, conservative limits strictly apply to prevent credential stuffing and brute-force attacks.
 const isDev = process.env.NODE_ENV === "development";
 
-export const POLICIES: Record<string, RateLimitPolicy> = {
+export const POLICIES = {
   AUTH_LOGIN: { name: "AUTH_LOGIN", limit: isDev ? 500 : 10, windowMs: 15 * 60 * 1000 },
   AUTH_REGISTER: { name: "AUTH_REGISTER", limit: isDev ? 200 : 5, windowMs: 60 * 60 * 1000 },
   PUBLIC_API: { name: "PUBLIC_API", limit: isDev ? 2000 : 120, windowMs: 60 * 1000 },
@@ -12,4 +12,5 @@ export const POLICIES: Record<string, RateLimitPolicy> = {
   AUTHENTICATED_API: { name: "AUTHENTICATED_API", limit: isDev ? 2000 : 120, windowMs: 60 * 1000 },
   MUTATION: { name: "MUTATION", limit: isDev ? 500 : 30, windowMs: 60 * 1000 },
   ADMIN_API: { name: "ADMIN_API", limit: isDev ? 2000 : 120, windowMs: 60 * 1000 },
-};
+  OWNER_UPLOAD: { name: "OWNER_UPLOAD", limit: isDev ? 200 : 20, windowMs: 10 * 60 * 1000 },
+} satisfies Record<string, RateLimitPolicy>;

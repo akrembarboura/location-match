@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { rateLimit, _setStoreForTesting, rateLimitResponse } from "@/server/rate-limit";
 import { MemoryStore } from "@/server/rate-limit/store";
+import { POLICIES } from "@/server/rate-limit/policies";
 
 describe("Rate Limiter Core", () => {
   let store: MemoryStore;
@@ -55,6 +56,24 @@ describe("Rate Limiter Core", () => {
     });
 
     const result = await rateLimit("key1", { name: "AUTH_LOGIN", limit: 10, windowMs: 1000 });
+    expect(result.success).toBe(false);
+  });
+
+  it("uses a dedicated upload limit and fails closed when its store is unavailable", async () => {
+    expect(POLICIES.OWNER_UPLOAD).toMatchObject({
+      name: "OWNER_UPLOAD",
+      limit: 20,
+      windowMs: 10 * 60 * 1000,
+    });
+
+    _setStoreForTesting({
+      increment: () => Promise.reject(new Error("Store down")),
+    });
+
+    const result = await rateLimit(
+      "rate-limit:OWNER_UPLOAD:user-1",
+      POLICIES.OWNER_UPLOAD
+    );
     expect(result.success).toBe(false);
   });
 

@@ -3,11 +3,10 @@ import { randomUUID } from "crypto";
 import { requireOwnerAccess } from "@/server/utils/auth-guards";
 import { ownerAuthErrorResponse } from "@/server/utils/owner-api-errors";
 import { uploadToCloudinary, deleteFromCloudinary } from "@/server/utils/cloudinary";
-import { getClientIp } from "@/server/utils/client-ip";
-import { generateRateLimitKey } from "@/server/rate-limit/key";
+import { generateUserRateLimitKey } from "@/server/rate-limit/key";
 import { POLICIES } from "@/server/rate-limit/policies";
 import { rateLimit, rateLimitResponse } from "@/server/rate-limit";
-
+import { getClientIp } from "@/server/utils/client-ip";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -30,10 +29,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const user = await requireOwnerAccess();
-
+    // Rate Limiting
     const ip = getClientIp(req);
-    const rlKey = generateRateLimitKey(POLICIES.WRITE_API.name, user.id || ip);
-    const rlResult = await rateLimit(rlKey, POLICIES.WRITE_API);
+    const rlKey = generateUserRateLimitKey(POLICIES.OWNER_UPLOAD.name, user.id || ip);
+    const rlResult = await rateLimit(rlKey, POLICIES.OWNER_UPLOAD);
     if (!rlResult.success) return rateLimitResponse(rlResult);
 
     // Reject oversized bodies before parsing them

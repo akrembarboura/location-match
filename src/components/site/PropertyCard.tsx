@@ -86,7 +86,7 @@ export function PropertyCard({ property, compact }: { property: any; compact?: b
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <Link href={targetLink} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset">
           <div>
-            <h3 className="line-clamp-2 min-h-[2.75rem] font-display text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary motion-reduce:transition-none sm:text-xl">
+            <h3 className="line-clamp-2 min-h-11 font-display text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary motion-reduce:transition-none sm:text-xl">
               {property.title}
             </h3>
 
