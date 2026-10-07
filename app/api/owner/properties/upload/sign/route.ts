@@ -13,6 +13,38 @@ const FOLDER = "location-match/properties";
 const ALLOWED_FORMATS = "jpg,jpeg,png,webp,avif";
 const TRANSFORMATION = "c_limit,w_1600";
 
+class ConfigError extends Error {
+  constructor(public code: string) {
+    super(code);
+  }
+}
+
+// Reads CLOUDINARY_URL and reports WHAT is wrong, never the value itself.
+function readCloudinaryConfig() {
+  const raw = process.env.CLOUDINARY_URL?.trim();
+  if (!raw) throw new ConfigError("CLOUDINARY_URL_MISSING");
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new ConfigError("CLOUDINARY_URL_MALFORMED");
+  }
+  if (
+    parsed.protocol !== "cloudinary:" ||
+    !parsed.username ||
+    !parsed.password ||
+    !parsed.hostname
+  ) {
+    throw new ConfigError("CLOUDINARY_URL_INCOMPLETE");
+  }
+  return {
+    apiKey: parsed.username,
+    apiSecret: parsed.password,
+    cloudName: parsed.hostname,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireOwnerAccess();
@@ -24,12 +56,7 @@ export async function POST(req: NextRequest) {
     );
     if (!rl.success) return rateLimitResponse(rl);
 
-    const url = process.env.CLOUDINARY_URL?.trim();
-    if (!url) throw new Error("CLOUDINARY_URL is missing");
-    const parsed = new URL(url);
-    const apiKey = parsed.username;
-    const apiSecret = parsed.password;
-    const cloudName = parsed.hostname;
+    const { apiKey, apiSecret, cloudName } = readCloudinaryConfig();
 
     const { v2: cloudinary } = await import("cloudinary");
     const timestamp = Math.round(Date.now() / 1000);
@@ -39,13 +66,36 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json(
-      { signature, timestamp, apiKey, cloudName, folder: FOLDER, allowedFormats: ALLOWED_FORMATS, transformation: TRANSFORMATION },
+      {
+        signature,
+        timestamp,
+        apiKey,
+        cloudName,
+        folder: FOLDER,
+        allowedFormats: ALLOWED_FORMATS,
+        transformation: TRANSFORMATION,
+      },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
     const res = ownerAuthErrorResponse(error);
     if (res) return res;
-    console.error("POST /api/owner/properties/upload/sign error:", error instanceof Error ? error.stack : error);
+
+    if (error instanceof ConfigError) {
+      console.error("POST /api/owner/properties/upload/sign config error:", error.code);
+      return NextResponse.json(
+        {
+          error: "Le service de photos est momentanément indisponible. Réessayez plus tard.",
+          code: error.code,
+        },
+        { status: 503 }
+      );
+    }
+
+    console.error(
+      "POST /api/owner/properties/upload/sign error:",
+      error instanceof Error ? error.stack : error
+    );
     return NextResponse.json(
       { error: "Le service de photos est momentanément indisponible. Réessayez plus tard." },
       { status: 503 }

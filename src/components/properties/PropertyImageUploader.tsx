@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { UploadCloud, X, Loader2, Image as ImageIcon, Star } from "lucide-react";
+import { UploadCloud, X, Loader2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { uploadImages } from "@/lib/rentals/upload-images";
 
 export interface PropertyImageItem {
   id?: string;
@@ -42,23 +43,16 @@ export function PropertyImageUploader({
       setUploading(true);
       setError(null);
 
-      const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append("files", files[i]);
-      }
+      const uploaded = await uploadImages(Array.from(files));
+      const newImages = uploaded.map((img, index) => ({
+        id: `img-${Date.now()}-${index}`,
+        url: img.url,
+        publicId: img.publicId,
+        alt: `Photo ${images.length + index + 1}`,
+        sortOrder: images.length + index,
+      }));
 
-      const res = await fetch("/api/owner/properties/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Erreur lors du téléversement.");
-      }
-
-      const newImages = [...images, ...(data.images || [])];
-      onChange(newImages);
+      onChange([...images, ...newImages]);
     } catch (err: any) {
       setError(err.message || "Impossible de téléverser les photos. Veuillez réessayer.");
     } finally {
