@@ -7,6 +7,7 @@ import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
 import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
 import { analyticsRepository } from "../analytics/AnalyticsRepository";
 import crypto from "crypto";
+import { resolvePropertyPricing } from "@/lib/pricing/pricing.service";
 
 export class RequestService {
   /**
@@ -127,13 +128,9 @@ export class RequestService {
         }
       }
 
-      const propPrice =
-        property.pricing?.price ||
-        property.pricePerNight ||
-        (reqCategory === "summer" ? property.summerPrice : property.studentPrice) ||
-        0;
-      const propPeriod =
-        property.pricing?.pricePeriod || (reqCategory === "summer" ? "week" : "month");
+      const resolvedPricing = resolvePropertyPricing(property);
+      const propPrice = resolvedPricing.unitPrice;
+      const propPeriod = resolvedPricing.pricePeriod;
 
       const data: any = {
         id,
@@ -298,9 +295,10 @@ export class RequestService {
       bedrooms: selectedPropertyDoc.capacity?.bedrooms || selectedPropertyDoc.bedrooms,
       bathrooms: selectedPropertyDoc.capacity?.bathrooms || selectedPropertyDoc.bathrooms,
       guests: selectedPropertyDoc.capacity?.guests || selectedPropertyDoc.guests || selectedPropertyDoc.people,
-      pricing: selectedPropertyDoc.pricing || {
-        price: selectedPropertyDoc.pricePerNight || selectedPropertyDoc.summerPrice || selectedPropertyDoc.studentPrice,
-        pricePeriod: selectedPropertyDoc.pricing?.pricePeriod || (selectedPropertyDoc.rentalCategory === "student" ? "month" : "week"),
+      pricing: {
+        price: resolvePropertyPricing(selectedPropertyDoc).unitPrice,
+        pricePeriod: resolvePropertyPricing(selectedPropertyDoc).pricePeriod,
+        currency: resolvePropertyPricing(selectedPropertyDoc).currency,
       },
       availabilityStatus: selectedPropertyDoc.availabilityStatus || "AVAILABLE",
       reservation: selectedPropertyDoc.reservation || null,

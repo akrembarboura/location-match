@@ -116,7 +116,16 @@ export function HouseCard({ house }: { house: House }) {
             )}
           </div>
 
-          {Number.isFinite(house.pricePerNight) && house.pricePerNight > 0 && (
+          {house.pricing?.price ? (
+            <div className="mt-4">
+              <span className="font-display text-xl font-bold leading-tight text-foreground">
+                {formatPrice(house.pricing.price)} DT
+              </span>{" "}
+              <span className="text-sm font-medium text-muted-foreground">
+                / {house.pricing.pricePeriod === "month" ? "mois" : house.pricing.pricePeriod === "week" ? "semaine" : t.card.perNight}
+              </span>
+            </div>
+          ) : Number.isFinite(house.pricePerNight) && house.pricePerNight > 0 ? (
             <div className="mt-4">
               <span className="font-display text-xl font-bold leading-tight text-foreground">
                 {formatPrice(house.pricePerNight)} DT
@@ -125,7 +134,7 @@ export function HouseCard({ house }: { house: House }) {
                 / {house.rentalCategory === "student" ? "mois" : t.card.perNight}
               </span>
             </div>
-          )}
+          ) : null}
 
           <div className="mt-2.5 flex min-h-6 flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-muted-foreground">
             {house.guests > 0 && (

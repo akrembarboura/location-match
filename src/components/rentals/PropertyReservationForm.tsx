@@ -23,6 +23,7 @@ import { formatDT } from "@/lib/utils";
 import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
 import { UNIVERSITIES } from "@/lib/mock-data";
 import { trackEvent } from "@/lib/analytics/client";
+import { resolvePropertyPricing } from "@/lib/pricing/pricing.service";
 
 interface PropertyReservationFormProps {
   propertyId: string;
@@ -166,17 +167,27 @@ export function PropertyReservationForm({
     (typeof property.images?.[0] === "string" ? property.images[0] : null) ||
     property.coverImage;
 
-  const displayPrice =
-    normalizedCategory === "summer"
-      ? property.pricing?.price || property.pricePerNight || property.summerPrice || 0
-      : property.pricing?.price || property.studentPrice || property.pricePerNight || 0;
+  const PERIOD_LABELS = { night: "nuit", week: "semaine", month: "mois" } as const;
 
-  const displayPeriod =
-    normalizedCategory === "summer"
-      ? property.pricing?.pricePeriod === "night"
-        ? "nuit"
-        : "semaine"
-      : "mois";
+  let displayPrice = 0;
+  let displayPeriod = "nuit";
+  try {
+    const pricing = resolvePropertyPricing(property);
+    displayPrice = pricing.unitPrice;
+    displayPeriod = PERIOD_LABELS[pricing.pricePeriod];
+  } catch {
+    // Fallback to legacy logic if pricing resolution fails
+    displayPrice =
+      normalizedCategory === "summer"
+        ? property.pricing?.price || property.pricePerNight || property.summerPrice || 0
+        : property.pricing?.price || property.studentPrice || property.pricePerNight || 0;
+    displayPeriod =
+      normalizedCategory === "summer"
+        ? property.pricing?.pricePeriod === "night"
+          ? "nuit"
+          : "semaine"
+        : "mois";
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

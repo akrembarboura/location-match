@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/mongoose";
 import { calculateNights } from "@/lib/date-utils";
 import crypto from "node:crypto";
 import { ContactReleasePolicy } from "../services/ContactReleasePolicy";
+import { quoteForProperty } from "@/lib/pricing/pricing.service";
 
 export function formatCustomerContactForOwner(
   res: {
@@ -77,8 +78,14 @@ export class ReservationRepository {
 
       if (!existingRes) {
         const nights = calculateNights(checkInDate, checkOutDate);
-        const nightlyRate = prop.pricePerNight || prop.pricing?.price || prop.summerPrice || prop.studentPrice || 150;
-        const total = nightlyRate * nights;
+        let quote;
+        try {
+          quote = quoteForProperty(prop, checkInDate, checkOutDate);
+        } catch (err) {
+          console.error(`[pricing] skipped reservation for request ${req.id}:`, err);
+          continue;
+        }
+        const total = quote.total;
 
         // Check if there are existing payment records
         const resId = `LM-${new Date().getFullYear()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
@@ -103,11 +110,14 @@ export class ReservationRepository {
           guests: req.guests || req.people || 1,
           status: "CONFIRMED",
           pricing: {
-            pricePerNight: nightlyRate,
+            pricePerNight: nights > 0 ? Math.round((total / nights) * 1000) / 1000 : 0,
             totalNights: nights,
             subtotal: total,
             total,
-            currency: "TND",
+            unitPrice: quote.unitPrice,
+            pricePeriod: quote.pricePeriod,
+            quantity: quote.quantity,
+            currency: quote.currency,
           },
           paymentSummary: {
             paidAmount,
@@ -129,8 +139,14 @@ export class ReservationRepository {
           const checkInDate = new Date(prop.reservation.from);
           const checkOutDate = new Date(prop.reservation.to);
           const nights = calculateNights(checkInDate, checkOutDate);
-          const nightlyRate = prop.pricePerNight || prop.pricing?.price || prop.summerPrice || 150;
-          const total = nightlyRate * nights;
+          let quote;
+          try {
+            quote = quoteForProperty(prop, checkInDate, checkOutDate);
+          } catch (err) {
+            console.error(`[pricing] skipped reservation for property ${prop.id}:`, err);
+            continue;
+          }
+          const total = quote.total;
 
           const resId = `LM-${new Date().getFullYear()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
 
@@ -145,11 +161,14 @@ export class ReservationRepository {
             guests: prop.guests || 2,
             status: "CONFIRMED",
             pricing: {
-              pricePerNight: nightlyRate,
+              pricePerNight: nights > 0 ? Math.round((total / nights) * 1000) / 1000 : 0,
               totalNights: nights,
               subtotal: total,
               total,
-              currency: "TND",
+              unitPrice: quote.unitPrice,
+              pricePeriod: quote.pricePeriod,
+              quantity: quote.quantity,
+              currency: quote.currency,
             },
             paymentSummary: {
               paidAmount: 0,

@@ -8,6 +8,7 @@ import { ReservationModel, AuditLogModel } from "@/lib/models";
 import connectToDatabase from "@/lib/mongoose";
 import crypto from "node:crypto";
 import { z } from "zod";
+import { quoteForProperty } from "@/lib/pricing/pricing.service";
 
 export const dynamic = "force-dynamic";
 
@@ -73,8 +74,16 @@ export async function POST(
             const checkInDate = housingReq.checkIn ? new Date(housingReq.checkIn) : new Date();
             const checkOutDate = housingReq.checkOut ? new Date(housingReq.checkOut) : new Date(Date.now() + 3 * 86400000);
             const nights = calculateNights(checkInDate, checkOutDate);
-            const nightlyRate = prop.pricePerNight || prop.pricing?.price || 150;
-            const total = nightlyRate * nights;
+            let quote;
+            try {
+              quote = quoteForProperty(prop, checkInDate, checkOutDate);
+            } catch (err) {
+              return NextResponse.json(
+                { error: "Impossible de créer la réservation : le tarif du logement est manquant ou invalide." },
+                { status: 422 }
+              );
+            }
+            const total = quote.total;
 
             const resId = `LM-${new Date().getFullYear()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
 
@@ -91,11 +100,14 @@ export async function POST(
               guests: housingReq.guests || housingReq.people || 1,
               status: "CONFIRMED",
               pricing: {
-                pricePerNight: nightlyRate,
+                pricePerNight: nights > 0 ? Math.round((total / nights) * 1000) / 1000 : 0,
                 totalNights: nights,
                 subtotal: total,
                 total,
-                currency: "TND",
+                unitPrice: quote.unitPrice,
+                pricePeriod: quote.pricePeriod,
+                quantity: quote.quantity,
+                currency: quote.currency,
               },
               paymentSummary: {
                 paidAmount: 0,

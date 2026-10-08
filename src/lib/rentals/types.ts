@@ -42,6 +42,7 @@ export type House = {
   rentalCategory: RentalCategory;
   rentalCategories?: RentalCategory[];
   pricePerNight: number;
+  pricing?: { price?: number; pricePeriod?: string; currency?: string };
   currency: "TND";
   guests: number;
   bedrooms: number;

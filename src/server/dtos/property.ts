@@ -1,3 +1,5 @@
+import { resolvePropertyPricing } from "@/lib/pricing/pricing.service";
+
 export function normalizeImages(images: any[]) {
   if (!images || !Array.isArray(images)) return [];
   return images.map((img: any, idx: number) => {
@@ -29,6 +31,8 @@ export function normalizeImages(images: any[]) {
  */
 export function mapPropertyToPublicDTO(doc: any) {
   const normalizedImages = normalizeImages(doc.images);
+  const resolvedPricing = resolvePropertyPricing(doc);
+
   return {
     id: doc.id,
     title: doc.title,
@@ -40,21 +44,13 @@ export function mapPropertyToPublicDTO(doc: any) {
     area: doc.area || doc.location?.area || "",
     rentalCategory: doc.rentalCategory || "summer",
     rentalCategories: doc.rentalCategories || [doc.rentalCategory || "summer"],
-    pricePerNight:
-      doc.pricePerNight ||
-      (doc.pricing?.pricePeriod === "night"
-        ? doc.pricing?.price
-        : doc.pricing?.pricePeriod === "week"
-        ? Math.round((doc.pricing?.price || 0) / 7)
-        : doc.summerPrice
-        ? Math.round(doc.summerPrice / 7)
-        : doc.pricing?.price || 0),
+    pricePerNight: doc.pricePerNight || (resolvedPricing.pricePeriod === "night" ? resolvedPricing.unitPrice : resolvedPricing.unitPrice),
     pricing: {
-      price: doc.pricing?.price || doc.summerPrice || doc.pricePerNight || 0,
-      pricePeriod: doc.pricing?.pricePeriod || (doc.summerPrice ? "week" : "night"),
-      currency: doc.currency || doc.pricing?.currency || "TND",
+      price: resolvedPricing.unitPrice,
+      pricePeriod: resolvedPricing.pricePeriod,
+      currency: resolvedPricing.currency,
     },
-    currency: doc.currency || doc.pricing?.currency || "TND",
+    currency: resolvedPricing.currency,
     guests: doc.capacity?.guests || doc.guests || 1,
     bedrooms: doc.capacity?.bedrooms || doc.bedrooms || 1,
     bathrooms: doc.capacity?.bathrooms || doc.bathrooms || 1,
@@ -90,6 +86,8 @@ export function mapPropertyToPublicDTO(doc: any) {
  */
 export function mapPropertyToOwnerDTO(doc: any) {
   const normalizedImages = normalizeImages(doc.images);
+  const resolvedPricing = resolvePropertyPricing(doc);
+
   return {
     id: doc.id,
     slug: doc.slug,
@@ -112,10 +110,11 @@ export function mapPropertyToOwnerDTO(doc: any) {
       governorate: "Mahdia",
     },
     pricing: {
-      price: doc.pricing?.price || doc.summerPrice || doc.pricePerNight || 0,
-      pricePeriod: doc.pricing?.pricePeriod || "week",
-      currency: doc.currency || doc.pricing?.currency || "TND",
+      price: resolvedPricing.unitPrice,
+      pricePeriod: resolvedPricing.pricePeriod,
+      currency: resolvedPricing.currency,
     },
+    pricePerNight: doc.pricePerNight || (resolvedPricing.pricePeriod === "night" ? resolvedPricing.unitPrice : resolvedPricing.unitPrice),
     summerPrice: doc.summerPrice,
     studentPrice: doc.studentPrice,
     capacity: {
@@ -152,6 +151,8 @@ export function mapPropertyToOwnerDTO(doc: any) {
  */
 export function mapPropertyToAdminDTO(doc: any, ownerDoc?: any) {
   const normalizedImages = normalizeImages(doc.images);
+  const resolvedPricing = resolvePropertyPricing(doc);
+
   return {
     id: doc.id,
     slug: doc.slug,
@@ -174,10 +175,11 @@ export function mapPropertyToAdminDTO(doc: any, ownerDoc?: any) {
       governorate: "Mahdia",
     },
     pricing: {
-      price: doc.pricing?.price || doc.summerPrice || doc.pricePerNight || 0,
-      pricePeriod: doc.pricing?.pricePeriod || "week",
-      currency: doc.currency || doc.pricing?.currency || "TND",
+      price: resolvedPricing.unitPrice,
+      pricePeriod: resolvedPricing.pricePeriod,
+      currency: resolvedPricing.currency,
     },
+    pricePerNight: doc.pricePerNight || (resolvedPricing.pricePeriod === "night" ? resolvedPricing.unitPrice : resolvedPricing.unitPrice),
     summerPrice: doc.summerPrice || (doc.rentalCategory === "summer" ? doc.pricing?.price : undefined),
     studentPrice: doc.studentPrice || (doc.rentalCategory === "student" ? doc.pricing?.price : undefined),
     capacity: {

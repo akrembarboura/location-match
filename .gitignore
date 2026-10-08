@@ -44,3 +44,6 @@ test-admin-api.ts
 create-admin.ts
 
 *.tsbuildinfo
+
+# Kilo
+.kilo/

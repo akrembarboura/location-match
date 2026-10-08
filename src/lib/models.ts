@@ -372,6 +372,9 @@ const ReservationSchema = new Schema(
       subtotal: { type: Number, default: 0 },
       total: { type: Number, default: 0 },
       currency: { type: String, default: "TND" },
+      unitPrice: { type: Number },
+      pricePeriod: { type: String, enum: ["night", "week", "month"] },
+      quantity: { type: Number },
     },
     paymentSummary: {
       paidAmount: { type: Number, default: 0 },

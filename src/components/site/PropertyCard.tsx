@@ -101,19 +101,24 @@ export function PropertyCard({ property, compact }: { property: any; compact?: b
           </div>
 
           <div className="mt-4 space-y-0.5">
-            {hasSummerPrice ? (
+            {property.pricing?.price ? (
+              <p className="font-display text-xl font-bold leading-tight text-foreground">
+                {formatDT(property.pricing.price)} DT{" "}
+                <span className="text-sm font-medium text-muted-foreground">
+                  / {property.pricing.pricePeriod === "month" ? "mois" : property.pricing.pricePeriod === "week" ? "semaine" : "nuit"}
+                </span>
+              </p>
+            ) : hasSummerPrice ? (
               <p className="font-display text-xl font-bold leading-tight text-foreground">
                 {formatDT(summerPrice)} DT{" "}
                 <span className="text-sm font-medium text-muted-foreground">/ sem. · été</span>
               </p>
-            ) : null}
-            {hasStudentPrice ? (
+            ) : hasStudentPrice ? (
               <p className="font-display text-xl font-bold leading-tight text-foreground">
                 {formatDT(studentPrice)} DT{" "}
                 <span className="text-sm font-medium text-muted-foreground">/ mois · univ.</span>
               </p>
-            ) : null}
-            {!hasSummerPrice && !hasStudentPrice && hasNightlyPrice ? (
+            ) : hasNightlyPrice ? (
               <p className="font-display text-xl font-bold leading-tight text-foreground">
                 {formatDT(nightlyPrice)} DT{" "}
                 <span className="text-sm font-medium text-muted-foreground">/ nuit</span>
