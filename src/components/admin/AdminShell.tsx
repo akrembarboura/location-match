@@ -121,7 +121,7 @@ export function AdminShell({
       {/* Desktop Blue Sidebar Navigation */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-5 transition-all duration-300 lg:flex select-none",
+          "hidden shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-5 transition-all duration-300 lg:flex select-none sticky top-0 h-screen overflow-y-auto",
           isCollapsed ? "w-16 items-center px-2" : "w-60"
         )}
       >
