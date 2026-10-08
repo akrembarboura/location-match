@@ -4,6 +4,8 @@ import { PageShell } from "@/components/site/PageShell";
 import { StatusPill } from "@/components/site/PropertyCard";
 import { formatDT, getProperty } from "@/lib/mock-data";
 
+export const dynamic = "force-dynamic";
+
 
 
 function PropertyNotFound() {

@@ -149,10 +149,18 @@ function HouseDetail() {
                 Réservé {formatReservationRange(house.reservation?.from, house.reservation?.to)}
               </div>
             )}
-            <p className="text-foreground">
-              <span className="font-display text-2xl">{formatPrice(house.pricePerNight)} DT</span>{" "}
-              <span className="text-muted-foreground">{t.card.perNight}</span>
-            </p>
+            {(() => {
+              const displayPrice = house.pricing?.price || house.pricePerNight;
+              const period = house.pricing?.pricePeriod || (house.rentalCategory === "student" ? "month" : "night");
+              const periodLabel = period === "month" ? "mois" : period === "week" ? "semaine" : "nuit";
+
+              return (
+                <p className="text-foreground">
+                  <span className="font-display text-2xl">{formatPrice(displayPrice)} DT</span>{" "}
+                  <span className="text-muted-foreground">/ {periodLabel}</span>
+                </p>
+              );
+            })()}
             {/* Dynamic Reservation CTA */}
             {(() => {
               const reservationHref =
