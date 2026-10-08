@@ -7,6 +7,7 @@ import { NetworkErrorState } from "./NetworkErrorState";
 import { UnauthorizedState } from "./UnauthorizedState";
 import { ForbiddenState } from "./ForbiddenState";
 import { SkeletonGrid } from "./SkeletonGrid";
+import { LoadingThreeDotsJumping } from "./LoadingThreeDotsJumping";
 
 export interface AsyncStateContainerProps<T = any> {
   isLoading?: boolean;
@@ -56,9 +57,8 @@ export function AsyncStateContainer<T = any>({
   if (isLoading) {
     if (loadingFallback) return <>{loadingFallback}</>;
     return (
-      <div className="flex flex-col items-center justify-center p-12 rounded-xl border border-border bg-card text-center">
-        <SkeletonGrid count={3} />
-        {loadingText && <p className="mt-4 text-sm font-medium text-muted-foreground">{loadingText}</p>}
+      <div className="flex flex-col items-center justify-center p-12 rounded-xl border border-border bg-card text-center min-h-[220px]">
+        <LoadingThreeDotsJumping text={loadingText || "Chargement en cours…"} size="md" />
       </div>
     );
   }
