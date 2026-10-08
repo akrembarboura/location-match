@@ -97,6 +97,18 @@ export default function AdminPropertyReviewPage({
     fetchDetails();
   }, [id]);
 
+  useEffect(() => {
+    if (!loading && typeof window !== "undefined" && window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      const elem = document.getElementById(hash);
+      if (elem) {
+        setTimeout(() => {
+          elem.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 150);
+      }
+    }
+  }, [loading]);
+
   async function handleTakeCharge() {
     try {
       setActionLoading(true);
@@ -296,6 +308,24 @@ export default function AdminPropertyReviewPage({
 
   const price = property.pricing?.price || property.summerPrice || property.studentPrice || 0;
   const period = property.pricing?.pricePeriod === "month" ? "mois" : "semaine";
+
+  const effectiveAnalytics: PropertyPerformance = analyticsData || {
+    propertyId: id,
+    title: property?.title || "",
+    city: property?.city || "",
+    views: 0,
+    favorites: 0,
+    requests: property?.requestCount ?? 0,
+    proposals: 0,
+    acceptedProposals: 0,
+    reservations: property?.reservationCount ?? 0,
+    conversionRates: {
+      viewToRequest: 0,
+      requestToProposal: 0,
+      proposalToReservation: 0,
+      viewToReservation: 0,
+    },
+  };
 
   return (
     <AdminShell
@@ -619,89 +649,91 @@ export default function AdminPropertyReviewPage({
               </div>
             </div>
 
-            {/* Disponibilité & Réservation Card */}
-            <div id="reservation" className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4 scroll-mt-6">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  Disponibilité & Statut Règlement
-                </h3>
-                {property.availabilityStatus === "RESERVED" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    Réservée
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Disponible
-                  </span>
-                )}
-              </div>
+            {/* Disponibilité, Réservation & Performance Section Anchor */}
+            <div id="analytics" className="space-y-6 scroll-mt-6">
+              {/* Disponibilité & Réservation Card */}
+              <div id="reservation" className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    Disponibilité & Statut Règlement
+                  </h3>
+                  {property.availabilityStatus === "RESERVED" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Réservée
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Disponible
+                    </span>
+                  )}
+                </div>
 
-              {property.availabilityStatus === "RESERVED" ? (
-                <div className="space-y-3">
-                  <div className="rounded-lg bg-surface p-3 text-xs space-y-1 border border-border">
-                    <p className="text-muted-foreground">Période réservée :</p>
-                    <p className="font-semibold text-foreground text-sm">
-                      {property.reservation?.from && property.reservation?.to
-                        ? `Du ${new Date(property.reservation.from).toLocaleDateString("fr-FR")} au ${new Date(property.reservation.to).toLocaleDateString("fr-FR")}`
-                        : "Dates non définies"}
+                {property.availabilityStatus === "RESERVED" ? (
+                  <div className="space-y-3">
+                    <div className="rounded-lg bg-surface p-3 text-xs space-y-1 border border-border">
+                      <p className="text-muted-foreground">Période réservée :</p>
+                      <p className="font-semibold text-foreground text-sm">
+                        {property.reservation?.from && property.reservation?.to
+                          ? `Du ${new Date(property.reservation.from).toLocaleDateString("fr-FR")} au ${new Date(property.reservation.to).toLocaleDateString("fr-FR")}`
+                          : "Dates non définies"}
+                      </p>
+                      {property.reservation?.updatedAt && (
+                        <p className="text-[0.7rem] text-muted-foreground pt-1">
+                          Dernière mise à jour : {new Date(property.reservation.updatedAt).toLocaleDateString("fr-FR")}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => openReserveModal("update")}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface transition-colors"
+                      >
+                        <Calendar className="h-3.5 w-3.5" />
+                        Modifier les dates
+                      </button>
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={handleReleaseReservation}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Libérer le bien
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Le bien est actuellement ouvert à la location. Vous pouvez le marquer comme réservé avec une période définie.
                     </p>
-                    {property.reservation?.updatedAt && (
-                      <p className="text-[0.7rem] text-muted-foreground pt-1">
-                        Dernière mise à jour : {new Date(property.reservation.updatedAt).toLocaleDateString("fr-FR")}
+                    {isPublished ? (
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => openReserveModal("create")}
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary-dark transition-colors shadow-xs"
+                      >
+                        <Calendar className="h-3.5 w-3.5" />
+                        Marquer comme réservé
+                      </button>
+                    ) : (
+                      <p className="text-[0.75rem] text-muted-foreground italic">
+                        Seul un bien publié peut faire l'objet d'une réservation.
                       </p>
                     )}
                   </div>
+                )}
+              </div>
 
-                  <div className="flex flex-col gap-2">
-                    <button
-                      type="button"
-                      disabled={actionLoading}
-                      onClick={() => openReserveModal("update")}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface transition-colors"
-                    >
-                      <Calendar className="h-3.5 w-3.5" />
-                      Modifier les dates
-                    </button>
-                    <button
-                      type="button"
-                      disabled={actionLoading}
-                      onClick={handleReleaseReservation}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Libérer le bien
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    Le bien est actuellement ouvert à la location. Vous pouvez le marquer comme réservé avec une période définie.
-                  </p>
-                  {isPublished ? (
-                    <button
-                      type="button"
-                      disabled={actionLoading}
-                      onClick={() => openReserveModal("create")}
-                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary-dark transition-colors shadow-xs"
-                    >
-                      <Calendar className="h-3.5 w-3.5" />
-                      Marquer comme réservé
-                    </button>
-                  ) : (
-                    <p className="text-[0.75rem] text-muted-foreground italic">
-                      Seul un bien publié peut faire l'objet d'une réservation.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Performance & Analytics Card */}
-            <div id="analytics" className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4 scroll-mt-6">
+              {/* Performance & Analytics Card */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-border">
                   <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-primary" />
@@ -713,38 +745,38 @@ export default function AdminPropertyReviewPage({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="rounded-lg bg-surface/50 border border-border p-2.5">
                     <p className="text-muted-foreground text-[11px]">Vues de la fiche</p>
-                    <p className="font-display text-lg font-bold text-foreground mt-0.5">{analyticsData.views}</p>
+                    <p className="font-display text-lg font-bold text-foreground mt-0.5">{effectiveAnalytics.views}</p>
                   </div>
                   <div className="rounded-lg bg-surface/50 border border-border p-2.5">
                     <p className="text-muted-foreground text-[11px]">Favoris</p>
-                    <p className="font-display text-lg font-bold text-foreground mt-0.5">{analyticsData.favorites}</p>
+                    <p className="font-display text-lg font-bold text-foreground mt-0.5">{effectiveAnalytics.favorites}</p>
                   </div>
                   <div className="rounded-lg bg-surface/50 border border-border p-2.5">
                     <p className="text-muted-foreground text-[11px]">Demandes générées</p>
-                    <p className="font-display text-lg font-bold text-primary mt-0.5">{analyticsData.requests}</p>
+                    <p className="font-display text-lg font-bold text-primary mt-0.5">{effectiveAnalytics.requests}</p>
                   </div>
                   <div className="rounded-lg bg-surface/50 border border-border p-2.5">
                     <p className="text-muted-foreground text-[11px]">Propositions reçues</p>
-                    <p className="font-display text-lg font-bold text-foreground mt-0.5">{analyticsData.proposals}</p>
+                    <p className="font-display text-lg font-bold text-foreground mt-0.5">{effectiveAnalytics.proposals}</p>
                   </div>
                 </div>
 
                 <div className="space-y-1.5 pt-2 border-t border-border text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Taux Vue → Demande :</span>
-                    <span className="font-mono font-semibold text-foreground">{analyticsData.conversionRates.viewToRequest}%</span>
+                    <span className="font-mono font-semibold text-foreground">{effectiveAnalytics.conversionRates.viewToRequest}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Taux Demande → Proposition :</span>
-                    <span className="font-mono font-semibold text-foreground">{analyticsData.conversionRates.requestToProposal}%</span>
+                    <span className="font-mono font-semibold text-foreground">{effectiveAnalytics.conversionRates.requestToProposal}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Taux Vue → Réservation :</span>
-                    <span className="font-mono font-semibold text-primary">{analyticsData.conversionRates.viewToReservation}%</span>
+                    <span className="font-mono font-semibold text-primary">{effectiveAnalytics.conversionRates.viewToReservation}%</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Moderation History Timeline */}
             <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-3">
