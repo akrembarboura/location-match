@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const MAX_FILES = 10;
-const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB (Vercel body limit is ~4.5 MB)
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB upload size limit
 
 /** Detect real image type from the first bytes (the browser-provided type is not trusted). */
 function detectImageType(buf: Buffer): "jpeg" | "png" | "webp" | "avif" | null {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       if (file.size > MAX_FILE_SIZE) {
         return await failWithCleanup(
           uploadedIds,
-          NextResponse.json({ error: "Une image dépasse la taille maximale autorisée (4 Mo)." }, { status: 400 })
+          NextResponse.json({ error: "Une image dépasse la taille maximale autorisée (5 Mo)." }, { status: 400 })
         );
       }
 

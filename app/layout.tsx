@@ -15,11 +15,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>
           <div className="flex min-h-screen flex-col">
             <AnalyticsPageViewTracker />

@@ -461,6 +461,7 @@ export function PropertyReservationForm({
                   value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
                   min={new Date().toISOString().slice(0, 10)}
+                  suppressHydrationWarning
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -476,6 +477,7 @@ export function PropertyReservationForm({
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
                   min={checkIn || new Date().toISOString().slice(0, 10)}
+                  suppressHydrationWarning
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>

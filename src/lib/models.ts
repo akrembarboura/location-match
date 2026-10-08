@@ -16,6 +16,21 @@ const UserSchema = new Schema({
   lastName: String,
   phone: String,
   avatar: String,
+  resetPasswordToken: { type: String, index: true },
+  resetPasswordExpires: { type: Date },
+  verificationStatus: {
+    type: String,
+    enum: ["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"],
+    default: "UNVERIFIED",
+    index: true,
+  },
+  verificationType: {
+    type: String,
+    enum: ["CIN", "STUDENT_CARD", "PROPERTY_DEED"],
+  },
+  documentUrl: String,
+  verificationNote: String,
+  verifiedAt: Date,
 }, { timestamps: true });
 
 export const UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
@@ -252,6 +267,7 @@ const OwnerSchema = new Schema({
   area: String,
   properties: Number,
   since: String,
+  isVerified: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export const OwnerModel = mongoose.models.Owner || mongoose.model("Owner", OwnerSchema);

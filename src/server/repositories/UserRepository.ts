@@ -37,6 +37,40 @@ export class UserRepository {
     const query = isObjectId ? { $or: [{ id: userId }, { _id: userId }] } : { id: userId };
     return UserModel.findOneAndUpdate(query, { $set: { status } }, { returnDocument: "after" }).exec();
   }
+
+  async setResetToken(userId: string, token: string, expires: Date) {
+    await connectToDatabase();
+    const isObjectId = mongoose.Types.ObjectId.isValid(userId);
+    const query = isObjectId ? { $or: [{ id: userId }, { _id: userId }] } : { id: userId };
+    return UserModel.findOneAndUpdate(
+      query,
+      { $set: { resetPasswordToken: token, resetPasswordExpires: expires } },
+      { returnDocument: "after" }
+    ).exec();
+  }
+
+  async findByResetToken(token: string) {
+    await connectToDatabase();
+    if (!token) return null;
+    return UserModel.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() },
+    }).exec();
+  }
+
+  async updatePassword(userId: string, newPasswordHash: string) {
+    await connectToDatabase();
+    const isObjectId = mongoose.Types.ObjectId.isValid(userId);
+    const query = isObjectId ? { $or: [{ id: userId }, { _id: userId }] } : { id: userId };
+    return UserModel.findOneAndUpdate(
+      query,
+      {
+        $set: { passwordHash: newPasswordHash },
+        $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
+      },
+      { returnDocument: "after" }
+    ).exec();
+  }
 }
 
 export const userRepository = new UserRepository();

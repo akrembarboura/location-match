@@ -272,11 +272,9 @@ export default function AdminPropertyReviewPage({
 
   if (loading) {
     return (
-      <AdminShell title="Examen de l'annonce" subtitle="Chargement…">
-        <div className="flex h-96 items-center justify-center rounded-xl border border-border bg-card">
-          <LoadingThreeDotsJumping text="Chargement de la fiche annonce…" size="lg" />
-        </div>
-      </AdminShell>
+      <div className="flex h-96 items-center justify-center rounded-xl border border-border bg-card">
+        <LoadingThreeDotsJumping text="Chargement de la fiche annonce…" size="lg" />
+      </div>
     );
   }
 

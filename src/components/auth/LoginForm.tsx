@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuthMutations } from "@/lib/auth/api";
 import { LoginFormSchema, firstFieldErrors, type LoginFormValues } from "@/lib/auth/form-schemas";
 import { withCallbackUrl } from "@/lib/auth/redirect";
@@ -11,6 +12,8 @@ import { useAuthPageRedirect } from "./useAuthPageRedirect";
 type FieldName = keyof LoginFormValues;
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
   const { callbackUrl, isRedirecting } = useAuthPageRedirect();
   const { login } = useAuthMutations();
 
@@ -90,6 +93,12 @@ export function LoginForm() {
       }
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4" aria-describedby={formError ? "login-form-error" : undefined}>
+        {resetSuccess && (
+          <div className="rounded-lg bg-emerald-50 p-3.5 border border-emerald-200 text-xs text-emerald-800">
+            Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.
+          </div>
+        )}
+
         {formError && (
           <div id="login-form-error">
             <FormAlert>{formError}</FormAlert>
@@ -126,12 +135,14 @@ export function LoginForm() {
           readOnly={busy}
         />
 
-        <p className="text-right text-xs text-muted-foreground">
-          Mot de passe oublié ?{" "}
-          <a href="tel:+21626574203" className="font-medium text-primary underline-offset-4 hover:underline">
-            Contactez-nous
-          </a>
-        </p>
+        <div className="flex items-center justify-end text-xs">
+          <Link
+            href="/forgot-password"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
 
         <SubmitButton loading={busy} label="Se connecter" loadingLabel={isRedirecting ? "Redirection…" : "Connexion…"} />
       </form>

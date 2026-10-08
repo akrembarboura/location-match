@@ -24,7 +24,7 @@ export default function OwnerProfilePage() {
             </h3>
             <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary mt-1">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Compte Propriétaire Vérifié
+              Compte Propriétaire
             </span>
           </div>
         </div>

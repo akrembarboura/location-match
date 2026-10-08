@@ -63,3 +63,14 @@ export const RegisterSchema = z.object({
     .default("CUSTOMER"),
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
+
+export const ForgotPasswordSchema = z.object({
+  email: emailField,
+});
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().trim().min(1, "Le jeton de réinitialisation est requis."),
+  password: passwordField,
+});
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;

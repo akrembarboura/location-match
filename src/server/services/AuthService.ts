@@ -6,6 +6,7 @@ import { setSessionCookie, deleteSessionCookie } from "../utils/session-cookie";
 import { OwnerModel } from "@/lib/models";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { emailService } from "../notifications/email.service";
 
 export class AuthService {
   async register(input: RegisterInput) {
@@ -121,6 +122,55 @@ export class AuthService {
     }
 
     return mapUserToPrivateDTO(userDoc);
+  }
+
+  async requestPasswordReset(email: string) {
+    const userDoc = await userRepository.findByEmail(email);
+    // Generic message to avoid email enumeration attack
+    const genericResponse = {
+      message: "Si cette adresse e-mail est associée à un compte, vous recevrez un lien de réinitialisation.",
+    };
+
+    if (!userDoc) {
+      return genericResponse;
+    }
+
+    // Generate secure random token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+
+    await userRepository.setResetToken(userDoc.id || (userDoc._id as string), token, expires);
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+    // Dispatch transactional email asynchronously
+    emailService.sendPasswordResetEmail(userDoc.email, resetUrl).catch((err) => {
+      console.error("[AUTH] Failed to send password reset email:", err);
+    });
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[AUTH] Password reset link for ${email}: ${resetUrl}`);
+    }
+
+    return { ...genericResponse, resetUrl };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const userDoc = await userRepository.findByResetToken(token);
+    if (!userDoc) {
+      const err: any = new Error("Le jeton de réinitialisation est invalide ou a expiré.");
+      err.code = "INVALID_RESET_TOKEN";
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await userRepository.updatePassword(userDoc.id || (userDoc._id as string), passwordHash);
+
+    return { message: "Votre mot de passe a été réinitialisé avec succès." };
   }
 }
 
