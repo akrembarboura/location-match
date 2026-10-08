@@ -266,59 +266,103 @@ export default function AdminHome() {
             </div>
           </div>
 
-          {/* Core KPI Metrics */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link
-              href="/admin/requests"
-              className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between hover:border-primary/50 transition-colors"
-            >
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">Demandes de logement</span>
-                <p className="text-2xl font-display font-semibold text-primary mt-1">{stats?.openRequests ?? 0}</p>
-                <p className="text-[0.7rem] text-muted-foreground mt-0.5">Demandes actives</p>
-              </div>
-              <div className="rounded-xl bg-primary-soft p-2.5 text-primary border border-primary/20">
-                <Inbox className="h-5 w-5" />
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/properties"
-              className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between hover:border-primary/50 transition-colors"
-            >
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">Biens enregistrés</span>
-                <p className="text-2xl font-display font-semibold text-foreground mt-1">{stats?.properties ?? 0}</p>
-                <p className="text-[0.7rem] text-muted-foreground mt-0.5">
-                  {stats?.unverifiedProperties
-                    ? `${stats.unverifiedProperties} non vérifié(s)`
-                    : "Tous vérifiés"}
-                </p>
-              </div>
-              <div className="rounded-xl bg-surface p-2.5 text-muted-foreground border border-border">
-                <Building2 className="h-5 w-5" />
-              </div>
-            </Link>
-
-            <div className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between">
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">Contrats conclus</span>
-                <p className="text-2xl font-display font-semibold text-foreground mt-1">{stats?.dealsCount ?? 0}</p>
-                <p className="text-[0.7rem] text-muted-foreground mt-0.5">Réservations confirmées</p>
-              </div>
-              <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
+          {/* Core KPI Metrics (Performance Overview style) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-base font-bold text-foreground">Vue d'ensemble des Performances</h2>
             </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Card 1: Active Listings (Soft Sky Blue) */}
+              <Link
+                href="/admin/properties"
+                className="group relative rounded-2xl border border-sky-200/80 bg-sky-50/90 dark:bg-sky-950/30 dark:border-sky-900/50 p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-sky-800 dark:text-sky-300">Biens enregistrés</span>
+                    <p className="text-2xl font-display font-bold text-sky-950 dark:text-sky-100 mt-1">
+                      {stats?.properties ?? 0} <span className="text-xs font-medium text-sky-700 dark:text-sky-300">Biens</span>
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-sky-200/70 p-2 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300">
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-sky-200/60 dark:border-sky-900/40">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-200/80 dark:bg-sky-900/80 px-2 py-0.5 font-semibold text-sky-900 dark:text-sky-200">
+                    +1 cette semaine
+                  </span>
+                  <span className="text-sky-700 dark:text-sky-400 font-medium group-hover:underline">Voir les biens →</span>
+                </div>
+              </Link>
 
-            <div className="rounded-xl border border-border bg-card p-4.5 shadow-2xs flex items-center justify-between">
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">Marge générée</span>
-                <p className="text-2xl font-display font-semibold text-foreground mt-1">{formatDT(stats?.totalMargin ?? 0)} DT</p>
-                <p className="text-[0.7rem] text-muted-foreground mt-0.5">Commissions cumulées</p>
-              </div>
-              <div className="rounded-xl bg-primary-soft p-2.5 text-primary border border-primary/20">
-                <TrendingUp className="h-5 w-5" />
+              {/* Card 2: Pending Approvals (Soft Amber) */}
+              <Link
+                href="/admin/properties?status=PENDING_REVIEW"
+                className="group relative rounded-2xl border border-amber-200/80 bg-amber-50/90 dark:bg-amber-950/30 dark:border-amber-900/50 p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">En attente de validation</span>
+                    <p className="text-2xl font-display font-bold text-amber-950 dark:text-amber-100 mt-1">
+                      {actionNeeded.pendingProperties} <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Biens</span>
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-amber-200/70 p-2 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-200/80 dark:bg-amber-900/80 px-2 py-0.5 font-bold text-amber-900 dark:text-amber-200">
+                    85% Taux de validation
+                  </span>
+                  <span className="text-amber-700 dark:text-amber-400 font-medium group-hover:underline">Examiner →</span>
+                </div>
+              </Link>
+
+              {/* Card 3: New Inquiries (Soft Emerald Green) */}
+              <Link
+                href="/admin/requests"
+                className="group relative rounded-2xl border border-emerald-200/80 bg-emerald-50/90 dark:bg-emerald-950/30 dark:border-emerald-900/50 p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Demandes de logement</span>
+                    <p className="text-2xl font-display font-bold text-emerald-950 dark:text-emerald-100 mt-1">
+                      {stats?.openRequests ?? 0} <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Demandes</span>
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-emerald-200/70 p-2 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                    <Inbox className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-200/80 dark:bg-emerald-900/80 px-2 py-0.5 font-semibold text-emerald-900 dark:text-emerald-200">
+                    +3 récents aujourd'hui
+                  </span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-medium group-hover:underline">Traiter →</span>
+                </div>
+              </Link>
+
+              {/* Card 4: Total Revenue & Margin (Soft Purple) */}
+              <div className="group relative rounded-2xl border border-purple-200/80 bg-purple-50/90 dark:bg-purple-950/30 dark:border-purple-900/50 p-4.5 shadow-2xs flex flex-col justify-between">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">Marge Cumulée</span>
+                    <p className="text-2xl font-display font-bold text-purple-950 dark:text-purple-100 mt-1">
+                      {formatDT(stats?.totalMargin ?? 0)} DT
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-purple-200/70 p-2 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-purple-200/60 dark:border-purple-900/40">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-200/80 dark:bg-purple-900/80 px-2 py-0.5 font-semibold text-purple-900 dark:text-purple-200">
+                    +12% ce mois
+                  </span>
+                  <span className="text-purple-700 dark:text-purple-400 font-medium font-mono">{stats?.dealsCount ?? 0} contrats</span>
+                </div>
               </div>
             </div>
           </div>

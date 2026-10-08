@@ -175,82 +175,74 @@ export function AdminShell({
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="mt-auto space-y-2 pt-4 border-t border-sidebar-border/60 w-full">
+        <div className="mt-auto space-y-1.5 pt-4 border-t border-sidebar-border/60 w-full">
+          <Link
+            href="/"
+            title={isCollapsed ? "Retour au site" : undefined}
+            className={cn(
+              "flex items-center gap-2.5 rounded-lg py-2 text-xs text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors w-full",
+              isCollapsed ? "justify-center px-2" : "px-3"
+            )}
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0 text-sidebar-foreground/70" /> {!isCollapsed && <span>Retour au site</span>}
+          </Link>
           <button
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
             title={isCollapsed ? "Déconnexion" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg py-2 text-xs font-medium text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 transition-colors w-full",
+              "flex items-center gap-2.5 rounded-lg py-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-colors w-full",
               isCollapsed ? "justify-center px-2" : "px-3"
             )}
           >
-            <LogOut className="h-4 w-4 shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0 text-rose-400" />
             {!isCollapsed && <span>Déconnexion</span>}
           </button>
-          <Link
-            href="/"
-            title={isCollapsed ? "Retour au site" : undefined}
-            className={cn(
-              "flex items-center gap-2 text-xs text-sidebar-foreground/70 hover:text-sidebar-foreground py-1.5 transition-colors w-full",
-              isCollapsed ? "justify-center px-2" : "px-3"
-            )}
-          >
-            <ArrowLeft className="h-4 w-4 shrink-0" /> {!isCollapsed && <span>Retour au site</span>}
-          </Link>
         </div>
       </aside>
 
       {/* Main Container */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header Bar */}
-        <header className="border-b border-border bg-card px-4 py-3.5 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="font-display text-lg font-semibold text-foreground tracking-tight">{title}</h1>
-              {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
-            </div>
-
+        <header className="border-b border-border bg-card px-4 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Left Header Greeting / Title */}
             <div className="flex items-center gap-3">
-              {/* Notification Bell */}
-              <AdminNotificationBell />
-
-              {/* Interactive Profile Avatar & Dropdown Menu */}
-              <div id="admin-user-profile-menu" className="relative pl-3 border-l border-border">
+              <div id="admin-user-profile-menu" className="relative">
                 <button
                   type="button"
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-2.5 rounded-lg p-1 hover:bg-surface transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex items-center gap-2.5 rounded-xl p-1 hover:bg-surface transition-colors focus:outline-none"
                   aria-expanded={profileMenuOpen}
                   aria-haspopup="true"
-                  title="Menu profil administrateur"
+                  title="Menu profil"
                 >
                   {user?.avatar ? (
                     <img
                       src={user.avatar}
                       alt={displayName}
-                      className="h-8 w-8 rounded-full object-cover border border-border shadow-2xs shrink-0"
+                      className="h-10 w-10 rounded-full object-cover border border-border shadow-2xs shrink-0"
                     />
                   ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-primary border border-primary/20 text-xs font-bold shadow-2xs shrink-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-primary border border-primary/20 text-xs font-bold shadow-2xs shrink-0">
                       {userInitials}
                     </div>
                   )}
-                  <div className="hidden md:block text-left">
-                    <span className="block font-semibold text-xs text-foreground truncate max-w-[130px]">
-                      {displayName}
+                  <div className="text-left">
+                    <span className="flex items-center gap-1 font-display text-xs font-bold text-foreground">
+                      Bonjour, {user?.firstName || displayName.split(" ")[0]} 👋
+                      <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform ml-0.5", profileMenuOpen && "rotate-180")} />
                     </span>
-                    <span className="block text-[0.65rem] text-muted-foreground uppercase font-medium tracking-wider">
-                      {user?.role || "ADMIN"}
+                    <span className="block text-[0.7rem] text-muted-foreground truncate max-w-[220px]">
+                      {subtitle || "Gérer vos logements, demandes et performances"}
                     </span>
                   </div>
-                  <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform hidden md:block", profileMenuOpen && "rotate-180")} />
                 </button>
 
                 {/* Dropdown Card */}
                 {profileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-card p-3 shadow-raised z-50 animate-in fade-in-50 zoom-in-95">
+                  <div className="absolute left-0 mt-2 w-64 rounded-xl border border-border bg-card p-3 shadow-raised z-50 animate-in fade-in-50 zoom-in-95">
                     <div className="flex items-center gap-3 p-2 rounded-lg bg-surface/60 border border-border/50 mb-2">
                       {user?.avatar ? (
                         <img
@@ -302,12 +294,26 @@ export function AdminShell({
                         className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                       >
                         <span>Se déconnecter</span>
-                        <LogOut className="h-3.5 w-3.5" />
+                        <LogOut className="h-3.5 w-3.5 text-rose-500" />
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Right Header Actions */}
+            <div className="flex items-center gap-3">
+              {/* Notification Bell */}
+              <AdminNotificationBell />
+
+              {/* Action CTA Button */}
+              <Link
+                href="/admin/properties"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-2xs hover:bg-primary/90 transition-colors"
+              >
+                <span>+ Gérer les annonces</span>
+              </Link>
             </div>
           </div>
 
