@@ -80,3 +80,4 @@ SEARCH AUDIT SUMMARY
   - Missing amenity multi-select filters
   - Static "Aucun résultat" empty state without recovery recommendations
 ```
+

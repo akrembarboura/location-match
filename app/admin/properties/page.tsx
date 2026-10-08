@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AsyncStateContainer } from "@/components/shared/AsyncStateContainer";
 import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
 import { formatDT } from "@/lib/utils";
 import {
@@ -140,31 +141,38 @@ export default function AdminProperties() {
 
       {/* Main Table */}
       <div className="mt-6">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-12 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-3 text-sm text-muted-foreground">Chargement des biens…</p>
-          </div>
-        ) : error ? (
-          <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-            <AlertCircle className="h-5 w-5 shrink-0" />
-            <p className="font-medium">{error}</p>
-          </div>
-        ) : properties.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-12 text-center">
-            <div className="rounded-full bg-surface p-3 text-muted-foreground mb-3">
-              <Building2 className="h-6 w-6" />
-            </div>
-            <h3 className="font-display text-base font-semibold text-foreground">
-              Aucune annonce dans cette catégorie
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {selectedStatus === "PENDING_REVIEW"
-                ? "Toutes les demandes de publication ont été traitées."
-                : "Aucun bien ne correspond au filtre sélectionné."}
-            </p>
-          </div>
-        ) : (
+        <AsyncStateContainer
+          isLoading={loading}
+          loadingText="Chargement des biens immobiliers…"
+          isError={Boolean(error)}
+          errorMessage={error || undefined}
+          isEmpty={properties.length === 0}
+          emptyTitle="Aucune annonce dans cette catégorie"
+          emptyDescription={
+            selectedStatus === "PENDING_REVIEW"
+              ? "Toutes les demandes de publication ont été traitées."
+              : "Aucun bien ne correspond au filtre sélectionné."
+          }
+          onRetry={() => {
+            setLoading(true);
+            setError(null);
+            const url =
+              selectedStatus === "ALL"
+                ? "/api/admin/properties"
+                : `/api/admin/properties?status=${selectedStatus}`;
+            fetch(url)
+              .then((res) => {
+                if (!res.ok) throw new Error("Erreur de chargement des biens.");
+                return res.json();
+              })
+              .then((data) => {
+                setProperties(data.properties || []);
+                if (data.counts) setCounts(data.counts);
+              })
+              .catch((err) => setError(err.message))
+              .finally(() => setLoading(false));
+          }}
+        >
           <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-xs">
             <table className="w-full text-sm text-left">
               <thead className="bg-surface text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
@@ -241,7 +249,7 @@ export default function AdminProperties() {
               </tbody>
             </table>
           </div>
-        )}
+        </AsyncStateContainer>
       </div>
     </AdminShell>
   );

@@ -113,3 +113,4 @@ location_match/
 1. **Model Fragmentation:** Currently, all Mongoose models reside in a single file (`src/lib/models.ts`). In Phase 2, models will be audited and split into domain-focused models (`src/server/models/`).
 2. **Missing Core Models:** Categories, Locations (Governorate/City/Area), Audit Logs, and Payment Transactions require explicit Mongoose models to support future marketplace scale.
 3. **Domain Lifecycle Alignment:** Property, Request, Reservation, and Payment lifecycles must be formalized into explicit state machines (Phases 2 & 3).
+

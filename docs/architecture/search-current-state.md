@@ -58,3 +58,4 @@ In the LOC MAISON MongoDB database (`PropertyModel`), a property is defined as *
 
 3. **Empty Results Handling:**
    - Returning `[]` when no properties match results in a generic empty container without contextual suggestions (e.g. shifting dates or removing filters).
+

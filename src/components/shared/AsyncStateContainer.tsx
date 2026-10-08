@@ -8,12 +8,16 @@ import { UnauthorizedState } from "./UnauthorizedState";
 import { ForbiddenState } from "./ForbiddenState";
 import { SkeletonGrid } from "./SkeletonGrid";
 
-export interface AsyncStateContainerProps<T> {
+export interface AsyncStateContainerProps<T = any> {
   isLoading?: boolean;
+  loadingText?: string;
   isError?: boolean;
   error?: unknown;
+  errorMessage?: string;
   data?: T[] | null;
   isEmpty?: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
   isUnauthorized?: boolean;
   isForbidden?: boolean;
   isNetworkError?: boolean;
@@ -25,15 +29,19 @@ export interface AsyncStateContainerProps<T> {
   emptyProps?: EmptyStateProps;
   emptyFallback?: React.ReactNode;
   
-  children: (data: T[]) => React.ReactNode;
+  children?: React.ReactNode | ((data: T[]) => React.ReactNode);
 }
 
-export function AsyncStateContainer<T>({
+export function AsyncStateContainer<T = any>({
   isLoading,
+  loadingText,
   isError,
   error,
+  errorMessage,
   data,
   isEmpty,
+  emptyTitle,
+  emptyDescription,
   isUnauthorized,
   isForbidden,
   isNetworkError,
@@ -46,7 +54,13 @@ export function AsyncStateContainer<T>({
 }: AsyncStateContainerProps<T>) {
   // 1. Loading State
   if (isLoading) {
-    return <>{loadingFallback || <SkeletonGrid />}</>;
+    if (loadingFallback) return <>{loadingFallback}</>;
+    return (
+      <div className="flex flex-col items-center justify-center p-12 rounded-xl border border-border bg-card text-center">
+        <SkeletonGrid count={3} />
+        {loadingText && <p className="mt-4 text-sm font-medium text-muted-foreground">{loadingText}</p>}
+      </div>
+    );
   }
 
   // 2. Unauthorized State
@@ -67,9 +81,9 @@ export function AsyncStateContainer<T>({
   // 5. Error State
   if (isError) {
     if (errorFallback) return <>{errorFallback}</>;
-    const errorMessage =
-      error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-    return <ErrorState message={errorMessage} onRetry={onRetry} />;
+    const resolvedErrorMessage =
+      errorMessage || (error instanceof Error ? error.message : "Une erreur inattendue est survenue.");
+    return <ErrorState message={resolvedErrorMessage} onRetry={onRetry} />;
   }
 
   // 6. Empty State
@@ -80,8 +94,9 @@ export function AsyncStateContainer<T>({
     if (emptyFallback) return <>{emptyFallback}</>;
     return (
       <EmptyState
-        title={emptyProps?.title || "Aucun résultat disponible"}
+        title={emptyTitle || emptyProps?.title || "Aucun résultat disponible"}
         description={
+          emptyDescription ||
           emptyProps?.description ||
           "Aucune donnée ne correspond à vos critères pour le moment."
         }
@@ -94,5 +109,9 @@ export function AsyncStateContainer<T>({
   }
 
   // 7. Success State
-  return <>{children((data || []) as T[])}</>;
+  if (typeof children === "function") {
+    return <>{children((data || []) as T[])}</>;
+  }
+
+  return <>{children}</>;
 }

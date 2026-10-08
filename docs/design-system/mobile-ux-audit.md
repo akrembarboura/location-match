@@ -40,3 +40,4 @@ LOC MAISON was audited across 6 target device breakpoints:
 ### 2.5 Data Tables on Mobile
 - **Current State:** Tables in Admin (`/admin/properties`, `/admin/requests`) use horizontal overflow scrolling (`overflow-x-auto`).
 - **Recommendation:** Replace wide desktop tables on screens < 768px with responsive card/list item primitives.
+

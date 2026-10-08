@@ -75,3 +75,4 @@ The application requires the following environment variables (secrets excluded):
 ## 6. Baseline Tag / Snapshot Verification
 
 Baseline freeze tag: `v0.1.0-baseline` created on `main`.
+

@@ -123,3 +123,4 @@ Recovered Search ➔ Property View Conversion Rate (%) =
                                    ▼
                Reservation Confirmed [RESERVATION_CONFIRMED]
 ```
+

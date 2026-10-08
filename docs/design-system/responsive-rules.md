@@ -25,3 +25,4 @@
 3. **Safe Area Inset Handling:** All fixed bottom elements (e.g. `<MobileTabBar />` or sticky CTAs) MUST include `pb-[env(safe-area-inset-bottom)]`.
 4. **Bottom Padding on Page Containers:** Page containers on mobile MUST specify `pb-24` to prevent content from being hidden behind the fixed bottom tab bar.
 5. **Mobile Drawer Filters:** Mobile search filters MUST use `<Sheet>` or `<Drawer>` overlays rather than expanding long inline lists.
+

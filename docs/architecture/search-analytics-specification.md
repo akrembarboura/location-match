@@ -121,3 +121,4 @@ export interface PropertyCardClickedEventPayload {
 - ❌ **No Sensitive PII:** Passwords, payment card info, and exact street numbers are excluded.
 - ✅ **Hashed IP Addresses:** Client IP is used solely for rate limiting and coarse geolocation (City level), then discarded.
 - ✅ **Retention Policy:** Behavioral events in `AnalyticsEventModel` carry a 90-day MongoDB TTL index (`expireAfterSeconds: 7776000`).
+

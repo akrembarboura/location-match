@@ -88,3 +88,4 @@ When an anonymous visitor logs in or registers:
                           ▼
               PAYMENT_SUCCEEDED (Server)
 ```
+

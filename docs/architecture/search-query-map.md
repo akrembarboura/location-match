@@ -73,3 +73,4 @@ Existing indexes defined in `PropertySchema` (`src/lib/models.ts`):
 - `{ status: 1, city: 1, rentalCategory: 1 }` (Compound index for public search queries)
 - `{ availabilityStatus: 1, "reservation.from": 1, "reservation.to": 1 }` (Index for date collision checks)
 - `{ ownerId: 1, createdAt: -1 }` (Index for owner property management)
+

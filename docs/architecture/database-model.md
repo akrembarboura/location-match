@@ -186,3 +186,4 @@ src/lib/models.ts (All-in-one file)  -> Split into domain files: src/server/mode
   - [Missing]                          -> Review (NEW)
   - [Missing]                          -> Message (NEW)
 ```
+

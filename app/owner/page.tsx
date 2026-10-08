@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { OwnerShell } from "@/components/owner/OwnerShell";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { AsyncStateContainer } from "@/components/shared/AsyncStateContainer";
 import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
 import { formatDT } from "@/lib/utils";
 import { withCallbackUrl } from "@/lib/auth/redirect";
@@ -231,18 +232,79 @@ export default function OwnerPage() {
       title={`Bonjour, ${displayName}`}
       subtitle="Voici l'état de vos locations et activités opérationnelles."
     >
-      {loading ? (
-        <div className="flex flex-col items-center justify-center p-16 rounded-xl border border-border bg-card">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="mt-3 text-sm text-muted-foreground">Chargement des données en direct…</p>
-        </div>
-      ) : error ? (
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <p className="font-medium">{error}</p>
-        </div>
-      ) : (
+      <AsyncStateContainer
+        isLoading={loading}
+        loadingText="Chargement des données de votre espace propriétaire…"
+        isError={Boolean(error)}
+        errorMessage={error || undefined}
+        onRetry={() => {
+          setLoading(true);
+          setError(null);
+          fetch("/api/owner/overview")
+            .then((res) => {
+              if (!res.ok) throw new Error("Impossible de charger votre tableau de bord.");
+              return res.json();
+            })
+            .then((json) => setData(json))
+            .catch((err) => setError(err.message))
+            .finally(() => setLoading(false));
+        }}
+      >
         <div className="space-y-8">
+          {/* Quick Actions Bar */}
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+            <Link
+              href="/owner/list-property"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-4 hover:border-primary/50 transition-colors shadow-2xs group"
+            >
+              <div className="rounded-lg bg-primary/10 p-2.5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <PlusCircle className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-xs sm:text-sm text-foreground block truncate">Ajouter un bien</span>
+                <span className="text-[0.7rem] text-muted-foreground hidden sm:block">Créer une annonce</span>
+              </div>
+            </Link>
+
+            <Link
+              href="/owner/calendar"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-4 hover:border-primary/50 transition-colors shadow-2xs group"
+            >
+              <div className="rounded-lg bg-sky-500/10 p-2.5 text-sky-600 dark:text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-xs sm:text-sm text-foreground block truncate">Calendrier</span>
+                <span className="text-[0.7rem] text-muted-foreground hidden sm:block">Planning & Arrivées</span>
+              </div>
+            </Link>
+
+            <Link
+              href="/owner/payments"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-4 hover:border-primary/50 transition-colors shadow-2xs group"
+            >
+              <div className="rounded-lg bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-xs sm:text-sm text-foreground block truncate">Paiements</span>
+                <span className="text-[0.7rem] text-muted-foreground hidden sm:block">Encaissements</span>
+              </div>
+            </Link>
+
+            <Link
+              href="/owner/requests"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-4 hover:border-primary/50 transition-colors shadow-2xs group"
+            >
+              <div className="rounded-lg bg-emerald-500/10 p-2.5 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-xs sm:text-sm text-foreground block truncate">Demandes</span>
+                <span className="text-[0.7rem] text-muted-foreground hidden sm:block">Réservations reçues</span>
+              </div>
+            </Link>
+          </div>
           {/* SECTION 22: DASHBOARD TODAY SUMMARY BOX */}
           <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xs">
             <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-4">
@@ -469,7 +531,7 @@ export default function OwnerPage() {
             )}
           </div>
         </div>
-      )}
+      </AsyncStateContainer>
     </OwnerShell>
   );
 }

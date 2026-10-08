@@ -134,3 +134,4 @@ Archive)▼
   2. Owner receives cash on-site or via deposit and clicks "Confirm Cash Receipt" (`POST /api/owner/reservations/[id]/report-cash`). Status updates to `REPORTED`.
   3. Admin verifies transaction or system auto-reconciles -> Status becomes `VERIFIED` / `SUCCEEDED`.
 - **Payment Methods Supported:** `CASH`, `BANK_TRANSFER`, `D17`, `ONLINE`.
+

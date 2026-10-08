@@ -38,3 +38,4 @@ TASK 21 refactored the customer property search experience on `/properties` to c
                                   ▼
       [ PropertyCard Grid rendered with Real Database Properties ]
 ```
+
