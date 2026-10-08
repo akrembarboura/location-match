@@ -49,7 +49,6 @@ export function PropertyReservationForm({
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [university, setUniversity] = useState("");
   const [message, setMessage] = useState("");
 
   // Submission state
@@ -261,10 +260,6 @@ export function PropertyReservationForm({
         guests: Number(guests) || 1,
         message: message.trim() || undefined,
       };
-
-      if (normalizedCategory === "student" && university.trim()) {
-        payload.university = university.trim();
-      }
 
       const res = await fetch("/api/requests", {
         method: "POST",
@@ -525,25 +520,6 @@ export function PropertyReservationForm({
               <Building2 className="h-4 w-4 text-primary" />
               Étape 2 sur 3 — Précisions & Remarques
             </h3>
-
-            {normalizedCategory === "student" && (
-              <div>
-                <label htmlFor="res-university" className="block text-xs font-medium text-foreground mb-1">
-                  Université / Faculté (facultatif)
-                </label>
-                <div className="relative">
-                  <GraduationCap className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <input
-                    id="res-university"
-                    type="text"
-                    placeholder="Ex. FSEG Mahdia, ISI, ISET..."
-                    value={university}
-                    onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-            )}
 
             <div>
               <label htmlFor="res-message" className="block text-xs font-medium text-foreground mb-1">

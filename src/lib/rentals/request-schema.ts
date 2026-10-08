@@ -162,7 +162,6 @@ export const SummerRequestSchema = baseSchema
 export const StudentRequestSchema = baseSchema.extend({
   rentalCategory: z.literal("student"),
   destination: z.string().trim().min(1, "Veuillez choisir une ville / destination."),
-  university: z.string().trim().min(1, "Veuillez indiquer votre université."),
   checkIn: isoDate,
   checkOut: isoDate.optional(),
   students: z.coerce.number().int().min(1, "Au moins 1 étudiant.").max(12).default(1),
@@ -183,7 +182,6 @@ export const PropertyReservationSchema = z
     checkOut: isoDate.optional(),
     guests: z.coerce.number().int().min(1, "Au moins 1 personne.").max(30).default(1),
     message: z.string().trim().max(1000).optional(),
-    university: z.string().trim().optional(),
   })
   .refine(
     (data) => {

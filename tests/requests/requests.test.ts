@@ -84,13 +84,12 @@ describe("Rental Request Workflow & Tunisian Validation", () => {
       expect(res.budgetPeriod).toBe("stay");
     });
 
-    it("creates a student request with university and monthly budget", async () => {
+    it("creates a student request without university and with monthly budget", async () => {
       const input = {
         rentalCategory: "student" as const,
         fullName: "Sarra Trabelsi",
         phone: "+216 98 765 432",
         destination: "Mahdia",
-        university: "FSEG Mahdia",
         checkIn: "2026-09-01",
         students: 2,
         budget: 300,
@@ -106,8 +105,26 @@ describe("Rental Request Workflow & Tunisian Validation", () => {
       expect(res.rentalCategory).toBe("student");
 
       const saved = await HousingRequestModel.findOne({ id: res.id }).lean();
-      expect(saved?.university).toBe("FSEG Mahdia");
+      expect(saved?.university).toBeUndefined();
       expect(saved?.customer?.phone).toBe("+21698765432");
+    });
+
+    it("preserves historical records with university when reading request details", async () => {
+      // Direct insertion simulating an old document created before university field removal
+      const oldDoc = await HousingRequestModel.create({
+        id: "REQ-2025-HIST",
+        rentalCategory: "student",
+        destination: "Mahdia",
+        university: "FSEG Mahdia (Historical)",
+        customer: { fullName: "Old Student", phone: "+21698000111" },
+        checkIn: "2025-09-01",
+        budget: 280,
+        budgetPeriod: "month",
+        status: "PENDING",
+      });
+
+      const clientView = await requestService.getClientRequest(oldDoc.id);
+      expect(clientView?.university).toBe("FSEG Mahdia (Historical)");
     });
 
     it("prevents client from seeing internal adminNotes", async () => {

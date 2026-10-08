@@ -160,10 +160,6 @@ export class RequestService {
         people: requestedGuests,
       };
 
-      if (reqCategory === "student" && (input as any).university) {
-        data.university = (input as any).university;
-      }
-
       const doc = await requestRepository.create(data);
 
       try {
@@ -227,7 +223,6 @@ export class RequestService {
       data.people = genericInput.guests;
       data.customer_name = genericInput.fullName;
     } else {
-      data.university = genericInput.university;
       data.checkIn = genericInput.checkIn;
       data.checkOut = genericInput.checkOut;
       data.guests = genericInput.students || genericInput.guests;

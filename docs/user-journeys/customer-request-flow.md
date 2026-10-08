@@ -35,7 +35,7 @@ To maximize conversion and minimize friction on mobile and desktop, request form
 
 ### Step 1: Stay & Capacity
 - **Summer / Direct Property**: `checkIn`, `checkOut`, `guests` count (validated against `maxCapacity`).
-- **Student**: `destination`, `university` (FSEG, ISI, ISET, ISAM, etc.), `checkIn` date, `students` count.
+- **Student**: `destination`, `checkIn` date, `students` count.
 
 ### Step 2: Requirements & Preferences
 - **Summer**: `propertyType`, `budget` (total or per week), `amenities` (Piscine, Climatisation, Vue mer, etc.), optional `message`.

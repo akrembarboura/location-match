@@ -599,7 +599,6 @@ export function StudentRequestForm() {
 
   // Academic / Stay
   const [destination, setDestination] = useState("Mahdia");
-  const [university, setUniversity] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [students, setStudents] = useState("1");
@@ -628,10 +627,6 @@ export function StudentRequestForm() {
 
   function validateStep1(): boolean {
     setError(null);
-    if (!university.trim()) {
-      setError("Veuillez choisir ou indiquer votre université / faculté.");
-      return false;
-    }
     if (!checkIn) {
       setError("Veuillez indiquer votre date d'emménagement souhaitée.");
       return false;
@@ -684,7 +679,6 @@ export function StudentRequestForm() {
         phone: normalizedPhone,
         email: email.trim() || undefined,
         destination,
-        university,
         checkIn,
         checkOut: checkOut || undefined,
         students: Number(students) || 1,
@@ -810,14 +804,6 @@ export function StudentRequestForm() {
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     placeholder="Sélectionnez une ville"
-                  />
-                </Field>
-                <Field label="Université / Faculté *">
-                  <SelectField
-                    options={UNIVERSITIES}
-                    value={university}
-                    onChange={(e) => setUniversity(e.target.value)}
-                    placeholder="Où étudiez-vous ?"
                   />
                 </Field>
                 <Field label="Date d'emménagement souhaitée *">
@@ -982,7 +968,7 @@ export function StudentRequestForm() {
 
               <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
                 <div>
-                  <span className="font-medium text-foreground">Université :</span> {university || "—"} ({destination})
+                  <span className="font-medium text-foreground">Destination d&apos;études :</span> {destination}
                 </div>
                 <div>
                   <span className="font-medium text-foreground">Emménagement :</span> {checkIn}
