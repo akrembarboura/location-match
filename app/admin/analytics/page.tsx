@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell, StatCard } from "@/components/admin/AdminShell";
 import type { AdminAnalyticsOverview, PropertyPerformance } from "@/lib/analytics/types";
+import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
 import {
   Loader2,
   AlertCircle,
@@ -122,11 +123,8 @@ export default function AdminAnalyticsPage() {
       </section>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-16 text-center shadow-2xs">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="mt-3 text-xs text-muted-foreground">
-            Agrégation des métriques en temps réel…
-          </p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-16 text-center shadow-2xs min-h-[300px]">
+          <LoadingThreeDotsJumping text="Agrégation des métriques en temps réel…" size="md" />
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 p-10 text-center">

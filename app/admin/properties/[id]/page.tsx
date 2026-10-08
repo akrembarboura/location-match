@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
+import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
 import { formatDT } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -272,8 +273,8 @@ export default function AdminPropertyReviewPage({
   if (loading) {
     return (
       <AdminShell title="Examen de l'annonce" subtitle="Chargement…">
-        <div className="flex h-96 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex h-96 items-center justify-center rounded-xl border border-border bg-card">
+          <LoadingThreeDotsJumping text="Chargement de la fiche annonce…" size="lg" />
         </div>
       </AdminShell>
     );

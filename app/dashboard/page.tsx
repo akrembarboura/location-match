@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell } from "@/components/site/PageShell";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
 import { Calendar, MapPin, Users, ArrowRight, Loader2, AlertCircle, Inbox } from "lucide-react";
 
 interface CustomerRequest {
@@ -79,8 +80,7 @@ export default function CustomerDashboard() {
 
         {authLoading || loading ? (
           <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-border bg-card p-12 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-3 text-sm text-muted-foreground">Chargement de vos demandes…</p>
+            <LoadingThreeDotsJumping text="Chargement de vos demandes…" size="md" />
           </div>
         ) : error ? (
           <div className="mt-8 flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">

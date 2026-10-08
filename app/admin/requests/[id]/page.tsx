@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
 import { REQUEST_STATUSES, type RequestStatus } from "@/lib/rentals/request-schema";
 import {
   ArrowLeft,
@@ -220,8 +221,7 @@ export default function AdminRequestDetailPage({ params }: { params: Promise<{ i
 
       {loading ? (
         <div className="flex h-64 items-center justify-center rounded-xl border border-border bg-card">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-3 text-sm text-muted-foreground">Chargement des détails...</span>
+          <LoadingThreeDotsJumping text="Chargement des détails de la demande…" size="md" />
         </div>
       ) : error || !requestData ? (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-center text-destructive">

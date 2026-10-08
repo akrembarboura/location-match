@@ -12,6 +12,7 @@ import {
   Activity,
   ArrowLeft,
   LogOut,
+  HelpCircle,
   PanelLeftClose,
   PanelLeftOpen,
   ChevronDown,
@@ -45,7 +46,7 @@ export function AdminShell({
   subtitle,
   children,
 }: {
-  title: string;
+  title?: string;
   subtitle?: string;
   children: ReactNode;
 }) {
@@ -175,29 +176,30 @@ export function AdminShell({
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="mt-auto space-y-1.5 pt-4 border-t border-sidebar-border/60 w-full">
+        <div className="mt-auto space-y-2 pt-6 border-t border-sidebar-border/40 w-full">
           <Link
             href="/"
-            title={isCollapsed ? "Retour au site" : undefined}
+            title={isCollapsed ? "Help & Support" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg py-2 text-xs text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors w-full",
+              "flex items-center gap-3 rounded-xl py-2 text-sm font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full",
               isCollapsed ? "justify-center px-2" : "px-3"
             )}
           >
-            <ArrowLeft className="h-4 w-4 shrink-0 text-sidebar-foreground/70" /> {!isCollapsed && <span>Retour au site</span>}
+            <HelpCircle className="h-5 w-5 shrink-0 text-sidebar-foreground/70" />
+            {!isCollapsed && <span>Help & Support</span>}
           </Link>
           <button
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            title={isCollapsed ? "Déconnexion" : undefined}
+            title={isCollapsed ? "Logout" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg py-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-colors w-full",
+              "flex items-center gap-3 rounded-xl py-2 text-sm font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-rose-500/10 transition-colors w-full",
               isCollapsed ? "justify-center px-2" : "px-3"
             )}
           >
-            <LogOut className="h-4 w-4 shrink-0 text-rose-400" />
-            {!isCollapsed && <span>Déconnexion</span>}
+            <LogOut className="h-5 w-5 shrink-0 text-rose-500" />
+            {!isCollapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/site/PageShell";
 import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
+import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
 import { formatDT } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -97,7 +98,7 @@ export default function OwnerPropertyDetailPage({
     return (
       <PageShell>
         <div className="flex h-96 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <LoadingThreeDotsJumping text="Chargement du bien et des statistiques…" size="lg" />
         </div>
       </PageShell>
     );

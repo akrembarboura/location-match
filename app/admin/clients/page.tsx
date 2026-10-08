@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminStatusBadge } from "@/lib/admin-theme";
+import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
 import {
   Users,
   Search,
@@ -107,8 +108,8 @@ export default function AdminClientsPage() {
       </div>
 
       {loading ? (
-        <div className="p-12 text-center text-xs font-medium text-muted-foreground">
-          Chargement des fiches clients…
+        <div className="rounded-xl border border-border bg-card p-12 text-center min-h-[260px] flex items-center justify-center shadow-2xs">
+          <LoadingThreeDotsJumping text="Chargement des fiches clients…" size="md" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
