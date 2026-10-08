@@ -85,7 +85,7 @@ function HouseDetail() {
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 pb-24 lg:pb-12">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">

@@ -55,6 +55,9 @@ export function PropertyReservationForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Wizard Step state (1: Dates & Guests, 2: Remarques, 3: Contact & Validation)
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
   const normalizedCategory = category === "universe" ? "student" : category;
 
   // Pre-fill user profile info
@@ -128,8 +131,6 @@ export function PropertyReservationForm({
     );
   }
 
-  // Wizard Step state (1: Dates & Guests, 2: Remarques, 3: Contact & Validation)
-  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Live Phone Validation Helper
   const normalizedPhonePreview = phone.trim() ? normalizeTunisianPhone(phone) : null;
