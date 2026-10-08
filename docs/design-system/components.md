@@ -40,3 +40,4 @@ Layer 3: Feature Domain Components (src/components/public/, customer/, owner/, a
 
 - ⚠️ **`Field.tsx` (`SelectField`, `InputField`):** Duplicate custom input controls. Must be refactored to wrap `src/components/ui/input.tsx` and `src/components/ui/select.tsx`.
 - ⚠️ **`HouseCard.tsx` vs `PropertyCard.tsx`:** Duplicate card components. `PropertyCard.tsx` in `src/components/site/` (or `shared/`) is designated as the single canonical card primitive.
+

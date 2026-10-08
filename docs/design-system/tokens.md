@@ -44,3 +44,4 @@ LOC MAISON uses an authentic Mediterranean coastal palette defined in OKLCH colo
 - **Elevation Shadows:**
   - `--shadow-card`: `0 1px 2px oklch(0.2972 0 89.88 / 6%), 0 8px 24px -16px oklch(0.2972 0 89.88 / 18%)`
   - `--shadow-raised`: `0 2px 6px oklch(0.2972 0 89.88 / 8%), 0 18px 40px -22px oklch(0.2972 0 89.88 / 30%)`
+

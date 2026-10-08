@@ -31,3 +31,4 @@
 ## 3. Strict Rules
 - 🛑 **No Random Fonts:** Do not introduce third-party font packages (e.g. Roboto, Open Sans).
 - 🛑 **No Heavy Typography Noise:** Avoid `font-black` (900) or excessive bolding on body paragraphs.
+

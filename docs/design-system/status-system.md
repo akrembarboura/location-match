@@ -45,3 +45,4 @@ All status badges across Public, Owner, and Admin portals MUST use centralized s
 | `REPORTED` | Signalé (Cash) | `info` | `bg-sky-500/10 text-sky-700 border-sky-500/20` |
 | `VERIFIED` / `PAID` | Payé / Vérifié | `success` | `bg-emerald-500/10 text-emerald-700 border-emerald-500/20` |
 | `REFUNDED` | Remboursé | `muted` | `bg-slate-500/10 text-slate-600 border-slate-500/20` |
+

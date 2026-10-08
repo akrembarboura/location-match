@@ -30,3 +30,4 @@
 - **Desktop (≥1024px):** Collapsible sidebar + header.
 - **Mobile (<1024px):** Top header + bottom navigation bar + `Sheet`/`Drawer` for complex filters and forms.
 - **Safe Areas:** Respect `env(safe-area-inset-bottom)` to ensure bottom actions are never obscured by mobile system navigation bars.
+

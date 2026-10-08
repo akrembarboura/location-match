@@ -29,3 +29,4 @@ LOC MAISON enforces a consistent 4px rhythm using standard Tailwind CSS classes.
 - **Card Grids:**
   - Public Search Results: `grid gap-5 sm:grid-cols-2 lg:grid-cols-3`
   - Dashboard KPIs: `grid gap-4 sm:grid-cols-2 lg:grid-cols-4`
+
