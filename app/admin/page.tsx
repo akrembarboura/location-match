@@ -609,15 +609,15 @@ export default function AdminHome() {
             </div>
 
             {propertyPerf?.properties && propertyPerf.properties.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {propertyPerf.properties.map((p) => (
                   <div
                     key={p.id}
-                    className="group flex flex-col justify-between rounded-xl border border-border bg-surface/40 overflow-hidden hover:border-primary/50 transition-all shadow-2xs"
+                    className="group flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-2xs hover:border-primary/50 transition-all"
                   >
                     <div>
                       {/* Property Cover Image */}
-                      <div className="relative h-36 w-full bg-card overflow-hidden">
+                      <div className="relative h-40 w-full rounded-xl bg-surface overflow-hidden border border-border/60">
                         {p.coverImage ? (
                           <img
                             src={p.coverImage}
@@ -626,43 +626,67 @@ export default function AdminHome() {
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-surface text-muted-foreground">
-                            <Building2 className="h-8 w-8 stroke-1 opacity-50" />
+                            <Building2 className="h-10 w-10 stroke-1 opacity-50" />
                           </div>
                         )}
-                        <div className="absolute top-2 left-2">
+                        <div className="absolute top-2.5 left-2.5">
                           <AdminStatusBadge status={p.status} showDot />
                         </div>
-                        <div className="absolute bottom-2 right-2 rounded-md bg-black/75 backdrop-blur-xs px-2 py-0.5 text-xs font-mono font-semibold text-white">
+                        <div className="absolute bottom-2.5 right-2.5 rounded-lg bg-black/80 backdrop-blur-xs px-2.5 py-1 text-xs font-mono font-bold text-white shadow-2xs">
                           {formatDT(p.price)} DT
                         </div>
                       </div>
 
-                      {/* Property Details */}
-                      <div className="p-3.5 space-y-1.5">
-                        <h3 className="font-display text-xs font-semibold text-foreground line-clamp-1" title={p.title}>
+                      {/* Title & Location */}
+                      <div className="mt-3.5 space-y-1">
+                        <h3 className="font-display text-sm font-bold text-foreground line-clamp-1" title={p.title}>
                           {p.title}
                         </h3>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <span>{p.city}</span>
+                          <span className="font-medium text-foreground">{p.city}</span>
                           <span>•</span>
                           <span className="capitalize">{p.rentalCategory === "summer" ? "Vacances" : "Étudiant"}</span>
                         </div>
                       </div>
+
+                      {/* 3 Metric Stat Pills Row */}
+                      <div className="mt-3.5 grid grid-cols-3 gap-1.5 text-center text-xs">
+                        <div className="rounded-xl bg-surface/70 p-2 border border-border/60">
+                          <span className="text-[0.65rem] text-muted-foreground block font-medium">Demandes</span>
+                          <span className="font-mono font-bold text-primary text-xs">{p.requestCount}</span>
+                        </div>
+                        <div className="rounded-xl bg-surface/70 p-2 border border-border/60">
+                          <span className="text-[0.65rem] text-muted-foreground block font-medium">Réservations</span>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                            {p.reservationCount}
+                          </span>
+                        </div>
+                        <div className="rounded-xl bg-surface/70 p-2 border border-border/60">
+                          <span className="text-[0.65rem] text-muted-foreground block font-medium">Ajouté</span>
+                          <span className="font-mono text-[0.7rem] text-foreground font-semibold truncate block">
+                            {p.createdAt || "Récents"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Attributed Metrics */}
-                    <div className="p-3 pt-0 border-t border-border/40 mt-2 grid grid-cols-2 gap-2 text-center text-xs">
-                      <div className="rounded-lg bg-card p-1.5 border border-border/50">
-                        <span className="text-[0.65rem] text-muted-foreground block">Demandes</span>
-                        <span className="font-mono font-semibold text-primary">{p.requestCount}</span>
-                      </div>
-                      <div className="rounded-lg bg-card p-1.5 border border-border/50">
-                        <span className="text-[0.65rem] text-muted-foreground block">Réservations</span>
-                        <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                          {p.reservationCount}
-                        </span>
-                      </div>
+                    {/* Dual Action Buttons at Bottom of Card (Inspired by reference UI) */}
+                    <div className="mt-4 pt-3 border-t border-border/60 grid grid-cols-2 gap-2">
+                      <Link
+                        href={`/admin/properties/${p.id}`}
+                        className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-surface px-2.5 py-2 text-[0.75rem] font-semibold text-foreground hover:bg-card hover:border-primary/50 transition-colors text-center"
+                        title="Voir propriétaire, clients et statut paiement"
+                      >
+                        <span>Données & Clients</span>
+                      </Link>
+                      <Link
+                        href={`/admin/properties/${p.id}`}
+                        className="inline-flex items-center justify-center gap-1 rounded-xl bg-primary px-2.5 py-2 text-[0.75rem] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors text-center shadow-2xs"
+                        title="Voir statistiques et performances de ce bien"
+                      >
+                        <span>Voir Performance</span>
+                      </Link>
                     </div>
                   </div>
                 ))}
