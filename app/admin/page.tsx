@@ -671,19 +671,19 @@ export default function AdminHome() {
                       </div>
                     </div>
 
-                    {/* Dual Action Buttons at Bottom of Card (Inspired by reference UI) */}
+                    {/* Dual Action Buttons at Bottom of Card (Separate data destinations) */}
                     <div className="mt-4 pt-3 border-t border-border/60 grid grid-cols-2 gap-2">
                       <Link
-                        href={`/admin/properties/${p.id}`}
+                        href={`/admin/properties/${p.id}#owner`}
                         className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-surface px-2.5 py-2 text-[0.75rem] font-semibold text-foreground hover:bg-card hover:border-primary/50 transition-colors text-center"
-                        title="Voir propriétaire, clients et statut paiement"
+                        title="Voir la fiche propriétaire, les clients et le statut de paiement"
                       >
                         <span>Données & Clients</span>
                       </Link>
                       <Link
-                        href={`/admin/properties/${p.id}`}
+                        href={`/admin/properties/${p.id}#analytics`}
                         className="inline-flex items-center justify-center gap-1 rounded-xl bg-primary px-2.5 py-2 text-[0.75rem] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors text-center shadow-2xs"
-                        title="Voir statistiques et performances de ce bien"
+                        title="Voir les statistiques de vue, conversions et performances"
                       >
                         <span>Voir Performance</span>
                       </Link>

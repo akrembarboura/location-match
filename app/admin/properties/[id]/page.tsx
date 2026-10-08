@@ -537,10 +537,10 @@ export default function AdminPropertyReviewPage({
           {/* Right Column (1 Col): Owner Info, Pricing, Moderation History */}
           <div className="space-y-6">
             {/* Owner Contact Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-3">
+            <div id="owner" className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-3 scroll-mt-6">
               <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" />
-                Propriétaire
+                Propriétaire & Dossier Client
               </h3>
 
               {property.owner ? (
@@ -567,7 +567,7 @@ export default function AdminPropertyReviewPage({
                     </p>
                   )}
                   <p className="font-mono text-[0.7rem] text-muted-foreground pt-1 border-t border-border">
-                    ID: {property.ownerId}
+                    ID Propriétaire: {property.ownerId}
                   </p>
                 </div>
               ) : (
@@ -620,11 +620,11 @@ export default function AdminPropertyReviewPage({
             </div>
 
             {/* Disponibilité & Réservation Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
+            <div id="reservation" className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4 scroll-mt-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
-                  Disponibilité
+                  Disponibilité & Statut Règlement
                 </h3>
                 {property.availabilityStatus === "RESERVED" ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
@@ -701,8 +701,7 @@ export default function AdminPropertyReviewPage({
             </div>
 
             {/* Performance & Analytics Card */}
-            {analyticsData && (
-              <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
+            <div id="analytics" className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4 scroll-mt-6">
                 <div className="flex items-center justify-between pb-2 border-b border-border">
                   <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-primary" />
