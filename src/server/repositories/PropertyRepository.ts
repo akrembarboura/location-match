@@ -219,13 +219,34 @@ export class PropertyRepository {
     return await PropertyModel.find({ ownerId }).sort({ createdAt: -1 }).lean().exec();
   }
 
-  async findAdminProperties(filters: { status?: string } = {}) {
+  async findAdminProperties(filters: { status?: string; page?: number; limit?: number } = {}) {
     await connectToDatabase();
     const query: any = {};
     if (filters.status && filters.status !== "ALL") {
       query.status = filters.status;
     }
-    return await PropertyModel.find(query).sort({ createdAt: -1 }).lean().exec();
+    const page = Math.max(1, filters.page || 1);
+    const limit = Math.max(1, Math.min(50, filters.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      PropertyModel.find(query)
+        .select("id title slug ownerId city area location rentalCategory propertyType type bedrooms bathrooms surface pricing summerPrice studentPrice pricePerNight verified status images moderation createdAt")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      PropertyModel.countDocuments(query),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
   }
 
   async countByStatus() {

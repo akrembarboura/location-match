@@ -10,9 +10,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") || undefined;
     const rentalCategory = searchParams.get("rentalCategory") || undefined;
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "20", 10)));
 
-    const requests = await requestService.getAdminRequests({ status, rentalCategory });
-    return NextResponse.json(requests);
+    const result = await requestService.getAdminRequests({ status, rentalCategory, page, limit });
+    return NextResponse.json(result);
   } catch (error: any) {
     if (error.name === "AuthenticationError") {
       return NextResponse.json({ error: "Authentification requise." }, { status: 401 });

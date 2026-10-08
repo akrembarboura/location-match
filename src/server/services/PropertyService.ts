@@ -441,13 +441,31 @@ export class PropertyService {
    * ADMIN MODERATION WORKFLOW
    * ======================================================================= */
 
-  async getAdminProperties(filters: { status?: string } = {}) {
-    const [rawProperties, rawOwners, rawUsers, counts] = await Promise.all([
+  async getAdminProperties(filters: { status?: string; page?: number; limit?: number } = {}) {
+    const [{ items: rawProperties, total, page, limit, totalPages }, counts] = await Promise.all([
       propertyRepository.findAdminProperties(filters),
-      OwnerModel.find({}).lean().exec(),
-      UserModel.find({}).lean().exec(),
       propertyRepository.countByStatus(),
     ]);
+
+    // Fetch owners/users ONLY for property owners on this page (avoid loading all owners/users in DB)
+    const pageOwnerIds = Array.from(
+      new Set(rawProperties.map((p: any) => p.ownerId).filter(Boolean))
+    ) as string[];
+
+    const [rawOwners, rawUsers] = pageOwnerIds.length > 0
+      ? await Promise.all([
+          OwnerModel.find({
+            $or: [{ id: { $in: pageOwnerIds } }, { userId: { $in: pageOwnerIds } }],
+          })
+            .select("id userId name phone email")
+            .lean()
+            .exec(),
+          UserModel.find({ id: { $in: pageOwnerIds } })
+            .select("id firstName lastName email phone")
+            .lean()
+            .exec(),
+        ])
+      : [[], []];
 
     const ownersMap = new Map();
     for (const o of rawOwners) {
@@ -475,8 +493,14 @@ export class PropertyService {
 
     return {
       properties,
-      totalCount: properties.length,
+      totalCount: total,
       counts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
     };
   }
 

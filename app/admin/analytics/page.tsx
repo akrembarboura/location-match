@@ -69,7 +69,7 @@ export default function AdminAnalyticsPage() {
     >
       <section
         aria-labelledby="analytics-period-heading"
-        className="mb-6 rounded-xl border border-border bg-card p-4 shadow-card sm:p-5"
+        className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-2xs sm:p-5"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -81,7 +81,7 @@ export default function AdminAnalyticsPage() {
                 Période d’analyse
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Choisissez la période à utiliser pour les indicateurs ci-dessous.
+                Sélectionnez la plage temporelle des métriques d'exploitation
               </p>
             </div>
           </div>
@@ -89,10 +89,10 @@ export default function AdminAnalyticsPage() {
             type="button"
             onClick={() => fetchAnalytics(period)}
             disabled={loading}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/20 bg-primary-soft px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
-            title="Rafraîchir les statistiques en direct"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-card transition-colors disabled:opacity-50"
+            title="Rafraîchir les statistiques"
           >
-            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            <RefreshCw className={cn("h-3.5 w-3.5 text-primary", loading && "animate-spin")} />
             Actualiser
           </button>
         </div>
@@ -109,36 +109,33 @@ export default function AdminAnalyticsPage() {
               aria-pressed={period === p.id}
               onClick={() => setPeriod(p.id)}
               className={cn(
-                "flex min-h-11 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "flex items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-medium transition-all",
                 period === p.id
-                  ? "border-primary bg-primary-soft text-primary shadow-sm"
-                  : "border-border bg-surface/50 text-muted-foreground hover:border-primary/30 hover:bg-primary-soft/50 hover:text-foreground"
+                  ? "border-primary bg-primary-soft text-primary font-semibold shadow-2xs"
+                  : "border-border bg-surface text-muted-foreground hover:bg-card hover:text-foreground"
               )}
             >
               {p.label}
             </button>
           ))}
         </div>
-        <p className="mt-3 hidden text-xs text-muted-foreground sm:block">
-            Données calculées en direct depuis les événements et la base d&apos;exploitation.
-        </p>
       </section>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-16 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="mt-3 text-sm text-muted-foreground">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-16 text-center shadow-2xs">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="mt-3 text-xs text-muted-foreground">
             Agrégation des métriques en temps réel…
           </p>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-destructive/20 bg-destructive/10 p-10 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="mt-2 text-sm font-medium text-destructive">{error}</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 p-10 text-center">
+          <AlertCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+          <p className="mt-2 text-xs font-semibold text-rose-700 dark:text-rose-300">{error}</p>
           <button
             type="button"
             onClick={() => fetchAnalytics(period)}
-            className="mt-4 rounded-md bg-destructive px-4 py-2 text-xs font-semibold text-white hover:bg-destructive/90"
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
           >
             Réessayer
           </button>
@@ -150,50 +147,50 @@ export default function AdminAnalyticsPage() {
             <StatCard
               label="Visiteurs uniques"
               value={String(stats?.visitors ?? 0)}
-              hint="Sessions anonymes et identifiées"
+              hint="Sessions totales"
             />
             <StatCard
               label="Recherches"
               value={String(stats?.searches ?? 0)}
-              hint="Requêtes formulées sur le site"
+              hint="Requêtes soumises"
             />
             <StatCard
               label="Vues de biens"
               value={String(stats?.propertyViews ?? 0)}
-              hint="Fiches détaillées ouvertes"
+              hint="Fiches consultées"
             />
             <StatCard
               label="Demandes formulées"
               value={String(stats?.requests ?? 0)}
               accent
-              hint="Dossiers clients déposés"
+              hint="Dossiers déposés"
             />
             <StatCard
               label="Propositions envoyées"
               value={String(stats?.proposals ?? 0)}
-              hint={`${stats?.acceptedProposals ?? 0} acceptée(s) par les clients`}
+              hint={`${stats?.acceptedProposals ?? 0} acceptée(s)`}
             />
             <StatCard
               label="Réservations"
               value={String(stats?.reservations ?? 0)}
               accent
-              hint="Biens verrouillés pour les clients"
+              hint="Contrats conclus"
             />
           </div>
 
           {/* Customer Funnel & Owner Funnel Grids */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Customer Funnel */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  <h2 className="font-display text-base text-foreground">Entonnoir Client (Demande)</h2>
+                  <h2 className="font-display text-sm font-bold text-foreground">Entonnoir Client (Demande)</h2>
                 </div>
-                <span className="text-xs text-muted-foreground">Taux de conversion d&apos;étape</span>
+                <span className="text-xs font-mono text-muted-foreground">Taux de conversion</span>
               </div>
 
-              <div className="mt-5 space-y-4">
+              <div className="space-y-3">
                 <FunnelStep
                   label="1. Visiteurs"
                   count={customerFunnel?.visitors ?? 0}
@@ -227,7 +224,7 @@ export default function AdminAnalyticsPage() {
                   count={customerFunnel?.proposals ?? 0}
                   icon={Building}
                   conversionRate={customerFunnel?.conversions?.requestToProposal}
-                  rateLabel="des demandes reçoivent une proposition"
+                  rateLabel="des demandes reçoivent une offre"
                 />
                 <FunnelStep
                   label="6. Réservations conclues"
@@ -235,7 +232,7 @@ export default function AdminAnalyticsPage() {
                   icon={CalendarCheck}
                   accent
                   conversionRate={customerFunnel?.conversions?.proposalToReservation}
-                  rateLabel="des propositions aboutissent à une réservation"
+                  rateLabel="des offres aboutissent à un contrat"
                 />
               </div>
             </div>
@@ -243,16 +240,16 @@ export default function AdminAnalyticsPage() {
             {/* Owner Funnel & Demand vs Supply */}
             <div className="space-y-6">
               {/* Owner Funnel */}
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-border">
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4 text-primary" />
-                    <h2 className="font-display text-base text-foreground">Entonnoir Propriétaire (Offre)</h2>
+                    <h2 className="font-display text-sm font-bold text-foreground">Entonnoir Propriétaire (Offre)</h2>
                   </div>
-                  <span className="text-xs text-muted-foreground">Acquisition d&apos;inventaire</span>
+                  <span className="text-xs font-mono text-muted-foreground">Inventaire</span>
                 </div>
 
-                <div className="mt-5 space-y-3.5">
+                <div className="space-y-3">
                   <FunnelStep
                     label="Clics CTA Propriétaire"
                     count={ownerFunnel?.ctaClicks ?? 0}
@@ -292,37 +289,32 @@ export default function AdminAnalyticsPage() {
               </div>
 
               {/* Demand vs Supply Overview */}
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                <h3 className="font-display text-sm text-foreground">Tension Marché : Demande vs Offre</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Comparatif des intentions de recherche et des biens effectivement publiés par ville.
-                </p>
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-2xs space-y-4">
+                <div>
+                  <h3 className="font-display text-sm font-bold text-foreground">Tension Marché : Demande vs Offre</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Comparatif des recherches et des biens publiés par ville
+                  </p>
+                </div>
 
-                <div className="mt-4 space-y-2.5">
+                <div className="space-y-2 text-xs">
                   {demandVsSupply.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Aucune donnée de localisation enregistrée.</p>
+                    <p className="text-xs text-muted-foreground">Aucune donnée de localisation disponible.</p>
                   ) : (
                     demandVsSupply.map((d) => (
                       <div
                         key={d.city}
-                        className="flex items-center justify-between rounded-lg border border-border bg-surface/50 p-3 text-xs"
+                        className="flex items-center justify-between rounded-xl border border-border/60 bg-surface/60 p-3"
                       >
                         <div>
                           <p className="font-semibold text-foreground">{d.city}</p>
-                          <p className="text-muted-foreground mt-0.5">
+                          <p className="text-muted-foreground text-[0.7rem] mt-0.5">
                             {d.searches} recherche(s) · {d.requests} demande(s)
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-medium text-foreground">{d.availableProperties} bien(s) publié(s)</p>
-                          <span
-                            className={cn(
-                              "inline-block rounded px-2 py-0.5 text-[10px] font-semibold mt-1",
-                              d.gapNote?.includes("Forte demande") || d.gapNote?.includes("supérieure")
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                : "bg-primary/10 text-primary"
-                            )}
-                          >
+                          <span className="inline-block rounded-md bg-amber-500/10 px-2 py-0.5 text-[0.65rem] font-semibold text-amber-700 dark:text-amber-400 mt-1 border border-amber-500/20">
                             {d.gapNote}
                           </span>
                         </div>
@@ -336,33 +328,33 @@ export default function AdminAnalyticsPage() {
 
           {/* Low Conversion Properties Alert Callout */}
           {lowConversion.length > 0 && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-5">
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 shadow-2xs space-y-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                    Biens à forte visibilité mais faible conversion (À auditer)
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Biens à forte visibilité mais faible conversion
                   </h3>
-                  <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                    Ces biens génèrent un trafic important mais peu ou pas de demandes de réservation. Une inspection humaine de l&apos;annonce (prix trop élevé, photos peu engageantes ou description insuffisante) est recommandée.
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    Ces annonces génèrent du trafic mais peu de réservations. Une revue du prix ou des visuels est recommandée.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {lowConversion.map((p) => (
                   <Link
                     key={p.propertyId}
                     href={`/admin/properties/${p.propertyId}`}
-                    className="flex flex-col justify-between rounded-lg border border-amber-200 dark:border-amber-800/40 bg-card p-3 transition-colors hover:border-amber-500"
+                    className="flex flex-col justify-between rounded-xl border border-border bg-card p-3.5 transition-all hover:border-amber-500/60 shadow-2xs"
                   >
                     <div>
-                      <p className="font-medium text-xs text-foreground line-clamp-1">{p.title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{p.city} · {p.propertyType}</p>
+                      <p className="font-semibold text-xs text-foreground line-clamp-1">{p.title}</p>
+                      <p className="text-[0.7rem] text-muted-foreground mt-0.5">{p.city} · {p.propertyType}</p>
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-border">
-                      <span className="text-muted-foreground">{p.views} vues</span>
-                      <span className="font-semibold text-destructive">{p.requests} demande(s) ({p.conversionRates.viewToRequest}%)</span>
+                    <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-border/50">
+                      <span className="text-muted-foreground text-[0.7rem]">{p.views} vues</span>
+                      <span className="font-semibold text-rose-600 dark:text-rose-400 text-[0.75rem]">{p.requests} demande(s) ({p.conversionRates.viewToRequest}%)</span>
                     </div>
                   </Link>
                 ))}
@@ -371,60 +363,60 @@ export default function AdminAnalyticsPage() {
           )}
 
           {/* Comprehensive Property Performance Table */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-2xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border">
               <div>
-                <h2 className="font-display text-base text-foreground">Performance des Biens</h2>
+                <h2 className="font-display text-base font-bold text-foreground">Performance Détaillée des Biens</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Agrégation réelle par bien : consultations, enregistrements en favoris, demandes et réservations.
+                  Agrégation réelle par bien : consultations, favoris, demandes et conversion
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground font-mono">
+              <span className="text-xs font-mono font-semibold text-muted-foreground">
                 {topProperties.length} bien(s) analysé(s)
               </span>
             </div>
 
             {topProperties.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-sm text-muted-foreground">Aucun bien publié pour le moment.</p>
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                Aucun bien publié pour le moment.
               </div>
             ) : (
-              <div className="mt-4 overflow-x-auto">
+              <div className="overflow-x-auto rounded-xl border border-border bg-card">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-surface text-muted-foreground">
+                  <thead className="bg-surface/60 text-muted-foreground font-semibold uppercase tracking-wider border-b border-border">
                     <tr>
-                      <th className="p-3 font-semibold">Logement</th>
-                      <th className="p-3 font-semibold">Ville</th>
-                      <th className="p-3 font-semibold text-right">Vues</th>
-                      <th className="p-3 font-semibold text-right">Favoris</th>
-                      <th className="p-3 font-semibold text-right">Demandes</th>
-                      <th className="p-3 font-semibold text-right">Propositions</th>
-                      <th className="p-3 font-semibold text-right">Réservé</th>
-                      <th className="p-3 font-semibold text-right">Taux Vue → Demande</th>
-                      <th className="p-3 font-semibold text-center">Action</th>
+                      <th className="p-3.5">Logement</th>
+                      <th className="p-3.5">Ville</th>
+                      <th className="p-3.5 text-right">Vues</th>
+                      <th className="p-3.5 text-right">Favoris</th>
+                      <th className="p-3.5 text-right">Demandes</th>
+                      <th className="p-3.5 text-right">Propositions</th>
+                      <th className="p-3.5 text-right">Réservé</th>
+                      <th className="p-3.5 text-right">Taux Conversion</th>
+                      <th className="p-3.5 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {topProperties.map((p) => (
                       <tr key={p.propertyId} className="hover:bg-surface/50 transition-colors">
-                        <td className="p-3 font-medium text-foreground max-w-[200px] truncate">
+                        <td className="p-3.5 font-semibold text-foreground max-w-[200px] truncate">
                           {p.title}
                         </td>
-                        <td className="p-3 text-muted-foreground">{p.city}</td>
-                        <td className="p-3 text-right font-mono font-medium text-foreground">{p.views}</td>
-                        <td className="p-3 text-right font-mono text-muted-foreground">{p.favorites}</td>
-                        <td className="p-3 text-right font-mono font-medium text-primary">{p.requests}</td>
-                        <td className="p-3 text-right font-mono text-muted-foreground">{p.proposals}</td>
-                        <td className="p-3 text-right">
+                        <td className="p-3.5 text-muted-foreground">{p.city}</td>
+                        <td className="p-3.5 text-right font-mono font-semibold text-foreground">{p.views}</td>
+                        <td className="p-3.5 text-right font-mono text-muted-foreground">{p.favorites}</td>
+                        <td className="p-3.5 text-right font-mono font-semibold text-primary">{p.requests}</td>
+                        <td className="p-3.5 text-right font-mono text-muted-foreground">{p.proposals}</td>
+                        <td className="p-3.5 text-right">
                           {p.reservations > 0 ? (
-                            <span className="inline-flex items-center rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                              Réservé
+                            <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-0.5 text-[0.65rem] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                              Oui ({p.reservations})
                             </span>
                           ) : (
                             <span className="text-muted-foreground font-mono">—</span>
                           )}
                         </td>
-                        <td className="p-3 text-right font-mono font-medium">
+                        <td className="p-3.5 text-right font-mono font-semibold">
                           <span
                             className={cn(
                               p.conversionRates.viewToRequest >= 15
@@ -437,13 +429,12 @@ export default function AdminAnalyticsPage() {
                             {p.conversionRates.viewToRequest}%
                           </span>
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="p-3.5 text-center">
                           <Link
                             href={`/admin/properties/${p.propertyId}`}
-                            className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-muted-foreground hover:bg-surface hover:text-foreground"
+                            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-surface hover:border-primary/50 transition-colors"
                           >
-                            Détail
-                            <ArrowUpRight className="h-3 w-3" />
+                            Fiche <ArrowUpRight className="h-3 w-3 text-primary" />
                           </Link>
                         </td>
                       </tr>
@@ -475,22 +466,22 @@ function FunnelStep({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface/40 p-3 transition-colors hover:bg-surface/70">
+    <div className="rounded-xl border border-border/60 bg-surface/50 p-3 transition-colors hover:bg-surface">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className={cn("rounded-md p-1.5", accent ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-            <Icon className="h-4 w-4" />
+          <div className={cn("rounded-md p-1.5", accent ? "bg-primary-soft text-primary" : "bg-card text-muted-foreground border border-border")}>
+            <Icon className="h-3.5 w-3.5" />
           </div>
           <span className="text-xs font-medium text-foreground">{label}</span>
         </div>
-        <span className={cn("font-display text-base", accent ? "text-primary" : "text-foreground")}>
+        <span className={cn("font-mono text-sm font-semibold", accent ? "text-primary" : "text-foreground")}>
           {count}
         </span>
       </div>
       {conversionRate !== null && conversionRate !== undefined && (
-        <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-1.5 text-[11px]">
+        <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-1.5 text-[0.7rem]">
           <span className="text-muted-foreground">{rateLabel || "Conversion"}</span>
-          <span className="font-medium text-foreground font-mono">{conversionRate}%</span>
+          <span className="font-mono font-semibold text-foreground">{conversionRate}%</span>
         </div>
       )}
     </div>

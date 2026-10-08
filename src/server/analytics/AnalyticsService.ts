@@ -53,9 +53,15 @@ export class AnalyticsService {
       analyticsRepository.countEvents("search_performed", period),
       analyticsRepository.countEvents("property_viewed", period),
       HousingRequestModel.countDocuments(requestQuery),
-      HousingRequestModel.find(requestQuery).lean(),
-      PropertyModel.find({}).lean(),
-      HouseModel.find({}).lean(),
+      HousingRequestModel.find(requestQuery)
+        .select("id propertyId selectedProperty proposedProperties destination area createdAt")
+        .lean(),
+      PropertyModel.find({})
+        .select("id slug title city location propertyType type rentalCategory status isPublished availabilityStatus reservation isReserved")
+        .lean(),
+      HouseModel.find({})
+        .select("id slug title city location propertyType type rentalCategory status isPublished availabilityStatus reservation isReserved")
+        .lean(),
       analyticsRepository.getAllPropertyViewsMap(period),
       analyticsRepository.getAllPropertyFavoritesMap(),
       analyticsRepository.getSearchedCities(period),

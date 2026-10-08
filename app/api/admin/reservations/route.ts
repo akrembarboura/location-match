@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const propertyId = searchParams.get("propertyId");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "20", 10)));
+    const skip = (page - 1) * limit;
 
     const query: any = {};
     if (status && status !== "ALL") {
@@ -33,20 +36,27 @@ export async function GET(req: NextRequest) {
       query.propertyId = propertyId;
     }
 
-    const reservations = await ReservationModel.find(query)
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec();
+    const [reservations, total] = await Promise.all([
+      ReservationModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      ReservationModel.countDocuments(query),
+    ]);
 
     // Attach property metadata
     const propIds = Array.from(new Set(reservations.map((r: any) => r.propertyId)));
-    const properties = await PropertyModel.find({ id: { $in: propIds } })
-      .select("id title city location images")
-      .lean()
-      .exec();
+    const properties = propIds.length > 0
+      ? await PropertyModel.find({ id: { $in: propIds } })
+          .select("id title city location images")
+          .lean()
+          .exec()
+      : [];
     const propMap = new Map(properties.map((p: any) => [p.id, p]));
 
-    const result = reservations.map((r: any) => {
+    const items = reservations.map((r: any) => {
       const prop = propMap.get(r.propertyId);
       return {
         ...r,
@@ -59,7 +69,15 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      reservations: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    });
   } catch (error: any) {
     if (error.name === "AuthenticationError") {
       return NextResponse.json({ error: "Authentification requise." }, { status: 401 });

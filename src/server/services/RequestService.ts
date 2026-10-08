@@ -529,19 +529,78 @@ export class RequestService {
   }
 
   async getAdminRequests(filters?: any) {
-    const list = await requestRepository.findAll(filters);
-    return await Promise.all(
-      list.map(async (r: any) => {
-        const propId = r.propertyId || r.selectedProperty;
-        const selectedPropertyDetails = propId ? await this.attachPropertyDetails(propId) : null;
-        return {
-          ...r,
-          propertyId: propId,
-          selectedProperty: propId,
-          selectedPropertyDetails,
+    const { items, total, page, limit, totalPages } = await requestRepository.findAll(filters);
+
+    // Collect all property IDs to batch-fetch and eliminate N+1 queries
+    const propIds = Array.from(
+      new Set(items.map((r: any) => r.propertyId || r.selectedProperty).filter(Boolean))
+    ) as string[];
+
+    let propMap = new Map<string, any>();
+    if (propIds.length > 0) {
+      await connectToDatabase();
+      const [props, houses] = await Promise.all([
+        PropertyModel.find({
+          $or: [{ id: { $in: propIds } }, { slug: { $in: propIds } }],
+        })
+          .select("id title slug city location area propertyType type capacity pricing availabilityStatus reservation images")
+          .lean()
+          .exec(),
+        HouseModel.find({
+          $or: [{ id: { $in: propIds } }, { slug: { $in: propIds } }],
+        })
+          .select("id title slug city location area propertyType type bedrooms bathrooms guests pricePerNight availabilityStatus reservation images")
+          .lean()
+          .exec(),
+      ]);
+
+      const allPropDocs = [...props, ...houses];
+      for (const p of allPropDocs) {
+        const details = {
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          city: p.city || p.location?.city,
+          area: p.area || p.location?.area,
+          propertyType: p.propertyType || p.type,
+          bedrooms: p.capacity?.bedrooms || p.bedrooms,
+          bathrooms: p.capacity?.bathrooms || p.bathrooms,
+          guests: p.capacity?.guests || p.guests || p.people,
+          pricing: {
+            price: resolvePropertyPricing(p).unitPrice,
+            pricePeriod: resolvePropertyPricing(p).pricePeriod,
+            currency: resolvePropertyPricing(p).currency,
+          },
+          availabilityStatus: p.availabilityStatus || "AVAILABLE",
+          reservation: p.reservation || null,
+          coverImage: p.images?.[0]?.url || (typeof p.images?.[0] === "string" ? p.images[0] : null),
+          images: (p.images || []).map((img: any) => (typeof img === "string" ? img : img.url)),
         };
-      })
-    );
+        if (p.id) propMap.set(p.id, details);
+        if (p.slug) propMap.set(p.slug, details);
+      }
+    }
+
+    const formattedItems = items.map((r: any) => {
+      const propId = r.propertyId || r.selectedProperty;
+      const selectedPropertyDetails = propId ? propMap.get(propId) || null : null;
+      return {
+        ...r,
+        propertyId: propId,
+        selectedProperty: propId,
+        selectedPropertyDetails,
+      };
+    });
+
+    return {
+      items: formattedItems,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    };
   }
 
   async updateRequestStatus(id: string, status: string, adminNotes?: string, adminId = "admin") {

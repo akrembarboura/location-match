@@ -4,17 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AsyncStateContainer } from "@/components/shared/AsyncStateContainer";
-import { PropertyModerationBadge } from "@/components/properties/PropertyModerationBadge";
+import { AdminStatusBadge } from "@/lib/admin-theme";
 import { formatDT } from "@/lib/utils";
 import {
-  Loader2,
-  AlertCircle,
   Building2,
   Clock,
-  CheckCircle2,
-  XCircle,
   Eye,
   Filter,
+  CheckCircle2,
 } from "lucide-react";
 
 interface AdminProperty {
@@ -99,7 +96,7 @@ export default function AdminProperties() {
   }, [selectedStatus]);
 
   const tabs = [
-    { key: "ALL", label: "Toutes", count: counts.all },
+    { key: "ALL", label: "Toutes les annonces", count: counts.all },
     { key: "PENDING_REVIEW", label: "En attente", count: counts.pending },
     { key: "UNDER_REVIEW", label: "En cours", count: counts.underReview },
     { key: "PUBLISHED", label: "Publiées", count: counts.published },
@@ -110,7 +107,7 @@ export default function AdminProperties() {
   return (
     <AdminShell
       title="Biens & Modération"
-      subtitle="Examen, validation et gestion des logements déposés par les propriétaires"
+      subtitle="Examen, validation et gestion de l'inventaire immobilier"
     >
       {/* Filter Tabs & Counters */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
@@ -119,9 +116,9 @@ export default function AdminProperties() {
             key={tab.key}
             type="button"
             onClick={() => setSelectedStatus(tab.key)}
-            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
               selectedStatus === tab.key
-                ? "bg-primary text-primary-foreground shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-2xs"
                 : "bg-card border border-border text-muted-foreground hover:bg-surface hover:text-foreground"
             }`}
           >
@@ -139,7 +136,7 @@ export default function AdminProperties() {
         ))}
       </div>
 
-      {/* Main Table */}
+      {/* Main Table Container */}
       <div className="mt-6">
         <AsyncStateContainer
           isLoading={loading}
@@ -148,99 +145,69 @@ export default function AdminProperties() {
           errorMessage={error || undefined}
           isEmpty={properties.length === 0}
           emptyTitle="Aucune annonce dans cette catégorie"
-          emptyDescription={
-            selectedStatus === "PENDING_REVIEW"
-              ? "Toutes les demandes de publication ont été traitées."
-              : "Aucun bien ne correspond au filtre sélectionné."
-          }
-          onRetry={() => {
-            setLoading(true);
-            setError(null);
-            const url =
-              selectedStatus === "ALL"
-                ? "/api/admin/properties"
-                : `/api/admin/properties?status=${selectedStatus}`;
-            fetch(url)
-              .then((res) => {
-                if (!res.ok) throw new Error("Erreur de chargement des biens.");
-                return res.json();
-              })
-              .then((data) => {
-                setProperties(data.properties || []);
-                if (data.counts) setCounts(data.counts);
-              })
-              .catch((err) => setError(err.message))
-              .finally(() => setLoading(false));
-          }}
+          emptyDescription="Aucun bien immobilier ne correspond au statut de modération sélectionné."
+          onRetry={() => setSelectedStatus(selectedStatus)}
         >
-          <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-xs">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-surface text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+          <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-2xs">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface/60 text-muted-foreground uppercase tracking-wider font-semibold border-b border-border">
                 <tr>
-                  <th className="p-3.5">Réf</th>
                   <th className="p-3.5">Logement</th>
+                  <th className="p-3.5">Catégorie</th>
+                  <th className="p-3.5">Ville / Zone</th>
                   <th className="p-3.5">Propriétaire</th>
-                  <th className="p-3.5">Tarif</th>
+                  <th className="p-3.5">Prix</th>
                   <th className="p-3.5">Statut</th>
                   <th className="p-3.5 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {properties.map((p) => {
-                  const cover = p.images?.[0]?.url || "/placeholder-property.jpg";
-                  const price = p.pricing?.price || p.summerPrice || p.studentPrice || 0;
-                  const period = p.pricing?.pricePeriod === "month" ? "mois" : "sem";
+                  const price =
+                    p.pricing?.price || p.summerPrice || p.studentPrice || 0;
+                  const ownerName = p.owner?.name || "Propriétaire anonyme";
 
                   return (
                     <tr key={p.id} className="hover:bg-surface/50 transition-colors">
-                      <td className="p-3.5 font-mono text-xs text-muted-foreground">
-                        {p.id}
-                      </td>
-
                       <td className="p-3.5">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={cover}
-                            alt=""
-                            className="h-10 w-12 rounded object-cover border border-border shrink-0 bg-surface"
-                          />
-                          <div className="min-w-0">
-                            <p className="font-medium text-foreground text-sm truncate max-w-xs">
-                              {p.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {p.type} · {p.city} {p.area ? `(${p.area})` : ""} · {p.images?.length || 0} photo{(p.images?.length || 0) > 1 ? "s" : ""}
-                            </p>
-                          </div>
+                        <div className="font-semibold text-foreground max-w-[220px] truncate" title={p.title}>
+                          {p.title}
+                        </div>
+                        <div className="text-[0.7rem] text-muted-foreground font-mono mt-0.5">
+                          #{p.id}
                         </div>
                       </td>
 
-                      <td className="p-3.5">
-                        {p.owner ? (
-                          <div>
-                            <p className="font-medium text-foreground text-xs">{p.owner.name}</p>
-                            <p className="text-xs text-muted-foreground">{p.owner.phone}</p>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                      <td className="p-3.5 text-muted-foreground capitalize">
+                        {p.rentalCategory === "summer" ? "Vacances" : "Étudiant"}
+                      </td>
+
+                      <td className="p-3.5 text-muted-foreground">
+                        <div>{p.city}</div>
+                        {p.area && <div className="text-[0.7rem]">{p.area}</div>}
+                      </td>
+
+                      <td className="p-3.5 text-muted-foreground">
+                        <div className="font-medium text-foreground">{ownerName}</div>
+                        {p.owner?.phone && (
+                          <div className="text-[0.7rem] font-mono">{p.owner.phone}</div>
                         )}
                       </td>
 
-                      <td className="p-3.5 font-medium text-foreground text-xs">
-                        {price > 0 ? `${formatDT(price)} DT / ${period}` : "—"}
+                      <td className="p-3.5 font-semibold text-foreground">
+                        {formatDT(price)} DT
                       </td>
 
                       <td className="p-3.5">
-                        <PropertyModerationBadge status={p.status} />
+                        <AdminStatusBadge status={p.status} showDot />
                       </td>
 
                       <td className="p-3.5 text-right">
                         <Link
                           href={`/admin/properties/${p.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors shadow-2xs"
+                          className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-card hover:border-primary/50 transition-colors"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          Examiner
+                          <Eye className="h-3.5 w-3.5 text-primary" /> Examen
                         </Link>
                       </td>
                     </tr>
@@ -254,4 +221,3 @@ export default function AdminProperties() {
     </AdminShell>
   );
 }
-

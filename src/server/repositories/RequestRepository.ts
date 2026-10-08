@@ -20,15 +20,33 @@ export class RequestRepository {
       .exec();
   }
 
-  async findAll(filters: { status?: string; rentalCategory?: string } = {}) {
+  async findAll(filters: { status?: string; rentalCategory?: string; page?: number; limit?: number } = {}) {
     await connectToDatabase();
     const query: any = {};
-    if (filters.status) query.status = filters.status;
-    if (filters.rentalCategory) query.rentalCategory = filters.rentalCategory;
-    return await HousingRequestModel.find(query)
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec();
+    if (filters.status && filters.status !== "ALL") query.status = filters.status;
+    if (filters.rentalCategory && filters.rentalCategory !== "ALL") query.rentalCategory = filters.rentalCategory;
+
+    const page = Math.max(1, filters.page || 1);
+    const limit = Math.max(1, Math.min(50, filters.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      HousingRequestModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      HousingRequestModel.countDocuments(query),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
   }
 
   async updateStatus(id: string, status: string, adminNotes?: string) {

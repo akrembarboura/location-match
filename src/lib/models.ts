@@ -273,11 +273,9 @@ const PropertyProposalSchema = new Schema({
 
 const HousingRequestSchema = new Schema({
   id: { type: String, required: true, unique: true },
-  customerId: { type: String }, // Links to user id if authenticated
-  customer: {
-    fullName: { type: String },
-    phone: { type: String },
-  },
+  customerId: { type: String, index: true },
+  customer: { type: Schema.Types.Mixed },
+  phone: { type: String },
   rentalCategory: { 
     type: String, 
     enum: ["summer", "student"],
