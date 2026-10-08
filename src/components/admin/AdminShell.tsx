@@ -179,27 +179,27 @@ export function AdminShell({
         <div className="mt-auto space-y-2 pt-6 border-t border-sidebar-border/40 w-full">
           <Link
             href="/"
-            title={isCollapsed ? "Help & Support" : undefined}
+            title={isCollapsed ? "Retour au site" : undefined}
             className={cn(
               "flex items-center gap-3 rounded-xl py-2 text-sm font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full",
               isCollapsed ? "justify-center px-2" : "px-3"
             )}
           >
-            <HelpCircle className="h-5 w-5 shrink-0 text-sidebar-foreground/70" />
-            {!isCollapsed && <span>Help & Support</span>}
+            <ArrowLeft className="h-5 w-5 shrink-0 text-sidebar-foreground/70" />
+            {!isCollapsed && <span>Retour au site</span>}
           </Link>
           <button
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            title={isCollapsed ? "Logout" : undefined}
+            title={isCollapsed ? "Déconnexion" : undefined}
             className={cn(
               "flex items-center gap-3 rounded-xl py-2 text-sm font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-rose-500/10 transition-colors w-full",
               isCollapsed ? "justify-center px-2" : "px-3"
             )}
           >
             <LogOut className="h-5 w-5 shrink-0 text-rose-500" />
-            {!isCollapsed && <span>Logout</span>}
+            {!isCollapsed && <span>Déconnexion</span>}
           </button>
         </div>
       </aside>
