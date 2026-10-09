@@ -236,61 +236,11 @@ export default function RequestTrackingPage() {
                             <p className="mt-0.5 italic">« {requestData.message} »</p>
                           </div>
                         )}
-                      </div>
 
-                      {/* Payment Schedule & Financial Tracking */}
-                      <div className="mt-4">
-                        <PaymentScheduleView
-                          rentalCategory={requestData.rentalCategory || requestData.selectedPropertyDetails?.rentalCategory}
-                          checkIn={requestData.checkIn}
-                          checkOut={requestData.checkOut}
-                          pricing={{
-                            total: requestData.selectedPropertyDetails?.pricing?.price,
-                            unitPrice: requestData.selectedPropertyDetails?.pricing?.price,
-                            pricePeriod: requestData.selectedPropertyDetails?.pricing?.pricePeriod || "month",
-                            currency: "TND",
-                          }}
-                          paymentSummary={
-                            requestData.paymentSummary || {
-                              paidAmount: requestData.payment?.amount || 0,
-                              reportedAmount: requestData.payment?.reportedAmount || 0,
-                              paidMonths: requestData.payment?.paidMonths || [],
-                              status: requestData.payment?.status || requestData.status,
-                            }
-                          }
-                        />
-                      </div>
-
-                      <div className="mt-6 border-t border-border pt-4">
-                        {requestData.status === "PENDING" && (
-                          <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 p-3.5 text-xs font-medium text-amber-800">
-                            <Clock className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
-                            <span>
-                              Votre demande est en cours de vérification par un conseiller LOC MAISON. Nous confirmons la disponibilité avec le propriétaire.
-                            </span>
-                          </div>
-                        )}
-                        {requestData.status === "CONFIRMED" && (
-                          <div className="flex items-start gap-2.5 rounded-lg bg-emerald-50 p-3.5 text-xs font-medium text-emerald-800">
-                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
-                            <span>
-                              Félicitations ! Votre réservation pour ce logement est confirmée. Notre équipe prendra contact avec vous pour finaliser votre séjour.
-                            </span>
-                          </div>
-                        )}
-                        {requestData.status === "REJECTED" && (
-                          <div className="flex items-start gap-2.5 rounded-lg bg-rose-50 p-3.5 text-xs font-medium text-rose-800">
-                            <XCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                            <span>
-                              Ce logement n'est malheureusement plus disponible pour vos dates sélectionnées.
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="mt-4 flex items-center justify-between">
+                        <div className="mt-5 border-t border-border pt-3 flex items-center justify-between">
                           <Link
                             href={`/properties/${requestData.selectedPropertyDetails.id}`}
-                            className="text-xs font-semibold text-primary hover:underline"
+                            className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
                           >
                             Revoir la fiche du logement →
                           </Link>
@@ -298,6 +248,32 @@ export default function RequestTrackingPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Independent Payment Schedule Section */}
+                <div className="space-y-3 pt-2">
+                  <h3 className="font-display text-lg font-bold text-foreground">
+                    Suivi Financier & Échéancier des Loyers
+                  </h3>
+                  <PaymentScheduleView
+                    rentalCategory={requestData.rentalCategory || requestData.selectedPropertyDetails?.rentalCategory}
+                    checkIn={requestData.checkIn}
+                    checkOut={requestData.checkOut}
+                    pricing={{
+                      total: requestData.selectedPropertyDetails?.pricing?.price,
+                      unitPrice: requestData.selectedPropertyDetails?.pricing?.price,
+                      pricePeriod: requestData.selectedPropertyDetails?.pricing?.pricePeriod || "month",
+                      currency: "TND",
+                    }}
+                    paymentSummary={
+                      requestData.paymentSummary || {
+                        paidAmount: requestData.payment?.amount || 0,
+                        reportedAmount: requestData.payment?.reportedAmount || 0,
+                        paidMonths: requestData.payment?.paidMonths || [],
+                        status: requestData.payment?.status || requestData.status,
+                      }
+                    }
+                  />
                 </div>
               </div>
             ) : (

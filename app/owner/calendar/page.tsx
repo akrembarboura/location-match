@@ -58,6 +58,21 @@ export default function OwnerCalendarPage() {
     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
   ];
 
+  function handleUpdateMonthPayment(monthItem: any) {
+    if (!selectedReservation) return;
+    const currentPaid = selectedReservation.paidMonths || [];
+    const monthKey = monthItem.monthKey;
+    const exists = currentPaid.includes(monthKey);
+    const updatedPaidMonths = exists
+      ? currentPaid.filter((m: string) => m !== monthKey)
+      : [...currentPaid, monthKey];
+
+    setSelectedReservation({
+      ...selectedReservation,
+      paidMonths: updatedPaidMonths,
+    });
+  }
+
   function prevMonth() {
     setCurrentDate(new Date(year, month - 1, 1));
   }
@@ -441,6 +456,7 @@ export default function OwnerCalendarPage() {
                   status: selectedReservation.paymentStatus,
                 }}
                 editableByOwner={true}
+                onToggleMonthStatus={(item) => handleUpdateMonthPayment(item)}
               />
 
               {/* Payment section */}

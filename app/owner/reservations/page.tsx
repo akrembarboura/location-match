@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { OwnerShell } from "@/components/owner/OwnerShell";
 import { formatDT } from "@/lib/utils";
 import { PaymentScheduleView } from "@/components/pricing/PaymentScheduleView";
+import { motion } from "framer-motion";
 import { calculatePaymentSchedule } from "@/lib/pricing/payment-schedule";
 import {
   ClipboardList,
@@ -84,15 +85,27 @@ export default function OwnerReservationsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Impossible de modifier le statut du paiement.");
       setConfirmModalOpen(false);
-      setSelectedRes(null);
-      // Reload list
+      // Reload list and refresh selectedRes in place without kicking the owner out of the modal
       const updatedRes = await fetch(
         statusFilter !== "ALL"
           ? `/api/owner/reservations?status=${statusFilter}`
           : "/api/owner/reservations"
       );
       if (updatedRes.ok) {
-        setReservations(await updatedRes.json());
+        const list = await updatedRes.json();
+        setReservations(list);
+        const refreshedCurrent = list.find((r: any) => r.id === selectedRes.id);
+        if (refreshedCurrent) {
+          setSelectedRes(refreshedCurrent);
+        } else if (data.paymentSummary) {
+          setSelectedRes((prev: any) => ({
+            ...prev,
+            paymentSummary: {
+              ...prev?.paymentSummary,
+              ...data.paymentSummary,
+            },
+          }));
+        }
       }
     } catch (err: any) {
       alert(err.message || "Erreur de communication.");
@@ -394,37 +407,41 @@ export default function OwnerReservationsPage() {
                     Gérer le statut de paiement :
                   </span>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
+                    <motion.button
                       type="button"
+                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={() => handleReportCash("REPORTED")}
                       disabled={reportingCashLoading || selectedRes.paymentSummary?.status === "PAID"}
-                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition-colors ${
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer ${
                         selectedRes.paymentSummary?.status === "REPORTED" || selectedRes.paymentSummary?.status === "PAID"
-                          ? "bg-emerald-600 text-white"
-                          : "bg-surface border border-border text-foreground hover:bg-emerald-500/10 hover:text-emerald-700"
+                          ? "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700 hover:shadow-md"
+                          : "bg-surface border border-border text-foreground hover:bg-emerald-500/10 hover:text-emerald-700 hover:border-emerald-300"
                       }`}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {selectedRes.paymentSummary?.status === "REPORTED" || selectedRes.paymentSummary?.status === "PAID"
                         ? "Payé (Enregistré)"
                         : "Marquer comme Payé"}
-                    </button>
+                    </motion.button>
 
-                    <button
+                    <motion.button
                       type="button"
+                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={() => handleReportCash("UNPAID")}
                       disabled={reportingCashLoading || selectedRes.paymentSummary?.status === "PAID"}
-                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition-colors ${
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer ${
                         selectedRes.paymentSummary?.status === "UNPAID" || !selectedRes.paymentSummary?.status
-                          ? "bg-rose-600 text-white"
-                          : "bg-surface border border-border text-foreground hover:bg-rose-500/10 hover:text-rose-700"
+                          ? "bg-rose-600 text-white shadow-rose-500/20 hover:bg-rose-700 hover:shadow-md"
+                          : "bg-surface border border-border text-foreground hover:bg-rose-500/10 hover:text-rose-700 hover:border-rose-300"
                       }`}
                     >
                       <X className="h-3.5 w-3.5" />
                       {selectedRes.paymentSummary?.status === "UNPAID" || !selectedRes.paymentSummary?.status
                         ? "Non payé"
                         : "Marquer comme Non payé"}
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               </div>
@@ -477,11 +494,13 @@ export default function OwnerReservationsPage() {
               >
                 Annuler
               </button>
-              <button
+              <motion.button
                 type="button"
+                whileHover={{ scale: 1.03, y: -1 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => handleReportCash("REPORTED")}
                 disabled={reportingCashLoading}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs hover:bg-primary-dark disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs hover:bg-primary-dark cursor-pointer disabled:opacity-50 transition-all"
               >
                 {reportingCashLoading ? (
                   <>
@@ -491,7 +510,7 @@ export default function OwnerReservationsPage() {
                 ) : (
                   "Confirmer la réception"
                 )}
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
