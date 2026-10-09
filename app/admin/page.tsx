@@ -229,7 +229,7 @@ export default function AdminHome() {
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-xs font-medium text-muted-foreground">Demandes ouvertes</span>
-                    <p className="text-2xl font-display font-semibold text-primary mt-1">
+                    <p className="text-2xl font-display font-semibold text-black dark:text-white mt-1">
                       {actionNeeded.openRequests}
                     </p>
                   </div>
@@ -484,7 +484,6 @@ export default function AdminHome() {
                     return (
                       <div key={statusKey} className="flex items-center justify-between text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${meta.color}`} />
                           <span className="truncate max-w-[150px]">{meta.label}</span>
                         </div>
                         <span className="font-mono font-medium text-foreground">
@@ -531,7 +530,6 @@ export default function AdminHome() {
                     return (
                       <div key={statusKey} className="flex items-center justify-between text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${meta.color}`} />
                           <span>{meta.label}</span>
                         </div>
                         <span className="font-mono font-medium text-foreground">

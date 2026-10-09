@@ -112,7 +112,6 @@ function HouseDetail() {
 
         {isReserved && (
           <div className="mt-4 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-4 text-amber-900 dark:text-amber-200">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
             <div>
               <p className="text-sm font-semibold">
                 Ce logement est réservé {formatReservationRange(house.reservation?.from, house.reservation?.to)}
@@ -145,8 +144,7 @@ function HouseDetail() {
           </div>
           <aside className="h-fit rounded-xl border border-border bg-card p-6 shadow-card lg:sticky lg:top-24">
             {isReserved && (
-              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <div className="mb-4 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-200">
                 Réservé {formatReservationRange(house.reservation?.from, house.reservation?.to)}
               </div>
             )}

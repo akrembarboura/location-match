@@ -85,13 +85,11 @@ export function PropertyCard({ property, compact }: { property: any; compact?: b
         {/* Glossy Glass Condition Badge (Top-Left) */}
         <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
           {isReserved ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-950/70 border border-rose-500/40 text-rose-200 px-3.5 py-1 text-[0.7rem] font-bold shadow-md backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
+            <span className="inline-flex items-center rounded-full bg-rose-950/70 border border-rose-500/40 text-rose-200 px-3.5 py-1 text-[0.7rem] font-bold shadow-md backdrop-blur-md">
               Réservée
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/60 border border-white/20 text-white px-3.5 py-1 text-[0.7rem] font-bold shadow-md backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="inline-flex items-center rounded-full bg-slate-950/60 border border-white/20 text-white px-3.5 py-1 text-[0.7rem] font-bold shadow-md backdrop-blur-md">
               {property.studentPrice && !property.summerPrice ? "Logement Étudiant" : "Disponible"}
             </span>
           )}

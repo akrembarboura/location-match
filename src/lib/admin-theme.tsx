@@ -114,7 +114,6 @@ export function AdminStatusBadge({
   status,
   label,
   className,
-  showDot = false,
 }: StatusBadgeProps) {
   const config = ADMIN_STATUS_CONFIG[status] || {
     label: status,
@@ -127,14 +126,11 @@ export function AdminStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[0.7rem] font-medium transition-colors",
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-[0.7rem] font-medium transition-colors",
         config.className,
         className
       )}
     >
-      {showDot && (
-        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", config.dotColor)} />
-      )}
       <span>{badgeText}</span>
     </span>
   );

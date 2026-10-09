@@ -177,27 +177,22 @@ export default function OwnerCalendarPage() {
         </div>
       </div>
 
-      {/* Legend - Clean Single Dot Per Category */}
+      {/* Legend - Clean Single Category List */}
       <div className="flex flex-wrap items-center gap-5 text-xs font-medium text-muted-foreground mb-6 p-3.5 rounded-xl bg-surface border border-border">
         <span className="font-semibold text-foreground mr-1">Légende :</span>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
           <span>Disponible</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
           <span>Louée / Réservée</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
           <span>Arrivée prochaine</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-sky-500 shrink-0" />
           <span>Départ prochain</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-600 shrink-0" />
           <span>Paiement en attente</span>
         </div>
       </div>
