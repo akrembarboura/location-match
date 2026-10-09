@@ -331,6 +331,9 @@ const HousingRequestSchema = new Schema({
   selectedProperty: { type: String },
   propertyId: { type: String, index: true },
   message: { type: String },
+  paymentSummary: {
+    type: Schema.Types.Mixed,
+  },
   contactAccessOverride: {
     enabled: { type: Boolean, default: false },
     grantedBy: { type: String },
@@ -394,6 +397,7 @@ const ReservationSchema = new Schema(
       paidAmount: { type: Number, default: 0 },
       reportedAmount: { type: Number, default: 0 },
       remainingAmount: { type: Number, default: 0 },
+      paidMonths: { type: [String], default: [] },
       status: {
         type: String,
         enum: ["UNPAID", "REPORTED", "PARTIALLY_PAID", "PAID", "REFUNDED"],

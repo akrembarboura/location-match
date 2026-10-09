@@ -105,4 +105,21 @@ describe("LOC MAISON — Cross-User Payment Status Synchronization", () => {
     expect(custRes.payment.status).toBe("VERIFIED");
     expect(custRes.paymentSummary.status).toBe("PAID");
   });
+
+  it("4. Owner reports cash with explicit paidMonths array: preserves paidMonths in reservation and client request summary", async () => {
+    const customPaidMonths = ["2026-09", "2026-10"];
+    const result = await paymentRepository.updatePaymentStatusByOwner(
+      mockOwnerId,
+      mockReservationId,
+      "REPORTED",
+      600,
+      customPaidMonths
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.paymentSummary.paidMonths).toEqual(customPaidMonths);
+
+    const clientReq = await requestService.getClientRequest(mockRequestId);
+    expect(clientReq.paymentSummary.paidMonths).toEqual(customPaidMonths);
+  });
 });
