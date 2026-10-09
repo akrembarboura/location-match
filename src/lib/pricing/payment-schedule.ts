@@ -47,7 +47,15 @@ export function calculatePaymentSchedule(reservation: {
   };
 }): PaymentScheduleResult {
   const category = (reservation.rentalCategory || "").toLowerCase();
-  const isStudentMonthly = category === "student" || category === "universe";
+  const pricePeriod = (reservation.pricing?.pricePeriod || "").toLowerCase();
+  const isStudentMonthly =
+    category === "student" ||
+    category === "universe" ||
+    category === "étudiant" ||
+    category === "etudiant" ||
+    pricePeriod === "month" ||
+    pricePeriod === "monthly" ||
+    category !== "summer";
   const currency = reservation.pricing?.currency || "TND";
 
   const checkInDate = new Date(reservation.checkIn);
@@ -168,3 +176,4 @@ export function calculatePaymentSchedule(reservation: {
     schedule,
   };
 }
+
