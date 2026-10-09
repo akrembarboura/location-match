@@ -100,15 +100,19 @@ export function calculatePaymentSchedule(reservation: {
     };
   }
 
-  // Student Monthly Schedule Calculation
-  const monthlyRate = reservation.pricing?.unitPrice || 0;
-  const explicitPaidMonths = reservation.paymentSummary?.paidMonths;
-
   // Calculate monthly sequence between checkIn and checkOut
-  const schedule: MonthlyScheduleItem[] = [];
   const curr = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), 1);
   const end = new Date(checkOutDate.getFullYear(), checkOutDate.getMonth(), 1);
+  const totalMonthsCountTemp = Math.max(1, (end.getFullYear() - curr.getFullYear()) * 12 + (end.getMonth() - curr.getMonth()) + 1);
 
+  const monthlyRate = reservation.pricing?.unitPrice || (reservation.pricing?.total ? Math.round(reservation.pricing.total / totalMonthsCountTemp) : 0);
+  const explicitPaidMonths = reservation.paymentSummary?.paidMonths;
+  const reportedAmountInput = reservation.paymentSummary?.reportedAmount || reservation.paymentSummary?.paidAmount || 0;
+  const autoPaidCount = (Array.isArray(explicitPaidMonths))
+    ? 0
+    : (monthlyRate > 0 ? Math.floor(reportedAmountInput / monthlyRate) : 0);
+
+  const schedule: MonthlyScheduleItem[] = [];
   let monthIndex = 1;
   const monthNamesFr = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -125,6 +129,8 @@ export function calculatePaymentSchedule(reservation: {
     let isPaid = false;
     if (Array.isArray(explicitPaidMonths)) {
       isPaid = explicitPaidMonths.includes(monthKey);
+    } else {
+      isPaid = monthIndex <= autoPaidCount;
     }
 
     schedule.push({
