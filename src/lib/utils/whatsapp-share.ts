@@ -27,20 +27,21 @@ export interface PropertyWhatsAppOptions {
 }
 
 export function generatePropertyWhatsAppLink(options: PropertyWhatsAppOptions): string {
-  const phone = normalizeTunisianWhatsAppNumber(options.ownerPhone);
+  // Always route client inquiries to LOC MAISON central support to protect platform commission
+  const platformPhone = "21626574203";
   const periodLabel =
     options.period === "month" ? "mois" : options.period === "week" ? "semaine" : "nuit";
 
-  const message = `Bonjour ! Je suis intéressé(e) par votre logement publié sur LOC MAISON :
+  const message = `Bonjour l'équipe LOC MAISON ! Je suis intéressé(e) par ce logement :
 
 🏠 *${options.title}*
 📍 Ville : ${options.city}
 💰 Prix : ${options.price} DT / ${periodLabel}
 🔗 Lien : ${options.propertyUrl}
 
-Est-il toujours disponible ? Merci !`;
+Merci de m'aider à finaliser ma réservation !`;
 
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${platformPhone}?text=${encodeURIComponent(message)}`;
 }
 
 export function generateWhatsAppShareLink(options: PropertyWhatsAppOptions): string {
@@ -54,3 +55,18 @@ export function generateWhatsAppShareLink(options: PropertyWhatsAppOptions): str
 
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
+
+export function generateClientConfirmationWhatsAppLink(phone?: string | null, clientName?: string, propertyTitle?: string): string {
+  const normalizedPhone = normalizeTunisianWhatsAppNumber(phone);
+  const title = propertyTitle ? ` (${propertyTitle})` : "";
+  const name = clientName ? ` ${clientName}` : "";
+  const message = `Bonjour${name},
+
+Félicitations ! Votre réservation pour ce logement${title} est confirmée. Notre équipe prendra contact avec vous pour finaliser votre séjour.
+
+Merci de votre confiance,
+L'équipe LOC MAISON 🏠`;
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+

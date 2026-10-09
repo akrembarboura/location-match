@@ -63,7 +63,7 @@ export function PropertyWhatsAppButtons({
         className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 font-display text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
       >
         <MessageSquare className="h-4 w-4" />
-        Contacter le propriétaire sur WhatsApp
+        Contacter LOC MAISON sur WhatsApp
       </a>
 
       <div className="grid grid-cols-2 gap-2">

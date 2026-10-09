@@ -1,7 +1,8 @@
 import { requestRepository } from "../repositories/RequestRepository";
 import { propertyRepository } from "../repositories/PropertyRepository";
 import { notificationService } from "./NotificationService";
-import { HouseModel, PropertyModel, HousingRequestModel } from "@/lib/models";
+import { HouseModel, PropertyModel, HousingRequestModel, UserModel } from "@/lib/models";
+import { emailService } from "../notifications/email.service";
 import connectToDatabase from "@/lib/mongoose";
 import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
 import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
@@ -633,6 +634,37 @@ export class RequestService {
             console.error("Failed to mark property reserved on request confirmation:", reserveErr);
           }
         }
+      }
+
+      // Send confirmation email to client if logged in or left email
+      try {
+        let propTitle = "votre logement sélectionné";
+        if (targetPropId) {
+          const propDoc = await PropertyModel.findOne({ id: targetPropId }).lean().exec();
+          if (propDoc?.title) propTitle = propDoc.title;
+        }
+
+        let clientEmail = updated.customer?.email || (updated as any).email;
+        let clientName = updated.customer?.fullName || updated.customer?.name || "Cher Client";
+
+        if (!clientEmail && updated.customerId) {
+          const userDoc = await UserModel.findOne({ id: updated.customerId }).lean().exec();
+          if (userDoc?.email) clientEmail = userDoc.email;
+          if (userDoc && (!clientName || clientName === "Cher Client")) {
+            clientName = `${userDoc.firstName || ""} ${userDoc.lastName || ""}`.trim() || clientName;
+          }
+        }
+
+        if (clientEmail) {
+          await emailService.sendReservationConfirmedNotification(
+            clientEmail,
+            clientName,
+            propTitle,
+            { checkIn: updated.checkIn, checkOut: updated.checkOut }
+          );
+        }
+      } catch (emailErr) {
+        console.error("Failed to send reservation confirmation email:", emailErr);
       }
     } else if (status === "CANCELLED" || status === "REJECTED") {
       if (targetPropId) {

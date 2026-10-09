@@ -138,6 +138,64 @@ export class EmailService {
     const res = await this.sendEmail({ to, subject, html });
     return res.success;
   }
+
+  /**
+   * Confirmation message sent to client when Admin confirms a reservation for them.
+   */
+  async sendReservationConfirmedNotification(
+    to: string,
+    clientName: string,
+    propertyTitle: string,
+    dates?: { checkIn?: string; checkOut?: string }
+  ): Promise<boolean> {
+    const subject = "🎉 Réservation confirmée ! — LOC MAISON";
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #f3f4f6;">
+          <h1 style="color: #059669; margin: 0; font-size: 24px;">LOC MAISON</h1>
+          <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Plateforme d'Hébergement & Location en Tunisie</p>
+        </div>
+        
+        <div style="padding: 24px 0;">
+          <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 18px; text-align: center; margin-bottom: 24px;">
+            <h2 style="color: #065f46; font-size: 18px; margin: 0 0 8px 0; font-weight: bold;">
+              Félicitations ! Votre réservation pour ce logement est confirmée.
+            </h2>
+            <p style="color: #047857; font-size: 14px; margin: 0; font-weight: 500;">
+              Notre équipe prendra contact avec vous pour finaliser votre séjour.
+            </p>
+          </div>
+
+          <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+            Bonjour <strong>${clientName}</strong>,
+          </p>
+
+          <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+            Nous avons le plaisir de vous informer que votre réservation pour le logement <strong>${propertyTitle}</strong> a été validée par notre équipe.
+          </p>
+
+          ${dates?.checkIn && dates?.checkOut ? `
+          <div style="background-color: #f9fafb; border-left: 4px solid #059669; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0 0 6px 0; color: #374151;"><strong>Arrivée (Check-in) :</strong> ${dates.checkIn}</p>
+            <p style="margin: 0; color: #374151;"><strong>Départ (Check-out) :</strong> ${dates.checkOut}</p>
+          </div>
+          ` : ""}
+
+          <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+            Un conseiller LOC MAISON prendra rapidement contact avec vous pour répondre à vos questions et finaliser votre séjour en toute sérénité.
+          </p>
+        </div>
+        
+        <div style="text-align: center; border-top: 1px solid #f3f4f6; padding-top: 20px; color: #9ca3af; font-size: 12px;">
+          &copy; ${new Date().getFullYear()} LOC MAISON. Tous droits réservés.
+        </div>
+      </div>
+    `;
+
+    const res = await this.sendEmail({ to, subject, html });
+    return res.success;
+  }
 }
 
 export const emailService = new EmailService();
+

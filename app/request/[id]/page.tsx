@@ -158,6 +158,18 @@ export default function RequestTrackingPage() {
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
           {/* Main: Property Reservation or Generic Proposals */}
           <div className="space-y-6">
+            {requestData.status === "CONFIRMED" && (
+              <div className="rounded-xl border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-5 text-emerald-900 dark:text-emerald-200 shadow-sm space-y-2">
+                <div className="flex items-center gap-2.5 font-bold text-emerald-900 dark:text-emerald-100 text-base sm:text-lg">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  Félicitations ! Votre réservation pour ce logement est confirmée.
+                </div>
+                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300 pl-8">
+                  Notre équipe prendra contact avec vous pour finaliser votre séjour.
+                </p>
+              </div>
+            )}
+
             {requestData.propertyId && requestData.selectedPropertyDetails ? (
               <div className="space-y-6">
                 <div>

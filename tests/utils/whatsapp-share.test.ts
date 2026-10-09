@@ -23,7 +23,7 @@ describe("Tunisian WhatsApp Contact & Social Sharing Utility", () => {
       ownerPhone: "20196546",
     });
 
-    expect(link).toContain("https://wa.me/21620196546?text=");
+    expect(link).toContain("https://wa.me/21626574203?text=");
     expect(decodeURIComponent(link)).toContain("Dar S+2 Mahdia");
     expect(decodeURIComponent(link)).toContain("600 DT / mois");
     expect(decodeURIComponent(link)).toContain("http://localhost:3000/houses/dar-s2-mahdia");
