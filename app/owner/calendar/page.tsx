@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { OwnerShell } from "@/components/owner/OwnerShell";
 import { formatDT } from "@/lib/utils";
+import { PaymentScheduleView } from "@/components/pricing/PaymentScheduleView";
 import {
   ChevronLeft,
   ChevronRight,
@@ -422,6 +423,25 @@ export default function OwnerCalendarPage() {
                   </span>
                 </div>
               </div>
+
+              <PaymentScheduleView
+                rentalCategory={selectedReservation.rentalCategory}
+                checkIn={selectedReservation.checkIn}
+                checkOut={selectedReservation.checkOut}
+                pricing={{
+                  total: selectedReservation.totalAmount,
+                  unitPrice: selectedReservation.unitPrice,
+                  pricePeriod: selectedReservation.pricePeriod,
+                  currency: "TND",
+                }}
+                paymentSummary={{
+                  paidAmount: selectedReservation.paidAmount,
+                  reportedAmount: selectedReservation.reportedAmount,
+                  paidMonths: selectedReservation.paidMonths,
+                  status: selectedReservation.paymentStatus,
+                }}
+                editableByOwner={true}
+              />
 
               {/* Payment section */}
               <div className="rounded-xl bg-surface p-4 space-y-3 border border-border/60">
