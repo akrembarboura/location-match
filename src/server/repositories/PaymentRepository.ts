@@ -29,7 +29,7 @@ export class PaymentRepository {
     return await PaymentModel.find({ reservationId }).sort({ createdAt: -1 }).lean().exec();
   }
 
-  async syncReservationPaymentSummary(reservationId: string): Promise<void> {
+  async syncReservationPaymentSummary(reservationId: string, customPaidMonths?: string[]): Promise<void> {
     await connectToDatabase();
     const reservation = await ReservationModel.findOne({ id: reservationId }).exec();
     if (!reservation) return;
@@ -57,15 +57,18 @@ export class PaymentRepository {
     else if (verifiedPaid > 0) payStatus = "PARTIALLY_PAID";
     else if (reportedPaid > 0) payStatus = "REPORTED";
 
-    const currentPaidMonths = reservation.paymentSummary?.paidMonths;
+    const targetPaidMonths = customPaidMonths !== undefined
+      ? customPaidMonths
+      : (reservation.paymentSummary?.paidMonths || []);
 
     reservation.paymentSummary = {
       paidAmount: safePaid,
       reportedAmount: reportedPaid,
       remainingAmount: remaining,
       status: payStatus,
-      paidMonths: currentPaidMonths,
+      paidMonths: targetPaidMonths,
     };
+    reservation.markModified("paymentSummary");
     await reservation.save();
 
     // Sync authoritative paymentSummary to linked HousingRequestModel if applicable
@@ -80,7 +83,7 @@ export class PaymentRepository {
               reportedAmount: reportedPaid,
               remainingAmount: remaining,
               status: payStatus,
-              paidMonths: currentPaidMonths,
+              paidMonths: targetPaidMonths,
             },
           },
         }
@@ -107,6 +110,7 @@ export class PaymentRepository {
         ...reservation.paymentSummary,
         paidMonths: paidMonthsInput,
       };
+      reservation.markModified("paymentSummary");
       await reservation.save();
     }
 
@@ -192,7 +196,7 @@ export class PaymentRepository {
         });
       }
 
-      await this.syncReservationPaymentSummary(reservationId);
+      await this.syncReservationPaymentSummary(reservationId, paidMonthsInput);
       const updatedRes = await ReservationModel.findOne({ id: reservationId }).lean().exec();
 
       return {

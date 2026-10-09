@@ -60,11 +60,22 @@ export default function OwnerReservationsPage() {
       ? currentPaid.filter((m: string) => m !== monthKey)
       : [...currentPaid, monthKey];
 
+    const totalAmount = selectedRes.pricing?.total || 0;
+    const totalMonths = schedule?.length || 1;
+    const monthlyRate = selectedRes.pricing?.unitPrice || (totalMonths > 0 ? Math.round(totalAmount / totalMonths) : 0);
+
+    const dynamicReportedAmount = updatedPaidMonths.length * monthlyRate;
+    const dynamicRemainingAmount = Math.max(0, totalAmount - dynamicReportedAmount);
+    const dynamicStatus = updatedPaidMonths.length > 0 ? "REPORTED" : "UNPAID";
+
     setSelectedRes({
       ...selectedRes,
       paymentSummary: {
         ...selectedRes.paymentSummary,
         paidMonths: updatedPaidMonths,
+        reportedAmount: dynamicReportedAmount,
+        remainingAmount: dynamicRemainingAmount,
+        status: selectedRes.paymentSummary?.status === "PAID" ? "PAID" : dynamicStatus,
       },
     });
   }
@@ -73,18 +84,26 @@ export default function OwnerReservationsPage() {
     if (!selectedRes) return;
     try {
       setReportingCashLoading(true);
+
+      const currentPaid = selectedRes.paymentSummary?.paidMonths || [];
+      const paidMonthsToSend = targetStatus === "REPORTED" ? currentPaid : [];
+      const amountToSend = targetStatus === "REPORTED"
+        ? (selectedRes.paymentSummary?.reportedAmount || selectedRes.pricing?.total || 0)
+        : 0;
+
       const res = await fetch(`/api/owner/reservations/${selectedRes.id}/report-cash`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: targetStatus,
-          amount: selectedRes.paymentSummary?.remainingAmount || selectedRes.pricing?.total || 0,
-          paidMonths: selectedRes.paymentSummary?.paidMonths,
+          amount: amountToSend,
+          paidMonths: paidMonthsToSend,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Impossible de modifier le statut du paiement.");
       setConfirmModalOpen(false);
+
       // Reload list and refresh selectedRes in place without kicking the owner out of the modal
       const updatedRes = await fetch(
         statusFilter !== "ALL"
