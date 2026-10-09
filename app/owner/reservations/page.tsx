@@ -50,6 +50,24 @@ export default function OwnerReservationsPage() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [reportingCashLoading, setReportingCashLoading] = useState(false);
 
+  function handleUpdateMonthPayment(monthItem: any, index: number, schedule: any[]) {
+    if (!selectedRes) return;
+    const currentPaid = selectedRes.paymentSummary?.paidMonths || [];
+    const monthKey = monthItem.monthKey;
+    const exists = currentPaid.includes(monthKey);
+    const updatedPaidMonths = exists
+      ? currentPaid.filter((m: string) => m !== monthKey)
+      : [...currentPaid, monthKey];
+
+    setSelectedRes({
+      ...selectedRes,
+      paymentSummary: {
+        ...selectedRes.paymentSummary,
+        paidMonths: updatedPaidMonths,
+      },
+    });
+  }
+
   async function handleReportCash(targetStatus: "REPORTED" | "UNPAID" = "REPORTED") {
     if (!selectedRes) return;
     try {
@@ -60,6 +78,7 @@ export default function OwnerReservationsPage() {
         body: JSON.stringify({
           status: targetStatus,
           amount: selectedRes.paymentSummary?.remainingAmount || selectedRes.pricing?.total || 0,
+          paidMonths: selectedRes.paymentSummary?.paidMonths,
         }),
       });
       const data = await res.json();

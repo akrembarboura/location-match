@@ -26,7 +26,8 @@ export async function POST(
       user.id,
       reservationId,
       targetStatus,
-      body?.amount ? Number(body.amount) : undefined
+      body?.amount ? Number(body.amount) : undefined,
+      body?.paidMonths
     );
 
     return NextResponse.json(result);

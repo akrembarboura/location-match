@@ -57,11 +57,14 @@ export class PaymentRepository {
     else if (verifiedPaid > 0) payStatus = "PARTIALLY_PAID";
     else if (reportedPaid > 0) payStatus = "REPORTED";
 
+    const currentPaidMonths = reservation.paymentSummary?.paidMonths;
+
     reservation.paymentSummary = {
       paidAmount: safePaid,
       reportedAmount: reportedPaid,
       remainingAmount: remaining,
       status: payStatus,
+      paidMonths: currentPaidMonths,
     };
     await reservation.save();
 
@@ -77,6 +80,7 @@ export class PaymentRepository {
               reportedAmount: reportedPaid,
               remainingAmount: remaining,
               status: payStatus,
+              paidMonths: currentPaidMonths,
             },
           },
         }
@@ -88,13 +92,22 @@ export class PaymentRepository {
     ownerId: string,
     reservationId: string,
     targetStatus: "PAID" | "REPORTED" | "UNPAID",
-    amountInput?: number
+    amountInput?: number,
+    paidMonthsInput?: string[]
   ): Promise<{ success: boolean; message: string; payment?: any; paymentSummary?: any }> {
     await connectToDatabase();
 
     const reservation = await ReservationModel.findOne({ id: reservationId, ownerId }).exec();
     if (!reservation) {
       throw new Error("Réservation introuvable ou vous n'êtes pas le propriétaire de ce logement.");
+    }
+
+    if (paidMonthsInput && Array.isArray(paidMonthsInput)) {
+      reservation.paymentSummary = {
+        ...reservation.paymentSummary,
+        paidMonths: paidMonthsInput,
+      };
+      await reservation.save();
     }
 
     const totalAmount = reservation.pricing?.total || 0;
