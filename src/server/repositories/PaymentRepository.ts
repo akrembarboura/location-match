@@ -118,12 +118,15 @@ export class PaymentRepository {
 
     if (targetStatus === "UNPAID") {
       await PaymentModel.deleteMany({ reservationId, ownerId }).exec();
+      const targetPaidMonths = paidMonthsInput !== undefined ? paidMonthsInput : [];
       reservation.paymentSummary = {
         paidAmount: 0,
         reportedAmount: 0,
         remainingAmount: totalAmount,
         status: "UNPAID",
+        paidMonths: targetPaidMonths,
       };
+      reservation.markModified("paymentSummary");
       await reservation.save();
 
       if (reservation.requestId) {
@@ -137,6 +140,7 @@ export class PaymentRepository {
                 reportedAmount: 0,
                 remainingAmount: totalAmount,
                 status: "UNPAID",
+                paidMonths: targetPaidMonths,
               },
             },
           }
@@ -150,7 +154,7 @@ export class PaymentRepository {
         paymentSummary: reservation.paymentSummary,
       };
     } else {
-      const amountToReport = amountInput && amountInput > 0 ? amountInput : totalAmount;
+      const amountToReport = amountInput !== undefined ? Math.max(0, amountInput) : totalAmount;
 
       let payment = await PaymentModel.findOne({ reservationId, ownerId }).exec();
       if (payment) {

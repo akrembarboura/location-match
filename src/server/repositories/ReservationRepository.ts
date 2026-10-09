@@ -4,6 +4,8 @@ import { calculateNights } from "@/lib/date-utils";
 import crypto from "node:crypto";
 import { ContactReleasePolicy } from "../services/ContactReleasePolicy";
 import { quoteForProperty } from "@/lib/pricing/pricing.service";
+import { commissionPolicyService } from "../services/CommissionPolicyService";
+import { financeLedgerService } from "../services/FinanceLedgerService";
 
 export function formatCustomerContactForOwner(
   res: {
@@ -125,6 +127,23 @@ export class ReservationRepository {
             status: payStatus,
           },
         });
+
+        try {
+          const snapshot = await commissionPolicyService.createSnapshotAtConfirmation({
+            reservationId: resId,
+            propertyId: propId,
+            ownerId,
+            rentalBasis: total,
+            collectionFlow: "OWNER_DIRECT",
+            confirmedAt: checkInDate,
+          });
+          await financeLedgerService.postCommissionObligation(
+            { id: resId, propertyId: propId, ownerId, customerId: req.customerId || undefined },
+            snapshot
+          );
+        } catch (finErr) {
+          console.error("Failed to post commission obligation on reservation sync:", finErr);
+        }
       }
     }
 
@@ -176,6 +195,23 @@ export class ReservationRepository {
               status: "UNPAID",
             },
           });
+
+          try {
+            const snapshot = await commissionPolicyService.createSnapshotAtConfirmation({
+              reservationId: resId,
+              propertyId: prop.id,
+              ownerId,
+              rentalBasis: total,
+              collectionFlow: "OWNER_DIRECT",
+              confirmedAt: checkInDate,
+            });
+            await financeLedgerService.postCommissionObligation(
+              { id: resId, propertyId: prop.id, ownerId },
+              snapshot
+            );
+          } catch (finErr) {
+            console.error("Failed to post commission obligation on property reservation sync:", finErr);
+          }
         }
       }
     }

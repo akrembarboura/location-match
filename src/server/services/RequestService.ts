@@ -1,7 +1,7 @@
 import { requestRepository } from "../repositories/RequestRepository";
 import { propertyRepository } from "../repositories/PropertyRepository";
 import { notificationService } from "./NotificationService";
-import { HouseModel, PropertyModel, HousingRequestModel, UserModel } from "@/lib/models";
+import { HouseModel, PropertyModel, HousingRequestModel, UserModel, ReservationModel } from "@/lib/models";
 import { emailService } from "../notifications/email.service";
 import connectToDatabase from "@/lib/mongoose";
 import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
@@ -9,6 +9,8 @@ import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
 import { analyticsRepository } from "../analytics/AnalyticsRepository";
 import crypto from "crypto";
 import { resolvePropertyPricing } from "@/lib/pricing/pricing.service";
+import { commissionPolicyService } from "./CommissionPolicyService";
+import { financeLedgerService } from "./FinanceLedgerService";
 
 export class RequestService {
   /**
@@ -634,6 +636,35 @@ export class RequestService {
             console.error("Failed to mark property reserved on request confirmation:", reserveErr);
           }
         }
+      }
+
+      // Finance & Commission Ledger Integration
+      try {
+        await connectToDatabase();
+        const propDoc = targetPropId ? await PropertyModel.findOne({ id: targetPropId }).lean().exec() : null;
+        const ownerId = propDoc?.ownerId || "owner-default";
+        const rentalBasis = typeof updated.budget === "number" ? updated.budget : (propDoc?.pricing?.price || propDoc?.pricePerNight || 0);
+
+        const snapshot = await commissionPolicyService.createSnapshotAtConfirmation({
+          reservationId: updated.id,
+          propertyId: targetPropId || undefined,
+          ownerId,
+          rentalBasis,
+          collectionFlow: "OWNER_DIRECT",
+          confirmedAt: new Date(),
+        });
+
+        await financeLedgerService.postCommissionObligation(
+          {
+            id: updated.id,
+            propertyId: targetPropId || "prop-default",
+            ownerId,
+            customerId: updated.customerId,
+          },
+          snapshot
+        );
+      } catch (finErr) {
+        console.error("Failed to post commission obligation on request confirmation:", finErr);
       }
 
       // Send confirmation email to client if logged in or left email

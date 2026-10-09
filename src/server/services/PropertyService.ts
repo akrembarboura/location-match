@@ -441,7 +441,7 @@ export class PropertyService {
    * ADMIN MODERATION WORKFLOW
    * ======================================================================= */
 
-  async getAdminProperties(filters: { status?: string; page?: number; limit?: number } = {}) {
+  async getAdminProperties(filters: { status?: string; search?: string; page?: number; limit?: number } = {}) {
     const [{ items: rawProperties, total, page, limit, totalPages }, counts] = await Promise.all([
       propertyRepository.findAdminProperties(filters),
       propertyRepository.countByStatus(),

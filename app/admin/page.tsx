@@ -272,98 +272,103 @@ export default function AdminHome() {
               <h2 className="font-display text-base font-bold text-foreground">Vue d'ensemble des Performances</h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Card 1: Active Listings (Soft Sky Blue) */}
+              {/* Card 1: Active Listings */}
               <Link
                 href="/admin/properties"
-                className="group relative rounded-2xl border border-sky-200/80 bg-sky-50/90 dark:bg-sky-950/30 dark:border-sky-900/50 p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                className="group relative rounded-xl border border-border bg-card p-4 shadow-2xs hover:border-primary/50 transition-all flex flex-col justify-between"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-xs font-semibold text-sky-800 dark:text-sky-300">Biens enregistrés</span>
-                    <p className="text-2xl font-display font-bold text-sky-950 dark:text-sky-100 mt-1">
-                      {stats?.properties ?? 0} <span className="text-xs font-medium text-sky-700 dark:text-sky-300">Biens</span>
+                    <span className="text-xs font-medium text-muted-foreground">Biens enregistrés</span>
+                    <p className="text-2xl font-display font-bold text-foreground mt-1">
+                      {stats?.properties ?? 0} <span className="text-xs font-normal text-muted-foreground">Biens</span>
                     </p>
                   </div>
-                  <div className="rounded-xl bg-sky-200/70 p-2 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300">
+                  <div className="rounded-xl bg-primary-soft p-2 text-primary border border-primary/20">
                     <Building2 className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-sky-200/60 dark:border-sky-900/40">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-200/80 dark:bg-sky-900/80 px-2 py-0.5 font-semibold text-sky-900 dark:text-sky-200">
-                    +1 cette semaine
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-border">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                    Catalogué en base
                   </span>
-                  <span className="text-sky-700 dark:text-sky-400 font-medium group-hover:underline">Voir les biens →</span>
+                  <span className="text-primary font-semibold group-hover:underline">Voir les biens →</span>
                 </div>
               </Link>
 
-              {/* Card 2: Pending Approvals (Soft Amber) */}
+              {/* Card 2: Pending Approvals */}
               <Link
                 href="/admin/properties?status=PENDING_REVIEW"
-                className="group relative rounded-2xl border border-amber-200/80 bg-amber-50/90 dark:bg-amber-950/30 dark:border-amber-900/50 p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                className="group relative rounded-xl border border-border bg-card p-4 shadow-2xs hover:border-amber-500/50 transition-all flex flex-col justify-between"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">En attente de validation</span>
-                    <p className="text-2xl font-display font-bold text-amber-950 dark:text-amber-100 mt-1">
-                      {actionNeeded.pendingProperties} <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Biens</span>
+                    <span className="text-xs font-medium text-muted-foreground">En attente de validation</span>
+                    <p className="text-2xl font-display font-bold text-amber-700 dark:text-amber-400 mt-1">
+                      {actionNeeded.pendingProperties} <span className="text-xs font-normal text-muted-foreground">Biens</span>
                     </p>
                   </div>
-                  <div className="rounded-xl bg-amber-200/70 p-2 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                  <div className="rounded-xl bg-amber-500/10 p-2 text-amber-700 dark:text-amber-400 border border-amber-500/20">
                     <Clock className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
-                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-200/80 dark:bg-amber-900/80 px-2 py-0.5 font-bold text-amber-900 dark:text-amber-200">
-                    85% Taux de validation
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-border">
+                  <span className="text-amber-700 dark:text-amber-400 font-medium">
+                    À vérifier
                   </span>
-                  <span className="text-amber-700 dark:text-amber-400 font-medium group-hover:underline">Examiner →</span>
+                  <span className="text-amber-700 dark:text-amber-400 font-semibold group-hover:underline">Examiner →</span>
                 </div>
               </Link>
 
-              {/* Card 3: New Inquiries (Soft Emerald Green) */}
+              {/* Card 3: New Inquiries */}
               <Link
                 href="/admin/requests"
-                className="group relative rounded-2xl border border-emerald-200/80 bg-emerald-50/90 dark:bg-emerald-950/30 dark:border-emerald-900/50 p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                className="group relative rounded-xl border border-border bg-card p-4 shadow-2xs hover:border-emerald-500/50 transition-all flex flex-col justify-between"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Demandes de logement</span>
-                    <p className="text-2xl font-display font-bold text-emerald-950 dark:text-emerald-100 mt-1">
-                      {stats?.openRequests ?? 0} <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Demandes</span>
+                    <span className="text-xs font-medium text-muted-foreground">Demandes de logement</span>
+                    <p className="text-2xl font-display font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                      {stats?.openRequests ?? 0} <span className="text-xs font-normal text-muted-foreground">Demandes</span>
                     </p>
                   </div>
-                  <div className="rounded-xl bg-emerald-200/70 p-2 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                  <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                     <Inbox className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-200/80 dark:bg-emerald-900/80 px-2 py-0.5 font-semibold text-emerald-900 dark:text-emerald-200">
-                    +3 récents aujourd'hui
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-border">
+                  <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                    Demandes ouvertes
                   </span>
-                  <span className="text-emerald-700 dark:text-emerald-400 font-medium group-hover:underline">Traiter →</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold group-hover:underline">Traiter →</span>
                 </div>
               </Link>
 
-              {/* Card 4: Total Revenue & Margin (Soft Purple) */}
-              <div className="group relative rounded-2xl border border-purple-200/80 bg-purple-50/90 dark:bg-purple-950/30 dark:border-purple-900/50 p-4.5 shadow-2xs flex flex-col justify-between">
+              {/* Card 4: Total Revenue & Margin */}
+              <Link
+                href="/admin/finance"
+                className="group relative rounded-xl border border-border bg-card p-4 shadow-2xs hover:border-primary/50 transition-all flex flex-col justify-between"
+              >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">Marge Cumulée</span>
-                    <p className="text-2xl font-display font-bold text-purple-950 dark:text-purple-100 mt-1">
-                      {formatDT(stats?.totalMargin ?? 0)} DT
+                    <span className="text-xs font-medium text-muted-foreground">Marge Cumulée</span>
+                    <p className="text-2xl font-display font-bold text-foreground mt-1">
+                      {formatDT(stats?.totalMargin ?? 0)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-purple-200/70 p-2 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300">
+                  <div className="rounded-xl bg-primary-soft p-2 text-primary border border-primary/20">
                     <TrendingUp className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-purple-200/60 dark:border-purple-900/40">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-200/80 dark:bg-purple-900/80 px-2 py-0.5 font-semibold text-purple-900 dark:text-purple-200">
-                    +12% ce mois
+                <div className="mt-3 flex items-center justify-between text-[0.7rem] pt-2 border-t border-border">
+                  <span className="text-muted-foreground">
+                    Commissions nettes
                   </span>
-                  <span className="text-purple-700 dark:text-purple-400 font-medium font-mono">{stats?.dealsCount ?? 0} contrats</span>
+                  <span className="text-primary font-semibold font-mono group-hover:underline">
+                    {stats?.dealsCount ?? 0} contrat(s) →
+                  </span>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 

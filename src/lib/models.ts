@@ -591,3 +591,130 @@ AnalyticsEventSchema.index({ occurredAt: 1 }, { expireAfterSeconds: 90 * 24 * 60
 export const AnalyticsEventModel =
   mongoose.models.AnalyticsEvent || mongoose.model("AnalyticsEvent", AnalyticsEventSchema);
 
+// --- FINANCE & COMMISSION ENGINE MODELS ---
+export const COLLECTION_FLOW_ENUM = ["OWNER_DIRECT", "PLATFORM_COLLECTS", "MIXED", "UNRESOLVED"] as const;
+export type CollectionFlow = (typeof COLLECTION_FLOW_ENUM)[number];
+
+export const POLICY_SCOPE_ENUM = ["PLATFORM", "OWNER", "PROPERTY", "RESERVATION"] as const;
+export type PolicyScope = (typeof POLICY_SCOPE_ENUM)[number];
+
+export const TRANSACTION_TYPE_ENUM = [
+  "COMMISSION_OBLIGATION",
+  "RENTAL_COLLECTION",
+  "COMMISSION_REMITTANCE",
+  "OWNER_PAYABLE_MOVEMENT",
+  "REVERSAL",
+  "ADJUSTMENT",
+] as const;
+export type TransactionType = (typeof TRANSACTION_TYPE_ENUM)[number];
+
+const CommissionPolicySchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    scope: { type: String, enum: POLICY_SCOPE_ENUM, required: true, index: true },
+    targetId: { type: String, index: true, sparse: true }, // ownerId, propertyId, or reservationId
+    rate: { type: Number, required: true }, // e.g. 10 for 10%
+    calculationMethod: {
+      type: String,
+      enum: ["PERCENTAGE", "FIXED_PER_RESERVATION", "FIXED_PER_NIGHT"],
+      default: "PERCENTAGE",
+    },
+    currency: { type: String, default: "TND" },
+    effectiveFrom: { type: Date, required: true, default: Date.now, index: true },
+    effectiveUntil: { type: Date, index: true },
+    isActive: { type: Boolean, default: true, index: true },
+    version: { type: Number, default: 1 },
+    notes: { type: String },
+    createdBy: { type: String, default: "ADMIN" },
+    updatedBy: { type: String, default: "ADMIN" },
+  },
+  { timestamps: true }
+);
+
+CommissionPolicySchema.index({ scope: 1, targetId: 1, isActive: 1, effectiveFrom: -1 });
+
+export const CommissionPolicyModel =
+  mongoose.models.CommissionPolicy || mongoose.model("CommissionPolicy", CommissionPolicySchema);
+
+const CommissionSnapshotSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    reservationId: { type: String, required: true, unique: true, index: true },
+    policyId: { type: String },
+    policyVersion: { type: Number, default: 1 },
+    scope: { type: String, enum: POLICY_SCOPE_ENUM, default: "PLATFORM" },
+    rate: { type: Number, required: true },
+    calculationMethod: { type: String, default: "PERCENTAGE" },
+    currency: { type: String, default: "TND" },
+    rentalBasis: { type: Number, required: true },
+    calculatedCommission: { type: Number, required: true },
+    collectionFlow: {
+      type: String,
+      enum: COLLECTION_FLOW_ENUM,
+      default: "OWNER_DIRECT",
+      index: true,
+    },
+    mixedAllocation: {
+      ownerAmount: { type: Number, default: 0 },
+      platformAmount: { type: Number, default: 0 },
+    },
+    confirmedAt: { type: Date, default: Date.now, index: true },
+    snapshotVersion: { type: Number, default: 1 },
+    notes: { type: String },
+  },
+  { timestamps: true }
+);
+
+export const CommissionSnapshotModel =
+  mongoose.models.CommissionSnapshot || mongoose.model("CommissionSnapshot", CommissionSnapshotSchema);
+
+const FinancialLedgerSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    reservationId: { type: String, required: true, index: true },
+    propertyId: { type: String, required: true, index: true },
+    ownerId: { type: String, required: true, index: true },
+    customerId: { type: String, index: true },
+    type: { type: String, enum: TRANSACTION_TYPE_ENUM, required: true, index: true },
+    direction: { type: String, enum: ["CREDIT", "DEBIT"], required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "TND" },
+    collectionFlow: { type: String, enum: COLLECTION_FLOW_ENUM, default: "OWNER_DIRECT" },
+    paymentMethod: { type: String, default: "CASH" },
+    status: {
+      type: String,
+      enum: ["REPORTED", "VERIFIED", "REJECTED", "REVERSED"],
+      default: "VERIFIED",
+      index: true,
+    },
+    reference: { type: String },
+    reportedBy: {
+      userId: { type: String },
+      role: { type: String },
+    },
+    reportedAt: { type: Date },
+    verifiedBy: {
+      userId: { type: String },
+      role: { type: String },
+    },
+    verifiedAt: { type: Date },
+    reversedBy: {
+      userId: { type: String },
+      role: { type: String },
+    },
+    reversedAt: { type: Date },
+    reversalReason: { type: String },
+    originalTransactionId: { type: String, index: true },
+    notes: { type: String },
+  },
+  { timestamps: true }
+);
+
+FinancialLedgerSchema.index({ reservationId: 1, type: 1, status: 1 });
+FinancialLedgerSchema.index({ ownerId: 1, type: 1, status: 1 });
+
+export const FinancialLedgerModel =
+  mongoose.models.FinancialLedger || mongoose.model("FinancialLedger", FinancialLedgerSchema);
+
+

@@ -88,7 +88,9 @@ export default function OwnerReservationsPage() {
       const currentPaid = selectedRes.paymentSummary?.paidMonths || [];
       const paidMonthsToSend = targetStatus === "REPORTED" ? currentPaid : [];
       const amountToSend = targetStatus === "REPORTED"
-        ? (selectedRes.paymentSummary?.reportedAmount || selectedRes.pricing?.total || 0)
+        ? (selectedRes.paymentSummary?.reportedAmount !== undefined
+            ? selectedRes.paymentSummary.reportedAmount
+            : (selectedRes.pricing?.total || 0))
         : 0;
 
       const res = await fetch(`/api/owner/reservations/${selectedRes.id}/report-cash`, {

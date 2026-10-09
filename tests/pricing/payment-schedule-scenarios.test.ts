@@ -101,4 +101,54 @@ describe("PaymentScheduleView & Payment Reporting — Zero Auto-Check & Idempote
     expect(result.schedule.filter((m) => m.status === "PAID")).toHaveLength(0);
     expect(result.schedule.filter((m) => m.status === "UNPAID")).toHaveLength(4);
   });
+
+  it("6. Amount independence: reportedAmount=2400 does NOT auto-check any boxes if paidMonths is empty", () => {
+    const result = calculatePaymentSchedule({
+      ...baseReservation,
+      paymentSummary: {
+        paidAmount: 0,
+        reportedAmount: 2400,
+        status: "REPORTED",
+        paidMonths: [],
+      },
+    });
+
+    expect(result.schedule.filter((m) => m.status === "PAID")).toHaveLength(0);
+    expect(result.schedule.filter((m) => m.status === "UNPAID")).toHaveLength(4);
+  });
+
+  it("7. Single-month unchecking: unchecking Sept from [Sept, Oct] leaves only Oct checked", () => {
+    const initialPaid = ["2026-09", "2026-10"];
+    const monthToRemove = "2026-09";
+    const updatedPaid = initialPaid.filter((m) => m !== monthToRemove);
+
+    const result = calculatePaymentSchedule({
+      ...baseReservation,
+      paymentSummary: {
+        paidAmount: 0,
+        reportedAmount: 600,
+        status: "REPORTED",
+        paidMonths: updatedPaid,
+      },
+    });
+
+    const checkedKeys = result.schedule.filter((m) => m.status === "PAID").map((m) => m.monthKey);
+    expect(checkedKeys).toEqual(["2026-10"]);
+  });
+
+  it("8. Idempotent clearing: saving empty selection repeatedly never restores old paid months", () => {
+    for (let click = 1; click <= 3; click++) {
+      const result = calculatePaymentSchedule({
+        ...baseReservation,
+        paymentSummary: {
+          paidAmount: 0,
+          reportedAmount: 0,
+          status: "UNPAID",
+          paidMonths: [],
+        },
+      });
+
+      expect(result.schedule.filter((m) => m.status === "PAID")).toHaveLength(0);
+    }
+  });
 });

@@ -219,17 +219,29 @@ export class PropertyRepository {
     return await PropertyModel.find({ ownerId }).sort({ createdAt: -1 }).lean().exec();
   }
 
-  async findAdminProperties(filters: { status?: string; page?: number; limit?: number } = {}) {
+  async findAdminProperties(filters: { status?: string; search?: string; page?: number; limit?: number } = {}) {
     await connectToDatabase();
     const query: any = {};
     if (filters.status && filters.status !== "ALL") {
       query.status = filters.status;
     }
+    if (filters.search && filters.search.trim()) {
+      const term = filters.search.trim();
+      const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      query.$or = [
+        { title: regex },
+        { slug: regex },
+        { city: regex },
+        { area: regex },
+        { id: regex },
+        { ownerId: regex },
+      ];
+    }
     const page = Math.max(1, filters.page || 1);
     const limit = Math.max(1, Math.min(50, filters.limit || 20));
     const skip = (page - 1) * limit;
 
-    const [items, total] = await Promise.all([
+    let [items, total] = await Promise.all([
       PropertyModel.find(query)
         .select("id title slug ownerId city area location rentalCategory propertyType type bedrooms bathrooms surface pricing summerPrice studentPrice pricePerNight verified status images moderation createdAt")
         .sort({ createdAt: -1 })
@@ -239,6 +251,41 @@ export class PropertyRepository {
         .exec(),
       PropertyModel.countDocuments(query),
     ]);
+
+    if (total === 0 && (!filters.status || filters.status === "ALL" || filters.status === "PUBLISHED")) {
+      const [houseItems, houseTotal] = await Promise.all([
+        HouseModel.find({})
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        HouseModel.countDocuments({}),
+      ]);
+
+      if (houseTotal > 0) {
+        items = houseItems.map((h: any) => ({
+          id: h.id,
+          title: h.title,
+          slug: h.slug,
+          ownerId: "owner-1",
+          city: h.city || h.location || "Mahdia",
+          area: h.area || "",
+          rentalCategory: h.rentalCategory || "summer",
+          propertyType: h.propertyType || "Appartement",
+          type: h.propertyType || "Appartement",
+          bedrooms: h.bedrooms,
+          bathrooms: h.bathrooms,
+          pricing: { price: h.pricePerNight, pricePeriod: "night" },
+          pricePerNight: h.pricePerNight,
+          verified: true,
+          status: "PUBLISHED",
+          images: h.images,
+          createdAt: h.createdAt || new Date(),
+        })) as any[];
+        total = houseTotal;
+      }
+    }
 
     return {
       items,
@@ -264,6 +311,20 @@ export class PropertyRepository {
       PropertyModel.countDocuments({ status: "REJECTED" }),
       PropertyModel.countDocuments({ status: "ARCHIVED" }),
     ]);
+
+    if (all === 0) {
+      const houseCount = await HouseModel.countDocuments({});
+      if (houseCount > 0) {
+        return {
+          all: houseCount,
+          pending: 0,
+          underReview: 0,
+          published: houseCount,
+          rejected: 0,
+          archived: 0,
+        };
+      }
+    }
 
     return {
       all,

@@ -11,6 +11,9 @@ import {
   PropertyModerationEventModel,
 } from "@/lib/models";
 
+import { financeLedgerService } from "@/server/services/FinanceLedgerService";
+import { CommissionSnapshotModel } from "@/lib/models";
+
 function getPropertyCoverImage(p: any): string {
   if (p.images && Array.isArray(p.images) && p.images.length > 0) {
     const firstImg = p.images[0];
@@ -40,8 +43,9 @@ export async function GET(req: NextRequest) {
       unverifiedPropertiesCount,
       pendingPropertiesCount,
       unpaidReservationsCount,
-      dealsCount,
-      marginAggregate,
+      dealsCountRaw,
+      reservationCountRaw,
+      financeOverview,
       deals,
       recentRequests,
       recentProperties,
@@ -63,16 +67,8 @@ export async function GET(req: NextRequest) {
       PropertyModel.countDocuments({ status: { $in: ["PENDING_REVIEW", "UNDER_REVIEW"] } }),
       ReservationModel.countDocuments({ "paymentSummary.status": { $in: ["UNPAID", "REPORTED"] } }),
       DealModel.countDocuments({}),
-      DealModel.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalMargin: {
-              $sum: { $subtract: ["$customerOffer", "$ownerPrice"] },
-            },
-          },
-        },
-      ]),
+      ReservationModel.countDocuments({}),
+      financeLedgerService.getFinancialOverview(),
       DealModel.find({})
         .select("id property ownerPrice customerOffer closed createdAt")
         .sort({ createdAt: -1 })
@@ -122,15 +118,16 @@ export async function GET(req: NextRequest) {
         .lean(),
     ]);
 
-    // Calculate total margin from DB aggregation or fallback to recent deals
-    const aggregatedMargin = marginAggregate[0]?.totalMargin;
+    // Calculate total margin directly from Finance Engine (commission earned/collected) with fallback
     const totalMargin =
-      typeof aggregatedMargin === "number" && aggregatedMargin >= 0
-        ? aggregatedMargin
+      financeOverview.commissionEarned > 0
+        ? financeOverview.commissionEarned
         : deals.reduce((acc, d: any) => {
             const margin = (d.customerOffer || 0) - (d.ownerPrice || 0);
             return acc + (margin > 0 ? margin : 0);
           }, 0);
+
+    const dealsCount = reservationCountRaw > 0 ? reservationCountRaw : dealsCountRaw;
 
     const conversionRate = totalRequestsCount > 0 ? Math.round((dealsCount / totalRequestsCount) * 100) : 0;
 

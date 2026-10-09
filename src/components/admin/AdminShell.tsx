@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Shield,
   ExternalLink,
+  Wallet,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ const links = [
   { to: "/admin/requests", label: "Demandes", icon: Inbox, exact: false },
   { to: "/admin/clients", label: "Clients", icon: Users, exact: false },
   { to: "/admin/properties", label: "Biens", icon: Building2, exact: false },
+  { to: "/admin/finance", label: "Finance", icon: Wallet, exact: false },
   { to: "/admin/analytics", label: "Statistiques", icon: BarChart3, exact: false },
   { to: "/admin/activities", label: "Activités", icon: Activity, exact: false },
 ];
