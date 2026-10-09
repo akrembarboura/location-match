@@ -18,6 +18,7 @@ import {
   Phone,
 } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
+import { PaymentScheduleView } from "@/components/pricing/PaymentScheduleView";
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; color: string }> = {
@@ -237,38 +238,28 @@ export default function RequestTrackingPage() {
                         )}
                       </div>
 
-                      {/* Canonical Payment Status Section */}
-                      {requestData.payment || requestData.paymentSummary ? (() => {
-                        const payStatus = requestData.payment?.status || requestData.paymentSummary?.status || "UNPAID";
-                        const isConfirmed = ["CONFIRMED", "VERIFIED", "PAID"].includes(payStatus);
-                        const isReported = ["REPORTED", "AWAITING_OWNER_CONFIRMATION"].includes(payStatus);
-
-                        return (
-                          <div className="mt-4 rounded-xl border border-border bg-surface p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                État du paiement
-                              </span>
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                isConfirmed
-                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                  : isReported
-                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
-                                  : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                              }`}>
-                                {isConfirmed ? "✓ Paiement confirmé" : isReported ? "🟡 Paiement en attente de validation" : "🔴 Non payé"}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center justify-between text-xs text-foreground font-medium pt-1">
-                              <span>Mode de règlement : <strong>{requestData.payment?.method || "Espèces"}</strong></span>
-                              {requestData.payment?.amount ? (
-                                <span>Total : <strong>{requestData.payment.amount} DT</strong></span>
-                              ) : null}
-                            </div>
-                          </div>
-                        );
-                      })() : null}
+                      {/* Payment Schedule & Financial Tracking */}
+                      <div className="mt-4">
+                        <PaymentScheduleView
+                          rentalCategory={requestData.rentalCategory || requestData.selectedPropertyDetails?.rentalCategory}
+                          checkIn={requestData.checkIn}
+                          checkOut={requestData.checkOut}
+                          pricing={{
+                            total: requestData.selectedPropertyDetails?.pricing?.price,
+                            unitPrice: requestData.selectedPropertyDetails?.pricing?.price,
+                            pricePeriod: requestData.selectedPropertyDetails?.pricing?.pricePeriod || "month",
+                            currency: "TND",
+                          }}
+                          paymentSummary={
+                            requestData.paymentSummary || {
+                              paidAmount: requestData.payment?.amount || 0,
+                              reportedAmount: requestData.payment?.reportedAmount || 0,
+                              paidMonths: requestData.payment?.paidMonths || [],
+                              status: requestData.payment?.status || requestData.status,
+                            }
+                          }
+                        />
+                      </div>
 
                       <div className="mt-6 border-t border-border pt-4">
                         {requestData.status === "PENDING" && (
