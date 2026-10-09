@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { OwnerShell } from "@/components/owner/OwnerShell";
 import { formatDT } from "@/lib/utils";
+import { PaymentScheduleView } from "@/components/pricing/PaymentScheduleView";
+import { calculatePaymentSchedule } from "@/lib/pricing/payment-schedule";
 import {
   ClipboardList,
   Loader2,
@@ -297,6 +299,28 @@ export default function OwnerReservationsPage() {
                   </div>
                 </div>
               </div>
+
+              <PaymentScheduleView
+                rentalCategory={selectedRes.rentalCategory}
+                checkIn={selectedRes.checkIn}
+                checkOut={selectedRes.checkOut}
+                pricing={{
+                  total: selectedRes.pricing?.total || 0,
+                  unitPrice: selectedRes.pricing?.unitPrice || selectedRes.unitPrice,
+                  pricePeriod: selectedRes.pricing?.pricePeriod || selectedRes.pricePeriod,
+                  currency: "TND",
+                }}
+                paymentSummary={{
+                  paidAmount: selectedRes.paymentSummary?.paidAmount || 0,
+                  reportedAmount: selectedRes.paymentSummary?.reportedAmount || 0,
+                  paidMonths: selectedRes.paymentSummary?.paidMonths || [],
+                  status: selectedRes.paymentSummary?.status || "UNPAID",
+                }}
+                editableByOwner={true}
+                onToggleMonthStatus={(monthItem, index, schedule) =>
+                  handleUpdateMonthPayment(monthItem, index, schedule)
+                }
+              />
 
               <div className="rounded-xl bg-surface p-4 space-y-3 border border-border/60">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
