@@ -136,7 +136,7 @@ export default function AdminRequests() {
             <span>Total Demandes</span>
             <Inbox className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-foreground">{stats.total}</p>
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">{stats.total}</p>
           <span className="text-[0.7rem] text-muted-foreground">Enregistrées au catalogue</span>
         </div>
 
@@ -145,7 +145,7 @@ export default function AdminRequests() {
             <span>En attente</span>
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-amber-700 dark:text-amber-400">
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">
             {stats.pending}
           </p>
           <span className="text-[0.7rem] text-muted-foreground">Nécessitent un traitement</span>
@@ -156,7 +156,7 @@ export default function AdminRequests() {
             <span>Réservations Directes</span>
             <Building className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-foreground">{stats.direct}</p>
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">{stats.direct}</p>
           <span className="text-[0.7rem] text-muted-foreground">Attachées à un logement</span>
         </div>
 
@@ -165,7 +165,7 @@ export default function AdminRequests() {
             <span>Confirmées</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">
             {stats.confirmed}
           </p>
           <span className="text-[0.7rem] text-muted-foreground">Dossiers validés</span>

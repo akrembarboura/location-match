@@ -166,7 +166,7 @@ export default function AdminProperties() {
             <span>Total Annonces</span>
             <Building2 className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-foreground">{counts.all}</p>
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">{counts.all}</p>
           <span className="text-[0.7rem] text-muted-foreground">Logements enregistrés</span>
         </div>
 
@@ -175,7 +175,7 @@ export default function AdminProperties() {
             <span>En attente</span>
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-amber-700 dark:text-amber-400">
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">
             {counts.pending}
           </p>
           <span className="text-[0.7rem] text-muted-foreground">À vérifier par la modération</span>
@@ -186,7 +186,7 @@ export default function AdminProperties() {
             <span>Publiées (En ligne)</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">
             {counts.published}
           </p>
           <span className="text-[0.7rem] text-muted-foreground">Visibles sur le site public</span>

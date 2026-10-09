@@ -155,7 +155,7 @@ export function PropertyCard({ property, compact }: { property: any; compact?: b
         {/* Bottom Price & Category Tag Row */}
         <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
           <div>
-            <span className="font-display text-xl sm:text-2xl font-extrabold text-foreground">
+            <span className="font-display text-xl sm:text-2xl font-extrabold text-black dark:text-white">
               {formatDT(priceVal)} DT
             </span>{" "}
             <span className="text-xs font-medium text-muted-foreground">

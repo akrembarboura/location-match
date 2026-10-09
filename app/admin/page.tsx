@@ -304,7 +304,7 @@ export default function AdminHome() {
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-xs font-medium text-muted-foreground">En attente de validation</span>
-                    <p className="text-2xl font-display font-bold text-amber-700 dark:text-amber-400 mt-1">
+                    <p className="text-2xl font-display font-bold text-black dark:text-white mt-1">
                       {actionNeeded.pendingProperties} <span className="text-xs font-normal text-muted-foreground">Biens</span>
                     </p>
                   </div>
@@ -328,7 +328,7 @@ export default function AdminHome() {
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-xs font-medium text-muted-foreground">Demandes de logement</span>
-                    <p className="text-2xl font-display font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                    <p className="text-2xl font-display font-bold text-black dark:text-white mt-1">
                       {stats?.openRequests ?? 0} <span className="text-xs font-normal text-muted-foreground">Demandes</span>
                     </p>
                   </div>
@@ -411,7 +411,7 @@ export default function AdminHome() {
                   <span className="text-xs font-medium text-muted-foreground">Demandes Actives</span>
                   <Inbox className="h-4 w-4 text-primary" />
                 </div>
-                <p className="text-xl font-display font-semibold text-primary mt-1">
+                <p className="text-xl font-display font-semibold text-black dark:text-white mt-1">
                   {marketplace?.activeRequests ?? 0} en cours
                 </p>
                 <p className="mt-2 text-[0.75rem] text-muted-foreground">
@@ -424,7 +424,7 @@ export default function AdminHome() {
                   <span className="text-xs font-medium text-muted-foreground">Taux de Conversion</span>
                   <Percent className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <p className="text-xl font-display font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
+                <p className="text-xl font-display font-semibold text-black dark:text-white mt-1">
                   {marketplace?.conversionRate ?? 0}%
                 </p>
                 <p className="mt-2 text-[0.75rem] text-muted-foreground">

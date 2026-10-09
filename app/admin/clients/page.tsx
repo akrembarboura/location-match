@@ -115,7 +115,7 @@ export default function AdminClientsPage() {
             <span>Réservations Directes</span>
             <Building className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="mt-2 font-display text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+          <p className="mt-2 font-display text-2xl font-bold text-black dark:text-white">
             {metrics.direct}
           </p>
           <span className="text-[0.7rem] text-muted-foreground">Dossiers sur logement spécifique</span>

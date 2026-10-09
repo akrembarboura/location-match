@@ -207,7 +207,7 @@ export default function AdminAnalyticsPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
               <span className="text-[0.7rem] font-medium text-muted-foreground block">Visiteurs uniques</span>
-              <span className="font-display text-xl font-bold text-foreground mt-1 block">
+              <span className="font-display text-xl font-bold text-black dark:text-white mt-1 block">
                 {stats?.visitors ?? 0}
               </span>
               <span className="text-[0.65rem] text-muted-foreground block mt-0.5">Sessions identifiées</span>
@@ -215,7 +215,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
               <span className="text-[0.7rem] font-medium text-muted-foreground block">Recherches</span>
-              <span className="font-display text-xl font-bold text-foreground mt-1 block">
+              <span className="font-display text-xl font-bold text-black dark:text-white mt-1 block">
                 {stats?.searches ?? 0}
               </span>
               <span className="text-[0.65rem] text-muted-foreground block mt-0.5">Filtres soumis</span>
@@ -223,7 +223,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
               <span className="text-[0.7rem] font-medium text-muted-foreground block">Vues de biens</span>
-              <span className="font-display text-xl font-bold text-foreground mt-1 block">
+              <span className="font-display text-xl font-bold text-black dark:text-white mt-1 block">
                 {stats?.propertyViews ?? 0}
               </span>
               <span className="text-[0.65rem] text-muted-foreground block mt-0.5">Fiches consultées</span>
@@ -231,7 +231,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
               <span className="text-[0.7rem] font-medium text-muted-foreground block">Demandes</span>
-              <span className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
+              <span className="font-display text-xl font-bold text-black dark:text-white mt-1 block">
                 {stats?.requests ?? 0}
               </span>
               <span className="text-[0.65rem] text-muted-foreground block mt-0.5">Dossiers déposés</span>
@@ -239,7 +239,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
               <span className="text-[0.7rem] font-medium text-muted-foreground block">Propositions</span>
-              <span className="font-display text-xl font-bold text-amber-600 dark:text-amber-400 mt-1 block">
+              <span className="font-display text-xl font-bold text-black dark:text-white mt-1 block">
                 {stats?.proposals ?? 0}
               </span>
               <span className="text-[0.65rem] text-muted-foreground block mt-0.5">{stats?.acceptedProposals ?? 0} acceptée(s)</span>
@@ -247,7 +247,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="rounded-xl border border-border bg-card p-3.5 shadow-2xs">
               <span className="text-[0.7rem] font-medium text-muted-foreground block">Réservations</span>
-              <span className="font-display text-xl font-bold text-primary mt-1 block">
+              <span className="font-display text-xl font-bold text-black dark:text-white mt-1 block">
                 {stats?.reservations ?? 0}
               </span>
               <span className="text-[0.65rem] text-muted-foreground block mt-0.5">Contrats conclus</span>
@@ -662,7 +662,7 @@ function FunnelStepItem({
     <div className="rounded-xl border border-border/60 bg-surface/50 p-2.5 space-y-1.5 transition-colors hover:bg-surface">
       <div className="flex items-center justify-between text-xs">
         <span className="font-semibold text-foreground">{label}</span>
-        <span className={cn("font-mono font-bold text-sm", accent ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
+        <span className="font-mono font-bold text-sm text-black dark:text-white">
           {count}
         </span>
       </div>
@@ -677,7 +677,7 @@ function FunnelStepItem({
       {conversionRate !== null && conversionRate !== undefined && (
         <div className="flex items-center justify-between text-[0.68rem] text-muted-foreground pt-0.5">
           <span>{rateLabel}</span>
-          <span className="font-mono font-semibold text-foreground">{conversionRate}%</span>
+          <span className="font-mono font-semibold text-black dark:text-white">{conversionRate}%</span>
         </div>
       )}
     </div>
