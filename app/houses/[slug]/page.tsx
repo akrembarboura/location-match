@@ -11,6 +11,7 @@ import { formatPrice } from "@/lib/rentals/types";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useTrackPropertyView, trackEvent } from "@/lib/analytics/client";
+import { PropertyWhatsAppButtons } from "@/components/properties/PropertyWhatsAppButtons";
 
 function HouseDetailSkeleton() {
   return (
@@ -178,6 +179,13 @@ function HouseDetail() {
               );
             })()}
             <p className="mt-3 text-center text-xs text-muted-foreground">{t.detail.requestHint}</p>
+
+            <PropertyWhatsAppButtons
+              title={house.title}
+              city={house.city}
+              price={house.pricing?.price || house.pricePerNight || 0}
+              period={house.pricing?.pricePeriod || (house.rentalCategory === "student" ? "month" : "night")}
+            />
           </aside>
         </div>
       </div>
