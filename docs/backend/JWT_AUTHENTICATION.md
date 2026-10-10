@@ -113,3 +113,4 @@ export async function deleteSessionCookie() {
 }
 ```
 Lors de l'appel à la route `/api/auth/logout`, le serveur renvoie un en-tête `Set-Cookie` qui écrase et expire instantanément le cookie de session de l'appareil.
+
