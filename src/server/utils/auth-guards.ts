@@ -2,16 +2,20 @@ import { authService } from "../services/AuthService";
 import type { Role } from "@/lib/models";
 
 export class AuthorizationError extends Error {
+  statusCode: number;
   constructor(message = "Unauthorized") {
     super(message);
     this.name = "AuthorizationError";
+    this.statusCode = 403;
   }
 }
 
 export class AuthenticationError extends Error {
+  statusCode: number;
   constructor(message = "Unauthenticated") {
     super(message);
     this.name = "AuthenticationError";
+    this.statusCode = 401;
   }
 }
 
