@@ -147,36 +147,39 @@ export function HouseCard({ house }: { house: House }) {
         </Link>
 
         {/* Features Pill Bar */}
-        <div className="mt-3.5 flex flex-wrap items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <div className="mt-3.5 flex flex-wrap items-center gap-1.5 text-xs font-medium">
           {house.bedrooms > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface border border-border/60 px-3 py-1 text-[0.75rem] text-foreground font-medium">
-              <BedDouble className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> {house.bedrooms} Chambres
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/90 border border-border/80 dark:border-border px-3 py-1 text-[0.75rem] font-semibold text-foreground dark:text-slate-100 shadow-2xs">
+              <BedDouble className="h-3.5 w-3.5 text-primary dark:text-sky-400 shrink-0" /> {house.bedrooms} Chambres
             </span>
           )}
           {house.bathrooms > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface border border-border/60 px-3 py-1 text-[0.75rem] text-foreground font-medium">
-              <Bath className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> {house.bathrooms} SDB
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/90 border border-border/80 dark:border-border px-3 py-1 text-[0.75rem] font-semibold text-foreground dark:text-slate-100 shadow-2xs">
+              <Bath className="h-3.5 w-3.5 text-primary dark:text-sky-400 shrink-0" /> {house.bathrooms} SDB
             </span>
           )}
           {house.guests > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface border border-border/60 px-3 py-1 text-[0.75rem] text-foreground font-medium">
-              <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> {house.guests} Pers.
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/90 border border-border/80 dark:border-border px-3 py-1 text-[0.75rem] font-semibold text-foreground dark:text-slate-100 shadow-2xs">
+              <Users className="h-3.5 w-3.5 text-primary dark:text-sky-400 shrink-0" /> {house.guests} Pers.
             </span>
           )}
         </div>
 
         {/* Bottom Price & Category Tag Row */}
-        <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
-          <div>
-            <span className="font-display text-xl sm:text-2xl font-extrabold text-black dark:text-white">
-              {formatPrice(priceVal)} DT
-            </span>{" "}
-            <span className="text-xs font-medium text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+          <div className="flex items-baseline gap-1">
+            <span className="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-foreground dark:text-white">
+              {formatPrice(priceVal)}
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-primary dark:text-sky-400 uppercase tracking-wide">
+              DT
+            </span>
+            <span className="text-xs font-medium text-muted-foreground dark:text-slate-400 ml-0.5">
               / {pricePeriodLabel}
             </span>
           </div>
 
-          <span className="rounded-full bg-surface border border-border px-3 py-1 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="rounded-full bg-surface/90 border border-border/80 dark:border-border px-3 py-1 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground dark:text-slate-300">
             {categoryTag}
           </span>
         </div>

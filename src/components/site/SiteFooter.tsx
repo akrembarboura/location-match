@@ -11,13 +11,13 @@ export function SiteFooter() {
 
   const f = t.footer;
   const link =
-    "flex min-h-10 items-center rounded-md text-sm leading-snug text-foreground/75 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+    "flex min-h-10 items-center rounded-md text-sm leading-snug text-foreground/75 dark:text-foreground/80 transition-colors hover:text-primary dark:hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
   return (
-    <footer className="mt-12 border-t border-border bg-sand sm:mt-20">
+    <footer className="mt-12 border-t border-border bg-sand dark:bg-card/75 dark:backdrop-blur sm:mt-20">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-5 gap-y-7 px-4 py-8 sm:gap-8 sm:px-6 sm:py-12 md:grid-cols-[1.4fr_1fr_1fr]">
-        <div className="col-span-2 rounded-2xl border border-border/70 bg-card/60 p-4 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 md:col-span-1">
+        <div className="col-span-2 rounded-2xl border border-border/70 bg-card/60 dark:bg-surface/60 p-4 sm:rounded-none sm:border-0 sm:bg-transparent sm:dark:bg-transparent sm:p-0 md:col-span-1">
           <Logo />
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-xs text-sm leading-relaxed text-foreground/85">
             <span className="sm:hidden">{f.taglineMobile}</span>
             <span className="hidden sm:inline">{f.tagline}</span>
           </p>
@@ -25,18 +25,18 @@ export function SiteFooter() {
             <span className="sm:hidden">{f.subtaglineMobile}</span>
             <span className="hidden sm:inline">{f.subtagline}</span>
           </p>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3.5 flex gap-2">
             <a
               href="https://facebook.com"
               aria-label="Facebook"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-10 sm:w-10"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card dark:bg-surface text-muted-foreground transition-all duration-200 hover:text-primary hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-10 sm:w-10"
             >
               <Facebook className="h-4 w-4" />
             </a>
             <a
               href="https://instagram.com"
               aria-label="Instagram"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-10 sm:w-10"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card dark:bg-surface text-muted-foreground transition-all duration-200 hover:text-primary hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-10 sm:w-10"
             >
               <Instagram className="h-4 w-4" />
             </a>
@@ -74,10 +74,10 @@ export function SiteFooter() {
           </ul>
         </nav>
       </div>
-      <div className="border-t border-border/70 px-4 py-4 text-center text-xs leading-relaxed text-muted-foreground sm:px-6 sm:py-5">
+      <div className="border-t border-border/70 dark:border-border/50 px-4 py-4 text-center text-xs leading-relaxed text-muted-foreground sm:px-6 sm:py-5">
         &copy; 2026 LOC MAISON <span className="hidden sm:inline">&mdash; Un projet de </span>
         <span className="sm:hidden">· </span>
-        <a href="https://microedition.tn/" className="font-medium text-foreground/75 transition-colors hover:text-primary" target="_blank" rel="noopener noreferrer">
+        <a href="https://microedition.tn/" className="font-medium text-foreground/80 dark:text-foreground/90 transition-colors hover:text-primary" target="_blank" rel="noopener noreferrer">
           Micro Edition
         </a>
       </div>

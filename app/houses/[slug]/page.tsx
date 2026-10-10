@@ -89,18 +89,21 @@ function HouseDetail() {
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 pb-24 lg:pb-12">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-display text-2xl text-foreground sm:text-3xl">{house.title}</h1>
+            <p className="eyebrow mb-1.5">
+              LOC MAISON · {house.rentalCategory === "summer" ? "LOCATION SAISONNIÈRE" : house.rentalCategory === "student" ? "LOGEMENT ÉTUDIANT" : "LOCATION RÉSIDENTIELLE"}
+            </p>
+            <div className="flex items-center gap-2.5">
+              <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl">{house.title}</h1>
               {isReserved && (
                 <span className="rounded-md bg-amber-500/90 px-2.5 py-0.5 text-xs font-semibold text-white">
                   Réservée
                 </span>
               )}
             </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" /> {house.location}, {house.city} · {house.governorate}</span>
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 font-medium"><MapPin className="h-4 w-4 text-primary" /> {house.location}, {house.city} · {house.governorate}</span>
               {house.rating !== null && house.reviewCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-foreground"><Star className="h-4 w-4 fill-foreground" /> {house.rating.toFixed(1)} · {t.card.reviews(house.reviewCount)}</span>
+                <span className="inline-flex items-center gap-1 text-foreground font-semibold"><Star className="h-4 w-4 fill-foreground" /> {house.rating.toFixed(1)} · {t.card.reviews(house.reviewCount)}</span>
               )}
             </p>
           </div>

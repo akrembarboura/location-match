@@ -23,6 +23,7 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import { AdminNotificationBell } from "./AdminNotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface UserProfile {
   id: string;
@@ -307,7 +308,10 @@ export function AdminShell({
             </div>
 
             {/* Right Header Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              {/* Dark / Light Mode Switch */}
+              <ThemeToggle size="sm" />
+
               {/* Notification Bell */}
               <AdminNotificationBell />
 

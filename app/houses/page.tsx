@@ -45,8 +45,16 @@ function HousesPage() {
   return (
     <PageShell>
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <h1 className="font-display text-3xl text-foreground">{search.city ? `${t.list.title} à ${search.city}` : t.list.title}</h1>
-        <div className="mt-5">
+        <div>
+          <p className="eyebrow">LOC MAISON · CATALOGUE DES BIENS</p>
+          <h1 className="mt-2 font-display text-2xl sm:text-3xl text-foreground">
+            {search.city ? `Logements disponibles à ${search.city}` : t.list.title}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Trouvez une location adaptée à vos critères parmi notre sélection de villas, dars et appartements en Tunisie.
+          </p>
+        </div>
+        <div className="mt-6">
           <SearchBar key={JSON.stringify(search)} initial={search} />
         </div>
         <div className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:px-0">

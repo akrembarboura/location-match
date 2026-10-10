@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * Dar Mahdia design system.
@@ -115,6 +115,68 @@
   --sidebar-ring: oklch(1 0 89.88);
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
+.dark {
+  /* Switched palette: Pages get the deeper darker slate, Menu/Sidebar gets the elevated surface */
+  --background: oklch(0.15 0.016 220);
+  --foreground: oklch(0.965 0.005 80);
+  --card: oklch(0.195 0.019 220);
+  --card-foreground: oklch(0.965 0.005 80);
+  --popover: oklch(0.20 0.019 220);
+  --popover-foreground: oklch(0.965 0.005 80);
+
+  --primary: oklch(0.64 0.115 210.67);
+  --primary-foreground: oklch(0.15 0.02 220);
+  --primary-dark: oklch(0.54 0.10 210.6);
+  --primary-soft: oklch(0.24 0.035 210.67);
+
+  --secondary: oklch(0.30 0.025 78.13);
+  --secondary-foreground: oklch(0.94 0.01 80);
+  --sand: oklch(0.18 0.012 220);
+
+  --muted: oklch(0.235 0.018 220);
+  --muted-foreground: oklch(0.74 0.022 220);
+
+  --accent: oklch(0.70 0.16 22.84);
+  --accent-foreground: oklch(0.98 0 89.88);
+
+  /* Elevated surface for chips, pills, and card components */
+  --surface: oklch(0.245 0.022 220);
+
+  --success: oklch(0.68 0.145 133.01);
+  --success-foreground: oklch(0.15 0.02 220);
+  --warning: oklch(0.82 0.155 84.38);
+  --warning-foreground: oklch(0.18 0.02 84.38);
+  --destructive: oklch(0.62 0.205 26.41);
+  --destructive-foreground: oklch(0.98 0 89.88);
+
+  --border: oklch(0.275 0.018 220);
+  --input: oklch(0.275 0.018 220);
+  --ring: oklch(0.64 0.115 210.67);
+
+  --chart-1: oklch(0.64 0.115 210.67);
+  --chart-2: oklch(0.70 0.16 22.84);
+  --chart-3: oklch(0.82 0.155 84.38);
+  --chart-4: oklch(0.68 0.145 133.01);
+  --chart-5: oklch(0.75 0.12 280);
+
+  /* Menu / Sidebar now uses the elevated lighter surface */
+  --sidebar: oklch(0.215 0.02 220);
+  --sidebar-foreground: oklch(0.965 0.005 80);
+  --sidebar-primary: oklch(0.64 0.115 210.67);
+  --sidebar-primary-foreground: oklch(0.15 0.02 220);
+  --sidebar-accent: oklch(0.27 0.022 220);
+  --sidebar-accent-foreground: oklch(0.965 0.005 80);
+  --sidebar-border: oklch(0.28 0.018 220);
+  --sidebar-ring: oklch(0.64 0.115 210.67);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.45), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-raised: 0 2px 8px rgba(0, 0, 0, 0.55), 0 18px 40px -16px rgba(0, 0, 0, 0.75);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -142,14 +204,18 @@
   }
 }
 
-/* Section eyebrow label: Montserrat medium, all caps */
+/* Section eyebrow label: Montserrat semibold, 13px, brand-aligned */
 @utility eyebrow {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.75rem;
-  color: var(--color-muted-foreground);
+  letter-spacing: 0.14em;
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+}
+
+.dark .eyebrow {
+  color: oklch(0.74 0.11 210.67);
 }
 
 @utility field-input {

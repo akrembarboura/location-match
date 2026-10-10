@@ -143,12 +143,18 @@ function Home() {
       <section className="relative isolate">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <img src={heroBackground} alt="" width={1265} height={768} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-foreground/35" />
+          <div className="absolute inset-0 bg-black/40" />
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
-          <p className="font-display text-xs font-medium uppercase tracking-[0.16em] text-primary-foreground/85">{t.hero.eyebrow}</p>
-          <h1 className="mt-3 max-w-2xl font-display text-[2.1rem] leading-[1.1] text-primary-foreground sm:text-5xl">{t.hero.title}</h1>
-          <p className="mt-4 max-w-lg text-[1.02rem] leading-relaxed text-primary-foreground/90">{t.hero.subtitle}</p>
+          <p className="font-display text-xs sm:text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-white/95">
+            {t.hero.eyebrow}
+          </p>
+          <h1 className="mt-3 max-w-2xl font-display text-[2.1rem] leading-[1.15] text-white sm:text-5xl font-bold">
+            {t.hero.title}
+          </h1>
+          <p className="mt-4 max-w-xl text-base sm:text-lg leading-relaxed text-white/90">
+            {t.hero.subtitle}
+          </p>
           <div className="mt-8 sm:mt-12"><SearchBar /></div>
         </div>
       </section>
@@ -375,12 +381,12 @@ function Home() {
           <Link
             href="/owner/list-property"
             onClick={() => trackEvent("owner_cta_clicked")}
-            className="mt-7 inline-flex h-12 items-center gap-2 rounded-lg bg-card px-6 font-display text-sm font-semibold text-primary transition-colors hover:bg-sand"
+            className="mt-7 inline-flex h-12 items-center gap-2 rounded-lg bg-card px-6 font-display text-sm font-semibold text-primary transition-colors hover:bg-sand dark:hover:bg-surface"
           >
             {t.owner.cta} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="flex flex-col justify-between rounded-xl border border-border bg-sand p-7 sm:p-10">
+        <div className="flex flex-col justify-between rounded-xl border border-border bg-sand dark:bg-card/75 dark:backdrop-blur p-7 sm:p-10">
           <div>
             <GraduationCap className="h-7 w-7 text-primary" />
             <h2 className="mt-3 font-display text-xl text-foreground">{t.student.title}</h2>

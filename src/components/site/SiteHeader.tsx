@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Menu,
   X,
-  Phone,
   Home,
   Sun,
   GraduationCap,
@@ -17,7 +16,9 @@ import {
   Inbox,
   Shield,
   Clock,
-  PlusCircle,
+  CalendarDays,
+  Compass,
+  User as UserIcon,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -28,11 +29,15 @@ import {
   getRoleLabel,
 } from "@/lib/auth/user-helpers";
 import { trackEvent } from "@/lib/analytics/client";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
-const nav = [
-  { to: "/summer", label: "Location d'été" },
-  { to: "/student", label: "Logement étudiant" },
-  { to: "/properties", label: "Biens" },
+/**
+ * Primary navigation routes with clean marketplace hierarchy.
+ */
+const primaryNav = [
+  { href: "/houses", label: "Explorer" },
+  { href: "/summer", label: "Location d'été" },
+  { href: "/student", label: "Logement étudiant" },
 ];
 
 /**
@@ -65,7 +70,11 @@ export function UserAvatar({
         src={user.avatar}
         alt={user.firstName || "Avatar"}
         onError={() => setImgError(true)}
-        className={cn("rounded-full object-cover shrink-0 border border-border", sizeClasses, className)}
+        className={cn(
+          "rounded-full object-cover shrink-0 border border-border",
+          sizeClasses,
+          className
+        )}
       />
     );
   }
@@ -87,22 +96,21 @@ export function UserAvatar({
 export function SiteHeader() {
   const [navOpen, setNavOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
 
   const pathname = usePathname();
   const { user, isAuthenticated, loading, logout } = useAuth();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
 
-  // Close header menus when navigating
+  // Close menus when route changes
   useEffect(() => {
     setNavOpen(false);
     setProfileOpen(false);
-    setMobileProfileOpen(false);
   }, [pathname]);
 
-  // Click-outside and Escape key management for desktop profile dropdown
+  // Click-outside and Escape key listener for account dropdown
   useEffect(() => {
     if (!profileOpen) return;
 
@@ -132,7 +140,49 @@ export function SiteHeader() {
     };
   }, [profileOpen]);
 
-  // The admin section uses AdminShell directly, so omit SiteHeader on /admin
+  // Escape key listener for mobile drawer
+  useEffect(() => {
+    if (!navOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setNavOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [navOpen]);
+
+  // Close on mobile drawer click outside
+  useEffect(() => {
+    if (!navOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        mobileNavRef.current &&
+        !mobileNavRef.current.contains(event.target as Node) &&
+        !(event.target as HTMLElement).closest("#mobile-menu-toggle-btn")
+      ) {
+        setNavOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [navOpen]);
+
+  const handleLogout = useCallback(async () => {
+    setProfileOpen(false);
+    setNavOpen(false);
+    await logout();
+  }, [logout]);
+
+  // Admin section has its own full sidebar & header shell
   if (pathname?.startsWith("/admin")) return null;
 
   const displayName = user ? getUserDisplayName(user) : "";
@@ -142,434 +192,457 @@ export function SiteHeader() {
   const roleLabel = user ? getRoleLabel(user.role) : "";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        {/* Left: Brand Logo */}
-        <Link
-          href="/"
-          onClick={() => {
-            setNavOpen(false);
-            setProfileOpen(false);
-          }}
-          className="shrink-0"
-        >
-          <Logo />
-        </Link>
+    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10">
+        {/* ========================================================= */}
+        {/* LEFT SECTION — Logo / Brand (Pushed to the far left)      */}
+        {/* ========================================================= */}
+        <div className="flex items-center shrink-0">
+          <Link
+            href="/"
+            aria-label="LOC MAISON — Accueil"
+            className="flex items-center transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg p-0.5"
+          >
+            <Logo />
+          </Link>
+        </div>
 
-        {/* Center: Primary Marketplace Navigation (Desktop) */}
-        <nav className="hidden items-center gap-7 lg:flex" aria-label="Navigation principale">
-          {nav.map((item) => (
+        {/* ========================================================= */}
+        {/* CENTER SECTION — Main Navigation Links in the Middle      */}
+        {/* ========================================================= */}
+        <nav
+          className="hidden md:flex items-center justify-center gap-7 lg:gap-9"
+          aria-label="Navigation principale"
+        >
+          {primaryNav.map((item) => {
+            const isActive =
+              item.href === "/houses"
+                ? pathname === "/houses" || pathname?.startsWith("/houses/")
+                : pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "relative py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm",
+                  isActive
+                    ? "text-primary font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {item.label}
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-2.5 left-0 right-0 h-0.5 rounded-full bg-primary"
+                  />
+                )}
+              </Link>
+            );
+          })}
+
+          {/* Customer quick access to 'Mes demandes' when authenticated */}
+          {isAuthenticated && user?.role === "CUSTOMER" && (
             <Link
-              key={item.to}
-              href={item.to}
+              href="/dashboard"
               className={cn(
-                "text-sm font-medium text-muted-foreground transition-colors hover:text-primary",
-                pathname === item.to && "text-primary font-semibold"
+                "relative py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm",
+                pathname?.startsWith("/dashboard")
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {item.label}
+              Mes demandes
+              {pathname?.startsWith("/dashboard") && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-2.5 left-0 right-0 h-0.5 rounded-full bg-primary"
+                />
+              )}
             </Link>
-          ))}
+          )}
         </nav>
 
-        {/* Right: Actions & User Control (Desktop) */}
-        <div className="hidden items-center gap-3.5 lg:flex">
-          {/* Subtle phone contact */}
-          <a
-            href="tel:+21626574203"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary mr-1"
-          >
-            <Phone className="h-3.5 w-3.5" />
-            Contact
-          </a>
-
-          {/* Primary Landlord Action (Marketplace CTA) */}
+        {/* ========================================================= */}
+        {/* RIGHT SECTION — Actions & Account Controls (Far right)    */}
+        {/* ========================================================= */}
+        <div className="hidden md:flex items-center gap-5 lg:gap-6 shrink-0">
+          {/* 1. Primary Conversion Action */}
           <Link
             href="/owner"
             onClick={() => trackEvent("owner_cta_clicked")}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-3.5 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-xs transition-colors hover:bg-primary-dark"
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-primary dark:text-primary-foreground px-4 py-2 text-xs font-semibold uppercase tracking-wider shadow-xs transition-colors hover:bg-slate-800 dark:hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            Publier votre bien
+            Publier mon bien
           </Link>
 
-          {/* Auth State Control */}
-          {loading ? (
-            <div className="h-8 w-8 rounded-full bg-border/40 animate-pulse" aria-hidden="true" />
-          ) : isAuthenticated && user ? (
-            <div className="relative">
-              <button
-                ref={triggerRef}
-                type="button"
-                onClick={() => setProfileOpen((prev) => !prev)}
-                aria-haspopup="menu"
-                aria-expanded={profileOpen}
-                aria-label={`Menu de compte (${fullName})`}
-                className={cn(
-                  "flex items-center gap-2 rounded-full border border-border bg-card p-1 pl-1 pr-2.5 text-left transition-colors hover:border-primary/50 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  profileOpen && "border-primary ring-2 ring-primary/20"
-                )}
-              >
-                <UserAvatar user={user} size="sm" />
-                <span className="max-w-30 truncate text-xs font-medium text-foreground">
-                  {displayName}
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                    profileOpen && "rotate-180"
-                  )}
-                />
-              </button>
+          {/* Grouped Minimalist Icons (Theme ☀️/🌙 & Account 👤) */}
+          <div className="flex items-center gap-3 lg:gap-3.5">
+            {/* 2. Theme Toggle (Minimalist Ghost Icon) */}
+            <ThemeToggle variant="ghost" aria-label="Changer de thème" />
 
-              {/* Floating Profile Dropdown */}
-              {profileOpen && (
-                <div
-                  ref={dropdownRef}
-                  role="menu"
-                  aria-label="Menu du compte utilisateur"
-                  className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-card p-2 shadow-card z-50 animate-in fade-in zoom-in-95 duration-100"
+            {/* 3. Account Menu Trigger (Minimalist Icon / Avatar) */}
+            {loading ? (
+              <div
+                className="h-9 w-9 rounded-full bg-border/40 animate-pulse"
+                aria-hidden="true"
+              />
+            ) : isAuthenticated && user ? (
+              <div className="relative">
+                <button
+                  ref={triggerRef}
+                  type="button"
+                  onClick={() => setProfileOpen((prev) => !prev)}
+                  aria-haspopup="menu"
+                  aria-expanded={profileOpen}
+                  aria-label={`Menu de compte (${fullName})`}
+                  title={`Compte: ${displayName}`}
+                  className={cn(
+                    "relative flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    profileOpen && "bg-surface text-foreground"
+                  )}
                 >
-                  {/* Account Header */}
-                  <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border/80">
-                    <UserAvatar user={user} size="md" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {fullName}
-                      </p>
-                      <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-medium text-primary">
-                        {roleLabel}
-                      </span>
-                      <p className="truncate text-[0.72rem] text-muted-foreground mt-0.5">
-                        {user.email}
-                      </p>
+                  {user.avatar ? (
+                    <UserAvatar user={user} size="sm" />
+                  ) : (
+                    <UserIcon className="h-5 w-5 stroke-[1.75]" />
+                  )}
+                  {/* Subtle active status indicator dot */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-card"
+                  />
+                </button>
+
+                {/* Floating Account Dropdown */}
+                {profileOpen && (
+                  <div
+                    ref={dropdownRef}
+                    role="menu"
+                    aria-label="Menu du compte utilisateur"
+                    className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-card p-2 shadow-card z-50 animate-in fade-in zoom-in-95 duration-100"
+                  >
+                    {/* Account Header */}
+                    <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border/80">
+                      <UserAvatar user={user} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {fullName}
+                        </p>
+                        <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-medium text-primary">
+                          {roleLabel}
+                        </span>
+                        <p className="truncate text-[0.72rem] text-muted-foreground mt-0.5">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Role-Specific Navigation Options */}
+                    <div className="py-1.5 space-y-0.5">
+                      {/* CUSTOMER Role Actions */}
+                      {user.role === "CUSTOMER" && (
+                        <>
+                          <Link
+                            role="menuitem"
+                            href="/dashboard"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Inbox className="h-4 w-4 text-muted-foreground" />
+                            Mes demandes
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            href="/owner"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            Espace propriétaire
+                          </Link>
+                        </>
+                      )}
+
+                      {/* OWNER Role Actions */}
+                      {user.role === "OWNER" && (
+                        <>
+                          <Link
+                            role="menuitem"
+                            href="/owner"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            Tableau de bord
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            href="/owner/properties"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            Mes annonces
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            href="/owner/calendar"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                            Calendrier
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            href="/owner/reservations"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            Mes réservations
+                          </Link>
+                        </>
+                      )}
+
+                      {/* ADMIN & SUPER_ADMIN Role Actions */}
+                      {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
+                        <>
+                          <Link
+                            role="menuitem"
+                            href="/admin"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                          >
+                            <Shield className="h-4 w-4 text-primary" />
+                            Console d'administration
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            href="/admin/requests"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            Gestion des demandes
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            href="/admin/properties"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
+                          >
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            Gestion des annonces
+                          </Link>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Sign Out Action */}
+                    <div className="border-t border-border/80 pt-1 mt-1">
+                      <button
+                        role="menuitem"
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Déconnexion
+                      </button>
                     </div>
                   </div>
-
-                  {/* Role-Specific Marketplace Navigation */}
-                  <div className="py-1.5 space-y-0.5">
-                    {/* Customer Actions */}
-                    {user.role === "CUSTOMER" && (
-                      <>
-                        <Link
-                          role="menuitem"
-                          href="/dashboard"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <Inbox className="h-4 w-4 text-muted-foreground" />
-                          Mes demandes
-                        </Link>
-                        <Link
-                          role="menuitem"
-                          href="/owner"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          Espace propriétaire
-                        </Link>
-                        <Link
-                          role="menuitem"
-                          href="/owner/list-property"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <PlusCircle className="h-4 w-4 text-muted-foreground" />
-                          Publier un bien
-                        </Link>
-                      </>
-                    )}
-
-                    {/* Owner Actions */}
-                    {user.role === "OWNER" && (
-                      <>
-                        <Link
-                          role="menuitem"
-                          href="/owner"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          Espace propriétaire
-                        </Link>
-                        <Link
-                          role="menuitem"
-                          href="/owner/list-property"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <PlusCircle className="h-4 w-4 text-muted-foreground" />
-                          Publier un bien
-                        </Link>
-                        <Link
-                          role="menuitem"
-                          href="/dashboard"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <Inbox className="h-4 w-4 text-muted-foreground" />
-                          Mes demandes
-                        </Link>
-                      </>
-                    )}
-
-                    {/* Admin Actions */}
-                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-                      <>
-                        <Link
-                          role="menuitem"
-                          href="/admin"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-                        >
-                          <Shield className="h-4 w-4 text-primary" />
-                          Administration
-                        </Link>
-                        <Link
-                          role="menuitem"
-                          href="/admin/requests"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          Gestion des demandes
-                        </Link>
-                        <Link
-                          role="menuitem"
-                          href="/admin/properties"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-surface transition-colors"
-                        >
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          Gestion des biens
-                        </Link>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Sign Out Action */}
-                  <div className="border-t border-border/80 pt-1 mt-1">
-                    <button
-                      role="menuitem"
-                      type="button"
-                      onClick={() => {
-                        setProfileOpen(false);
-                        logout();
-                      }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors text-left"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Déconnexion
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <LogIn className="h-4 w-4" />
-              Connexion
-            </Link>
-          )}
+                )}
+              </div>
+            ) : (
+              /* Signed-Out Visitor: Minimalist User Icon linking to Login */
+              <Link
+                href="/login"
+                aria-label="Connexion à votre compte"
+                title="Connexion"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <UserIcon className="h-5 w-5 stroke-[1.75]" />
+              </Link>
+            )}
+          </div>
         </div>
 
-        {/* Mobile Header Controls */}
-        <div className="flex items-center gap-2 lg:hidden">
-          {/* Authenticated Avatar Trigger on Mobile */}
-          {isAuthenticated && user && (
-            <button
-              type="button"
-              onClick={() => {
-                setMobileProfileOpen((v) => !v);
-                setNavOpen(false);
-              }}
-              aria-label="Mon profil"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border"
-            >
-              <UserAvatar user={user} size="sm" />
-            </button>
-          )}
+        {/* ========================================================= */}
+        {/* MOBILE SECTION — Minimalist Controls                     */}
+        {/* ========================================================= */}
+        <div className="flex items-center gap-1.5 md:hidden">
+          {/* Quick Theme Toggle on Mobile */}
+          <ThemeToggle variant="ghost" aria-label="Changer de thème" />
 
-          {/* Hamburger button */}
+          {/* Quick Account Icon on Mobile */}
+          <Link
+            href={isAuthenticated ? (user?.role === "OWNER" ? "/owner" : "/dashboard") : "/login"}
+            aria-label="Mon profil"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 hover:bg-surface transition-colors"
+          >
+            {isAuthenticated && user ? (
+              <UserAvatar user={user} size="sm" />
+            ) : (
+              <UserIcon className="h-5 w-5 stroke-[1.75]" />
+            )}
+          </Link>
+
+          {/* Hamburger Menu Toggle */}
           <button
+            id="mobile-menu-toggle-btn"
             type="button"
-            aria-label={navOpen ? "Fermer le menu" : "Ouvrir le menu"}
-            onClick={() => {
-              setNavOpen((v) => !v);
-              setMobileProfileOpen(false);
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground"
+            aria-label={navOpen ? "Fermer le menu" : "Ouvrir le menu de navigation"}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((prev) => !prev)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {navOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Profile Menu Drawer */}
-      {mobileProfileOpen && isAuthenticated && user && (
-        <div className="border-t border-border bg-card px-4 pb-5 pt-4 lg:hidden">
-          {/* User Card */}
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-            <UserAvatar user={user} size="md" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
-              <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-medium text-primary">
-                {roleLabel}
-              </span>
-              <p className="truncate text-xs text-muted-foreground mt-0.5">{user.email}</p>
-            </div>
-          </div>
-
-          {/* Mobile Profile Actions */}
-          <div className="mt-3 flex flex-col divide-y divide-border">
-            {user.role === "CUSTOMER" && (
-              <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <Inbox className="h-4 w-4 text-primary" />
-                  Mes demandes
-                </Link>
-                <Link
-                  href="/owner"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Espace propriétaire
-                </Link>
-                <Link
-                  href="/owner/list-property"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <PlusCircle className="h-4 w-4 text-primary" />
-                  Publier un bien
-                </Link>
-              </>
-            )}
-
-            {user.role === "OWNER" && (
-              <>
-                <Link
-                  href="/owner"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Espace propriétaire
-                </Link>
-                <Link
-                  href="/owner/list-property"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <PlusCircle className="h-4 w-4 text-primary" />
-                  Publier un bien
-                </Link>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <Inbox className="h-4 w-4 text-primary" />
-                  Mes demandes
-                </Link>
-              </>
-            )}
-
-            {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-              <>
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-semibold text-primary"
-                >
-                  <Shield className="h-4 w-4 text-primary" />
-                  Administration
-                </Link>
-                <Link
-                  href="/admin/requests"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <Clock className="h-4 w-4 text-primary" />
-                  Gestion des demandes
-                </Link>
-                <Link
-                  href="/admin/properties"
-                  onClick={() => setMobileProfileOpen(false)}
-                  className="flex items-center gap-3 py-3 text-sm font-medium text-foreground"
-                >
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Gestion des biens
-                </Link>
-              </>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setMobileProfileOpen(false);
-                logout();
-              }}
-              className="flex items-center gap-3 py-3 text-sm font-medium text-destructive text-left"
-            >
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile Navigation Drawer */}
+      {/* ========================================================= */}
+      {/* MOBILE DRAWER — Clean Navigation Drawer                   */}
+      {/* ========================================================= */}
       {navOpen && (
-        <div className="border-t border-border bg-card px-4 pb-5 pt-3 lg:hidden">
-          <div className="flex flex-col">
-            {nav.map((item) => (
-              <Link
-                key={item.to}
-                href={item.to}
-                onClick={() => setNavOpen(false)}
-                className={cn(
-                  "border-b border-border py-3 text-[0.95rem] font-medium text-foreground last:border-0",
-                  pathname === item.to && "text-primary font-semibold"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+        <div
+          ref={mobileNavRef}
+          className="border-t border-border bg-card px-5 pb-6 pt-3 md:hidden shadow-raised animate-in fade-in slide-in-from-top-2 duration-150"
+        >
+          {/* Primary Navigation Links */}
+          <nav aria-label="Navigation mobile" className="flex flex-col">
+            {primaryNav.map((item) => {
+              const isActive =
+                item.href === "/houses"
+                  ? pathname === "/houses" || pathname?.startsWith("/houses/")
+                  : pathname === item.href;
 
-            {!isAuthenticated && (
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setNavOpen(false)}
+                  className={cn(
+                    "flex items-center justify-between border-b border-border/70 py-3.5 text-sm font-medium transition-colors last:border-0",
+                    isActive ? "text-primary font-semibold" : "text-foreground"
+                  )}
+                >
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {isAuthenticated && user?.role === "CUSTOMER" && (
+              <Link
+                href="/dashboard"
+                onClick={() => setNavOpen(false)}
+                className="flex items-center justify-between border-b border-border/70 py-3.5 text-sm font-medium transition-colors text-foreground"
+              >
+                <span>Mes demandes</span>
+              </Link>
+            )}
+          </nav>
+
+          {/* User Account / Session Section */}
+          <div className="mt-4 pt-3 border-t border-border/80">
+            {isAuthenticated && user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5">
+                  <UserAvatar user={user} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
+                    <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-medium text-primary">
+                      {roleLabel}
+                    </span>
+                    <p className="truncate text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                  </div>
+                </div>
+
+                {/* Role Specific Shortcuts */}
+                <div className="flex flex-col gap-1 text-sm font-medium">
+                  {user.role === "CUSTOMER" && (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setNavOpen(false)}
+                      className="flex items-center gap-2.5 py-2 text-foreground hover:text-primary transition-colors"
+                    >
+                      <Inbox className="h-4 w-4 text-primary" />
+                      Mes demandes
+                    </Link>
+                  )}
+
+                  {user.role === "OWNER" && (
+                    <>
+                      <Link
+                        href="/owner"
+                        onClick={() => setNavOpen(false)}
+                        className="flex items-center gap-2.5 py-2 text-foreground hover:text-primary transition-colors"
+                      >
+                        <Building2 className="h-4 w-4 text-primary" />
+                        Tableau de bord
+                      </Link>
+                      <Link
+                        href="/owner/properties"
+                        onClick={() => setNavOpen(false)}
+                        className="flex items-center gap-2.5 py-2 text-foreground hover:text-primary transition-colors"
+                      >
+                        <Building2 className="h-4 w-4 text-primary" />
+                        Mes annonces
+                      </Link>
+                    </>
+                  )}
+
+                  {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setNavOpen(false)}
+                      className="flex items-center gap-2.5 py-2 text-primary font-semibold hover:opacity-80 transition-opacity"
+                    >
+                      <Shield className="h-4 w-4 text-primary" />
+                      Console d'administration
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex items-center gap-2.5 py-2 text-destructive font-medium text-left hover:opacity-80 transition-opacity"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Déconnexion
+                  </button>
+                </div>
+              </div>
+            ) : (
               <Link
                 href="/login"
                 onClick={() => setNavOpen(false)}
-                className="border-b border-border py-3 text-[0.95rem] font-medium text-primary last:border-0"
+                className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card py-2.5 text-sm font-medium text-foreground hover:bg-surface transition-colors"
               >
+                <LogIn className="h-4 w-4 text-primary" />
                 Connexion / Créer un compte
               </Link>
             )}
           </div>
 
-          <div className="mt-4 flex gap-2">
+          {/* Primary Landlord Action (Full Width CTA in Mobile Menu) */}
+          <div className="mt-4">
             <Link
               href="/owner"
-              onClick={() => setNavOpen(false)}
-              className="flex-1 rounded-md bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground"
+              onClick={() => {
+                trackEvent("owner_cta_clicked");
+                setNavOpen(false);
+              }}
+              className="flex w-full items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-primary dark:text-primary-foreground py-2.5 text-center text-xs font-semibold uppercase tracking-wider shadow-xs transition-colors hover:bg-slate-800 dark:hover:bg-primary-dark"
             >
-              Publier votre bien
+              Publier mon bien
             </Link>
-            <a
-              href="tel:+21626574203"
-              className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground"
-            >
-              Contact
-            </a>
           </div>
         </div>
       )}
@@ -577,41 +650,57 @@ export function SiteHeader() {
   );
 }
 
+/**
+ * Mobile Bottom Tab Bar for quick thumb navigation on handheld devices
+ */
 const bottomNav = [
   { to: "/", label: "Accueil", icon: Home },
+  { to: "/houses", label: "Explorer", icon: Compass },
   { to: "/summer", label: "Été", icon: Sun },
   { to: "/student", label: "Étudiant", icon: GraduationCap },
-  { to: "/properties", label: "Biens", icon: Building2 },
 ];
 
 export function MobileTabBar() {
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
+
+  // Omit bottom tab bar on admin pages
   if (pathname?.startsWith("/admin")) return null;
 
   return (
     <nav
       aria-label="Barre de navigation mobile"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      {bottomNav.map(({ to, label, icon: Icon }) => (
-        <Link
-          key={to}
-          href={to}
-          className={cn(
-            "flex flex-col items-center gap-1 py-2 text-[0.68rem] font-medium text-muted-foreground",
-            (to === "/" ? pathname === "/" : pathname?.startsWith(to)) && "text-primary font-semibold"
-          )}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </Link>
-      ))}
+      {bottomNav.map(({ to, label, icon: Icon }) => {
+        const isActive =
+          to === "/"
+            ? pathname === "/"
+            : to === "/houses"
+            ? pathname === "/houses" || pathname?.startsWith("/houses/")
+            : pathname?.startsWith(to);
+
+        return (
+          <Link
+            key={to}
+            href={to}
+            className={cn(
+              "flex flex-col items-center gap-1 py-2 text-[0.68rem] font-medium transition-colors",
+              isActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </Link>
+        );
+      })}
       <Link
         href={isAuthenticated ? "/dashboard" : "/login"}
         className={cn(
-          "flex flex-col items-center gap-1 py-2 text-[0.68rem] font-medium text-muted-foreground",
-          (pathname?.startsWith("/dashboard") || pathname?.startsWith("/login")) && "text-primary font-semibold"
+          "flex flex-col items-center gap-1 py-2 text-[0.68rem] font-medium transition-colors",
+          (pathname?.startsWith("/dashboard") || pathname?.startsWith("/login"))
+            ? "text-primary font-semibold"
+            : "text-muted-foreground hover:text-foreground"
         )}
       >
         {isAuthenticated ? <Inbox className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}

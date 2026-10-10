@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PageShell } from "@/components/site/PageShell";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import {
   LayoutDashboard,
   Building2,
@@ -54,7 +55,8 @@ export function OwnerShell({ children, title, subtitle, actions }: OwnerShellPro
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <ThemeToggle size="sm" />
             {actions}
             <Link
               href="/owner/list-property"
