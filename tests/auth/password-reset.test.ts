@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { authService } from "@/server/services/AuthService";
 import { userRepository } from "@/server/repositories/UserRepository";
 import connectToDatabase from "@/lib/mongoose";
-import { checkRateLimit } from "@/server/utils/rate-limit";
+import { rateLimit } from "@/server/rate-limit";
 
 describe("Password Reset & Rate Limiting System", () => {
   it("generates a reset token for an existing user and resets password successfully", async () => {
@@ -57,22 +57,20 @@ describe("Password Reset & Rate Limiting System", () => {
     ).rejects.toThrow("Le jeton de réinitialisation est invalide ou a expiré.");
   });
 
-  it("enforces sliding token bucket rate limiting on requests", () => {
-    const dummyReq = new Request("http://localhost:3000/api/auth/forgot-password", {
-      headers: { "x-forwarded-for": "192.168.1.200" },
-    });
-
+  it("enforces sliding token bucket rate limiting on requests using atomic store", async () => {
     // Option: limit to 2 requests
-    const res1 = checkRateLimit(dummyReq, { limit: 2, windowMs: 60000 });
-    expect(res1).toBeNull();
+    const policy = { name: "TEST_AUTH", limit: 2, windowMs: 60000 };
+    const ipKey = "rate-limit:TEST_AUTH:192.168.1.200";
 
-    const res2 = checkRateLimit(dummyReq, { limit: 2, windowMs: 60000 });
-    expect(res2).toBeNull();
+    const res1 = await rateLimit(ipKey, policy);
+    expect(res1.success).toBe(true);
 
-    // 3rd attempt should trigger 429 Too Many Requests response
-    const res3 = checkRateLimit(dummyReq, { limit: 2, windowMs: 60000 });
-    expect(res3).not.toBeNull();
-    expect(res3?.status).toBe(429);
+    const res2 = await rateLimit(ipKey, policy);
+    expect(res2.success).toBe(true);
+
+    // 3rd attempt should fail
+    const res3 = await rateLimit(ipKey, policy);
+    expect(res3.success).toBe(false);
   });
 });
 

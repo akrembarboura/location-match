@@ -10,7 +10,7 @@ export interface SendEmailOptions {
 export class EmailService {
   private isProduction = process.env.NODE_ENV === "production";
   private resendApiKey = process.env.RESEND_API_KEY;
-  private fromEmail = process.env.EMAIL_FROM || "LOC MAISON <noreply@locmaison.tn>";
+  private fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
   /**
    * Core email transmission method.
