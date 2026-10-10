@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { authService } from "@/server/services/AuthService";
 import { ForgotPasswordSchema } from "@/server/validations/auth";
-import { checkRateLimit } from "@/server/utils/rate-limit";
+import { rateLimit, rateLimitResponse } from "@/server/rate-limit";
+import { POLICIES } from "@/server/rate-limit/policies";
+import { getClientIp } from "@/server/utils/client-ip";
 
-export async function POST(req: Request) {
-  // Apply strict rate limiting: max 3 requests per 5 minutes per IP
-  const rateLimitErr = checkRateLimit(req, { limit: 3, windowMs: 5 * 60 * 1000 });
-  if (rateLimitErr) return rateLimitErr;
+export async function POST(req: NextRequest) {
+  // 1. Apply IP-level rate limiting (max 20 per 15 min)
+  const clientIp = getClientIp(req);
+  const ipLimitResult = await rateLimit(`rate-limit:AUTH_FORGOT_PASSWORD_IP:${clientIp}`, POLICIES.AUTH_FORGOT_PASSWORD_IP);
+  if (!ipLimitResult.success) {
+    return rateLimitResponse(ipLimitResult);
+  }
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -25,24 +30,37 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await authService.requestPasswordReset(parseResult.data.email);
+    const normalizedEmail = parseResult.data.email.toLowerCase().trim();
 
+    // 2. Apply Account-level rate limiting (max 5 per hour per normalized email)
+    const accountLimitResult = await rateLimit(
+      `rate-limit:AUTH_FORGOT_PASSWORD_ACCOUNT:${normalizedEmail}`,
+      POLICIES.AUTH_FORGOT_PASSWORD_ACCOUNT
+    );
+    if (!accountLimitResult.success) {
+      return rateLimitResponse(accountLimitResult);
+    }
+
+    const result = await authService.requestPasswordReset(normalizedEmail);
+
+    // Secure Public Response Contract: Strip internal fields / resetUrl to prevent enumeration & disclosure
     return NextResponse.json({
       success: true,
-      data: result,
+      data: {
+        message: result.message || "Si cette adresse e-mail est associée à un compte, vous recevrez des instructions pour réinitialiser votre mot de passe.",
+      },
     });
   } catch (err: any) {
-    console.error("Forgot password error:", err);
+    console.error("[AUTH] Forgot password request error:", err.message);
+    // Generic public response even on error to prevent account discovery
     return NextResponse.json(
       {
-        success: false,
-        error: {
-          code: err.code || "INTERNAL_ERROR",
-          message: err.message || "Une erreur est survenue lors de la demande.",
+        success: true,
+        data: {
+          message: "Si cette adresse e-mail est associée à un compte, vous recevrez des instructions pour réinitialiser votre mot de passe.",
         },
       },
-      { status: err.statusCode || 500 }
+      { status: 200 }
     );
   }
 }
-

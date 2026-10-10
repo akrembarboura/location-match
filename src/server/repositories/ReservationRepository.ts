@@ -129,11 +129,16 @@ export class ReservationRepository {
         });
 
         try {
+          const isMonthly = quote.pricePeriod === "month";
+          const commBasis = isMonthly ? "FIRST_MONTH_RENT" : "TOTAL_RENTAL_VALUE";
+          const commRentalBasis = isMonthly ? quote.unitPrice : total;
+
           const snapshot = await commissionPolicyService.createSnapshotAtConfirmation({
             reservationId: resId,
             propertyId: propId,
             ownerId,
-            rentalBasis: total,
+            rentalBasis: commRentalBasis,
+            commissionBasis: commBasis,
             collectionFlow: "OWNER_DIRECT",
             confirmedAt: checkInDate,
           });
@@ -197,11 +202,16 @@ export class ReservationRepository {
           });
 
           try {
+            const isMonthly = quote.pricePeriod === "month";
+            const commBasis = isMonthly ? "FIRST_MONTH_RENT" : "TOTAL_RENTAL_VALUE";
+            const commRentalBasis = isMonthly ? quote.unitPrice : total;
+
             const snapshot = await commissionPolicyService.createSnapshotAtConfirmation({
               reservationId: resId,
               propertyId: prop.id,
               ownerId,
-              rentalBasis: total,
+              rentalBasis: commRentalBasis,
+              commissionBasis: commBasis,
               collectionFlow: "OWNER_DIRECT",
               confirmedAt: checkInDate,
             });

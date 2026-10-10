@@ -98,7 +98,15 @@ export default function CommissionRegisterPage() {
         </div>
 
         {/* Data Table */}
-        <AsyncStateContainer isLoading={loading} error={error} onRetry={fetchCommissions}>
+        <AsyncStateContainer
+          isLoading={loading}
+          isError={Boolean(error)}
+          error={error}
+          isEmpty={items.length === 0}
+          emptyTitle="Aucun snapshot de commission"
+          emptyDescription="Aucune commission enregistrée ne correspond à vos critères."
+          onRetry={fetchCommissions}
+        >
           <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
@@ -142,24 +150,14 @@ export default function CommissionRegisterPage() {
                           </span>
                         </td>
                         <td className="p-4 font-mono font-semibold text-foreground">{formatDT(item.calculatedCommission)}</td>
-                        <td className="p-4 font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                        <td className="p-4 font-mono font-medium text-foreground">
                           {formatDT(item.verifiedCollected)}
                         </td>
-                        <td className="p-4 font-mono font-semibold text-rose-600 dark:text-rose-400">
+                        <td className="p-4 font-mono font-semibold text-foreground">
                           {formatDT(item.outstandingAmount)}
                         </td>
                         <td className="p-4">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              item.collectionFlow === "OWNER_DIRECT"
-                                ? "bg-blue-500/10 text-blue-600"
-                                : item.collectionFlow === "PLATFORM_COLLECTS"
-                                ? "bg-indigo-500/10 text-indigo-600"
-                                : item.collectionFlow === "MIXED"
-                                ? "bg-purple-500/10 text-purple-600"
-                                : "bg-amber-500/10 text-amber-600"
-                            }`}
-                          >
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border/60">
                             {item.collectionFlow}
                           </span>
                         </td>

@@ -606,16 +606,60 @@ export class RequestService {
     };
   }
 
-  async updateRequestStatus(id: string, status: string, adminNotes?: string, adminId = "admin") {
-    const updated = await requestRepository.updateStatus(id, status, adminNotes);
-    if (!updated) return null;
+  async updateRequestStatus(
+    id: string,
+    status: string,
+    adminNotes?: string,
+    adminId = "admin",
+    options?: { skipCommissionCheck?: boolean; waiverReason?: string }
+  ) {
+    await connectToDatabase();
+    const existingReq = await HousingRequestModel.findOne({ id }).exec();
+    if (!existingReq) return null;
 
-    const targetPropId = updated.propertyId || updated.selectedProperty;
+    const targetPropId = existingReq.propertyId || existingReq.selectedProperty;
 
     if (status === "CONFIRMED") {
-      if (targetPropId && updated.checkIn && updated.checkOut) {
-        const fromDate = new Date(updated.checkIn);
-        const toDate = new Date(updated.checkOut);
+      // Stage F Prerequisite Enforcement
+      if (!targetPropId) {
+        const err: any = new Error("Impossible de confirmer une demande sans logement sélectionné.");
+        err.statusCode = 400;
+        throw err;
+      }
+
+      const commissionTerms = existingReq.negotiation?.commissionTerms;
+      const paymentVerif = existingReq.negotiation?.paymentVerification;
+
+      const isCommissionTermsAgreed =
+        commissionTerms?.status === "AGREED" ||
+        commissionTerms?.status === "WAIVED" ||
+        Boolean(options?.skipCommissionCheck);
+
+      if (!isCommissionTermsAgreed) {
+        const err: any = new Error(
+          "Impossible de confirmer la réservation : les termes de la commission doivent d'abord être convenus ou exonérés."
+        );
+        err.statusCode = 400;
+        throw err;
+      }
+
+      const isCommissionPaymentVerified =
+        paymentVerif?.status === "VERIFIED" ||
+        paymentVerif?.status === "WAIVED" ||
+        commissionTerms?.status === "WAIVED" ||
+        Boolean(options?.skipCommissionCheck);
+
+      if (!isCommissionPaymentVerified) {
+        const err: any = new Error(
+          "Impossible de confirmer la réservation : le paiement de la commission doit d'abord être vérifié ou exonéré."
+        );
+        err.statusCode = 400;
+        throw err;
+      }
+
+      if (targetPropId && existingReq.checkIn && existingReq.checkOut) {
+        const fromDate = new Date(existingReq.checkIn);
+        const toDate = new Date(existingReq.checkOut);
         if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
           try {
             await propertyRepository.reserve(targetPropId, {
@@ -630,7 +674,7 @@ export class RequestService {
               action: "RESERVED",
               previousStatus: "AVAILABLE",
               newStatus: "RESERVED",
-              reason: `Réservation confirmée suite à la demande ${id} (du ${updated.checkIn} au ${updated.checkOut})`,
+              reason: `Réservation confirmée suite à la demande ${id} (du ${existingReq.checkIn} au ${existingReq.checkOut})`,
             });
           } catch (reserveErr) {
             console.error("Failed to mark property reserved on request confirmation:", reserveErr);
@@ -640,26 +684,36 @@ export class RequestService {
 
       // Finance & Commission Ledger Integration
       try {
-        await connectToDatabase();
         const propDoc = targetPropId ? await PropertyModel.findOne({ id: targetPropId }).lean().exec() : null;
         const ownerId = propDoc?.ownerId || "owner-default";
-        const rentalBasis = typeof updated.budget === "number" ? updated.budget : (propDoc?.pricing?.price || propDoc?.pricePerNight || 0);
+        const rentalBasis =
+          commissionTerms?.rentalBasis ||
+          (typeof existingReq.budget === "number"
+            ? existingReq.budget
+            : propDoc?.pricing?.price || propDoc?.pricePerNight || 0);
+
+        const rateOverride = commissionTerms?.rate;
+        const commissionBasis = commissionTerms?.basis || "FIRST_MONTH_RENT";
 
         const snapshot = await commissionPolicyService.createSnapshotAtConfirmation({
-          reservationId: updated.id,
+          reservationId: existingReq.id,
           propertyId: targetPropId || undefined,
           ownerId,
           rentalBasis,
-          collectionFlow: "OWNER_DIRECT",
+          rateOverride,
+          commissionBasis,
+          collectionFlow: commissionTerms?.collectionFlow || "OWNER_DIRECT",
+          status: paymentVerif?.status === "VERIFIED" ? "VERIFIED" : "AGREED",
+          verifiedCommission: paymentVerif?.verifiedAmount || 0,
           confirmedAt: new Date(),
         });
 
         await financeLedgerService.postCommissionObligation(
           {
-            id: updated.id,
+            id: existingReq.id,
             propertyId: targetPropId || "prop-default",
             ownerId,
-            customerId: updated.customerId,
+            customerId: existingReq.customerId,
           },
           snapshot
         );
@@ -667,23 +721,51 @@ export class RequestService {
         console.error("Failed to post commission obligation on request confirmation:", finErr);
       }
 
-      // Send confirmation email to client if logged in or left email
+      // Stage G Notifications to Owner and Customer
       try {
         let propTitle = "votre logement sélectionné";
+        let propOwnerId: string | undefined;
         if (targetPropId) {
           const propDoc = await PropertyModel.findOne({ id: targetPropId }).lean().exec();
           if (propDoc?.title) propTitle = propDoc.title;
+          if (propDoc?.ownerId) propOwnerId = propDoc.ownerId;
         }
 
-        let clientEmail = updated.customer?.email || (updated as any).email;
-        let clientName = updated.customer?.fullName || updated.customer?.name || "Cher Client";
+        let clientEmail = existingReq.customer?.email || (existingReq as any).email;
+        let clientName = existingReq.customer?.fullName || existingReq.customer?.name || "Cher Client";
 
-        if (!clientEmail && updated.customerId) {
-          const userDoc = await UserModel.findOne({ id: updated.customerId }).lean().exec();
+        if (!clientEmail && existingReq.customerId) {
+          const userDoc = await UserModel.findOne({ id: existingReq.customerId }).lean().exec();
           if (userDoc?.email) clientEmail = userDoc.email;
           if (userDoc && (!clientName || clientName === "Cher Client")) {
             clientName = `${userDoc.firstName || ""} ${userDoc.lastName || ""}`.trim() || clientName;
           }
+        }
+
+        // Notify Owner
+        if (propOwnerId) {
+          await notificationService.createNotification({
+            type: "STATUS_CHANGE",
+            title: "Réservation confirmée",
+            message: `La réservation #${existingReq.id} pour "${propTitle}" (${existingReq.checkIn} au ${existingReq.checkOut}) est officiellement confirmée.`,
+            requestId: existingReq.id,
+            propertyId: targetPropId,
+            recipientRole: "OWNER",
+            recipientId: propOwnerId,
+          });
+        }
+
+        // Notify Customer in-app & via email
+        if (existingReq.customerId) {
+          await notificationService.createNotification({
+            type: "STATUS_CHANGE",
+            title: "Réservation confirmée !",
+            message: `Votre demande de réservation pour "${propTitle}" a été confirmée pour les dates ${existingReq.checkIn} au ${existingReq.checkOut}.`,
+            requestId: existingReq.id,
+            propertyId: targetPropId,
+            recipientRole: "CUSTOMER",
+            recipientId: existingReq.customerId,
+          });
         }
 
         if (clientEmail) {
@@ -691,11 +773,11 @@ export class RequestService {
             clientEmail,
             clientName,
             propTitle,
-            { checkIn: updated.checkIn, checkOut: updated.checkOut }
+            { checkIn: existingReq.checkIn, checkOut: existingReq.checkOut }
           );
         }
-      } catch (emailErr) {
-        console.error("Failed to send reservation confirmation email:", emailErr);
+      } catch (notifErr) {
+        console.error("Failed to send party notifications on confirmation:", notifErr);
       }
     } else if (status === "CANCELLED" || status === "REJECTED") {
       if (targetPropId) {
@@ -707,7 +789,255 @@ export class RequestService {
       }
     }
 
+    const updated = await requestRepository.updateStatus(id, status, adminNotes);
     return updated;
+  }
+
+  // --- STAGE B: Customer Verification ---
+  async recordCustomerVerification(
+    id: string,
+    data: { status: "PENDING" | "CONTACTED" | "CONFIRMED" | "DECLINED"; notes?: string },
+    adminId: string
+  ) {
+    await connectToDatabase();
+    const req = await HousingRequestModel.findOne({ id }).exec();
+    if (!req) return null;
+
+    if (!req.negotiation) req.negotiation = {};
+    req.negotiation.customerVerification = {
+      status: data.status,
+      notes: data.notes || "",
+      verifiedAt: new Date(),
+      verifiedBy: adminId,
+    };
+
+    if (data.status === "CONFIRMED" && req.status === "PENDING") {
+      req.status = "UNDER_REVIEW";
+    }
+
+    req.markModified("negotiation");
+    await req.save();
+    return req.toObject();
+  }
+
+  // --- STAGE C: Owner Negotiation ---
+  async recordOwnerNegotiation(
+    id: string,
+    data: {
+      status: "PENDING" | "CONTACTED" | "AGREED" | "REJECTED";
+      proposedRate?: number;
+      proposedBasis?: "FIRST_MONTH_RENT" | "FIRST_AGREED_PAYMENT" | "TOTAL_RENTAL_VALUE";
+      collectionFlow?: "OWNER_DIRECT" | "PLATFORM_COLLECTS" | "MIXED";
+      notes?: string;
+    },
+    adminId: string
+  ) {
+    await connectToDatabase();
+    const req = await HousingRequestModel.findOne({ id }).exec();
+    if (!req) return null;
+
+    if (!req.negotiation) req.negotiation = {};
+    req.negotiation.ownerNegotiation = {
+      status: data.status,
+      proposedRate: data.proposedRate ?? 10,
+      proposedBasis: data.proposedBasis || "FIRST_MONTH_RENT",
+      collectionFlow: data.collectionFlow || "OWNER_DIRECT",
+      notes: data.notes || "",
+      negotiatedAt: new Date(),
+      negotiatedBy: adminId,
+    };
+
+    req.markModified("negotiation");
+    await req.save();
+    return req.toObject();
+  }
+
+  // --- STAGE D: Confirm Commission Terms ---
+  async confirmCommissionTerms(
+    id: string,
+    data: {
+      rate: number;
+      basis: "FIRST_MONTH_RENT" | "FIRST_AGREED_PAYMENT" | "TOTAL_RENTAL_VALUE";
+      rentalBasis?: number;
+      collectionFlow?: "OWNER_DIRECT" | "PLATFORM_COLLECTS" | "MIXED";
+      waivedReason?: string;
+    },
+    adminId: string
+  ) {
+    await connectToDatabase();
+    const req = await HousingRequestModel.findOne({ id }).exec();
+    if (!req) return null;
+
+    const targetPropId = req.propertyId || req.selectedProperty;
+    const propDoc = targetPropId ? await PropertyModel.findOne({ id: targetPropId }).lean().exec() : null;
+
+    const rentalBasis =
+      typeof data.rentalBasis === "number" && data.rentalBasis > 0
+        ? data.rentalBasis
+        : typeof req.budget === "number" && req.budget > 0
+        ? req.budget
+        : propDoc?.pricing?.price || propDoc?.pricePerNight || 600;
+
+    const calculatedCommission = commissionPolicyService.calculateCommission(
+      rentalBasis,
+      data.rate,
+      "PERCENTAGE",
+      data.basis
+    );
+
+    const isWaived = Boolean(data.waivedReason);
+    const termsStatus = isWaived ? "WAIVED" : "AGREED";
+
+    if (!req.negotiation) req.negotiation = {};
+    req.negotiation.commissionTerms = {
+      status: termsStatus,
+      rate: data.rate,
+      basis: data.basis,
+      rentalBasis,
+      calculatedCommission: isWaived ? 0 : calculatedCommission,
+      collectionFlow: data.collectionFlow || "OWNER_DIRECT",
+      waivedReason: data.waivedReason,
+      confirmedAt: new Date(),
+      confirmedBy: adminId,
+    };
+
+    if (isWaived) {
+      req.negotiation.paymentVerification = {
+        status: "WAIVED",
+        reportedAmount: 0,
+        verifiedAmount: 0,
+        remainingAmount: 0,
+        paymentMethod: "CASH",
+        verifiedAt: new Date(),
+        verifiedBy: adminId,
+      };
+    }
+
+    req.markModified("negotiation");
+    await req.save();
+
+    // Create immutable snapshot
+    const ownerId = propDoc?.ownerId || "owner-default";
+    await commissionPolicyService.createSnapshotAtConfirmation({
+      reservationId: req.id,
+      propertyId: targetPropId || undefined,
+      ownerId,
+      rentalBasis,
+      rateOverride: data.rate,
+      commissionBasis: data.basis,
+      collectionFlow: data.collectionFlow || "OWNER_DIRECT",
+      status: termsStatus,
+      waivedBy: isWaived ? adminId : undefined,
+      waivedReason: data.waivedReason,
+      confirmedAt: new Date(),
+    });
+
+    return req.toObject();
+  }
+
+  // --- STAGE E: Record & Verify Commission Payment ---
+  async recordCommissionPayment(
+    id: string,
+    data: { amount: number; paymentMethod?: string; reference?: string },
+    actor: { userId: string; role: string }
+  ) {
+    await connectToDatabase();
+    const req = await HousingRequestModel.findOne({ id }).exec();
+    if (!req) return null;
+
+    const targetPropId = req.propertyId || req.selectedProperty;
+    const propDoc = targetPropId ? await PropertyModel.findOne({ id: targetPropId }).lean().exec() : null;
+    const ownerId = propDoc?.ownerId || "owner-default";
+
+    if (!req.negotiation) req.negotiation = {};
+    const expected = req.negotiation.commissionTerms?.calculatedCommission || 0;
+
+    req.negotiation.paymentVerification = {
+      status: "REPORTED",
+      reportedAmount: Math.round(data.amount * 1000) / 1000,
+      verifiedAmount: req.negotiation.paymentVerification?.verifiedAmount || 0,
+      remainingAmount: Math.max(0, Math.round((expected - (req.negotiation.paymentVerification?.verifiedAmount || 0)) * 1000) / 1000),
+      paymentMethod: data.paymentMethod || "CASH",
+      reference: data.reference,
+      reportedAt: new Date(),
+    };
+
+    req.markModified("negotiation");
+    await req.save();
+
+    await financeLedgerService.recordPaymentTransaction({
+      reservationId: req.id,
+      propertyId: targetPropId || "prop-default",
+      ownerId,
+      customerId: req.customerId,
+      type: "COMMISSION_REMITTANCE",
+      direction: "CREDIT",
+      amount: data.amount,
+      paymentMethod: data.paymentMethod || "CASH",
+      status: "REPORTED",
+      reference: data.reference,
+      reportedBy: actor,
+      notes: `Versement de commission déclaré (${data.amount} TND via ${data.paymentMethod || "CASH"}).`,
+    });
+
+    return req.toObject();
+  }
+
+  async verifyCommissionPayment(
+    id: string,
+    data: { verifiedAmount?: number; transactionId?: string },
+    adminId: string
+  ) {
+    await connectToDatabase();
+    const req = await HousingRequestModel.findOne({ id }).exec();
+    if (!req) return null;
+
+    const targetPropId = req.propertyId || req.selectedProperty;
+    const propDoc = targetPropId ? await PropertyModel.findOne({ id: targetPropId }).lean().exec() : null;
+    const ownerId = propDoc?.ownerId || "owner-default";
+
+    if (!req.negotiation) req.negotiation = {};
+    const expected = req.negotiation.commissionTerms?.calculatedCommission || 0;
+    const verifiedAmount =
+      typeof data.verifiedAmount === "number" && data.verifiedAmount > 0
+        ? data.verifiedAmount
+        : req.negotiation.paymentVerification?.reportedAmount || expected;
+
+    const remainingAmount = Math.max(0, Math.round((expected - verifiedAmount) * 1000) / 1000);
+
+    req.negotiation.paymentVerification = {
+      ...req.negotiation.paymentVerification,
+      status: "VERIFIED",
+      verifiedAmount,
+      remainingAmount,
+      verifiedAt: new Date(),
+      verifiedBy: adminId,
+    };
+
+    req.markModified("negotiation");
+    await req.save();
+
+    // Verify corresponding ledger transaction or record verified remittance
+    if (data.transactionId) {
+      await financeLedgerService.verifyTransaction(adminId, data.transactionId);
+    } else {
+      await financeLedgerService.recordPaymentTransaction({
+        reservationId: req.id,
+        propertyId: targetPropId || "prop-default",
+        ownerId,
+        customerId: req.customerId,
+        type: "COMMISSION_REMITTANCE",
+        direction: "CREDIT",
+        amount: verifiedAmount,
+        paymentMethod: req.negotiation.paymentVerification?.paymentMethod || "CASH",
+        status: "VERIFIED",
+        reference: `VERIF-${req.id}`,
+        reportedBy: { userId: adminId, role: "ADMIN" },
+        notes: `Paiement de commission vérifié par admin (${verifiedAmount} TND).`,
+      });
+    }
+
+    return req.toObject();
   }
 
   async addProposal(

@@ -15,6 +15,10 @@ import {
   Search,
   Send,
   Loader2,
+  Trash2,
+  AlertTriangle,
+  X,
+  CheckCircle,
 } from "lucide-react";
 
 const STATUS_TABS = [
@@ -33,6 +37,10 @@ export default function OwnerPropertiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusTab, setStatusTab] = useState("ALL");
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [propertyToDelete, setPropertyToDelete] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchProperties = async () => {
     try {
@@ -78,6 +86,33 @@ export default function OwnerPropertiesPage() {
     }
   };
 
+  const handleDeleteProperty = async () => {
+    if (!propertyToDelete) return;
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      const res = await fetch(`/api/owner/properties/${propertyToDelete.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Impossible de supprimer ce bien.");
+      }
+
+      setFeedbackMessage({
+        type: "success",
+        text: data.message || "Annonce supprimée avec succès.",
+      });
+
+      setPropertyToDelete(null);
+      await fetchProperties();
+    } catch (err: any) {
+      setDeleteError(err.message || "Erreur lors de la suppression.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const filteredProperties = properties.filter((property) => {
     const title = property.title || "";
     const city = property.city || property.location?.city || "";
@@ -99,6 +134,22 @@ export default function OwnerPropertiesPage() {
       title="Mes biens"
       subtitle="Gérez les détails, tarifs, statuts et disponibilités de vos logements"
     >
+      {/* Feedback Banner */}
+      {feedbackMessage && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            <span>{feedbackMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedbackMessage(null)}
+            className="rounded p-1 hover:bg-emerald-500/20"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
       {/* Search & Filter Header Bar */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="relative flex-1 min-w-[260px] max-w-md">
@@ -287,6 +338,20 @@ export default function OwnerPropertiesPage() {
                       <Edit className="h-3.5 w-3.5" />
                       Modifier
                     </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteError(null);
+                        setPropertyToDelete(property);
+                      }}
+                      title="Supprimer l'annonce"
+                      aria-label={`Supprimer l'annonce ${property.title}`}
+                      className="inline-flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only">Supprimer</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -294,6 +359,84 @@ export default function OwnerPropertiesPage() {
           })}
         </div>
       </AsyncStateContainer>
+
+      {/* Delete Confirmation Modal */}
+      {propertyToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-bold text-foreground">
+                    Supprimer l'annonce
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Confirmation requise</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isDeleting) setPropertyToDelete(null);
+                }}
+                disabled={isDeleting}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="rounded-lg bg-surface/80 p-3 border border-border/60 text-xs space-y-1">
+              <p className="font-semibold text-foreground line-clamp-1">{propertyToDelete.title}</p>
+              <p className="text-muted-foreground">ID : #{propertyToDelete.id}</p>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Êtes-vous sûr de vouloir supprimer cette annonce ? Elle ne sera plus visible publiquement sur LOC MAISON.
+            </p>
+
+            <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-[0.75rem] text-amber-800 dark:text-amber-300">
+              <p className="font-semibold mb-0.5">Conservation comptable & historique :</p>
+              <p>
+                Si cette annonce possède des réservations passées ou des opérations financières associées, elle sera désactivée et archivée afin de préserver l'intégrité comptable.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setPropertyToDelete(null)}
+                disabled={isDeleting}
+                className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-surface/80 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProperty}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                <span>{isDeleting ? "Suppression…" : "Confirmer la suppression"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </OwnerShell>
   );
 }

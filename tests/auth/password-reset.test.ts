@@ -26,7 +26,7 @@ describe("Password Reset & Rate Limiting System", () => {
     expect(requestResult.resetUrl).toContain("token=");
 
     // Extract token from reset URL
-    const token = requestResult.resetUrl!.split("token=")[1];
+    const token = requestResult.resetUrl!.split("token=")[1].split("&")[0];
     expect(token).toBeTruthy();
 
     // Verify token exists in database

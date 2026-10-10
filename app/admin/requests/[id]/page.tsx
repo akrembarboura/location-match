@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { LoadingThreeDotsJumping } from "@/components/shared/LoadingThreeDotsJumping";
+import { CommissionNegotiationPanel } from "@/components/admin/CommissionNegotiationPanel";
 import { REQUEST_STATUSES, type RequestStatus } from "@/lib/rentals/request-schema";
 import {
   ArrowLeft,
@@ -379,6 +380,14 @@ export default function AdminRequestDetailPage({ params }: { params: Promise<{ i
                 )}
               </div>
             </div>
+
+            {/* Commission Negotiation & Financial Tracking Workflow Panel */}
+            <CommissionNegotiationPanel
+              requestId={id}
+              requestData={requestData}
+              onRefresh={fetchRequestDetail}
+              onStatusChange={(status) => handleStatusChange(status as RequestStatus)}
+            />
           </div>
 
           {/* Right Section: Status Control, Contact Access, Internal Notes & Proposal */}

@@ -94,7 +94,13 @@ export default function AdminFinanceSettingsPage() {
   return (
     <AdminShell title="Configuration des Commissions" subtitle="Gestion des règles de commissionnement et scripts de réconciliation">
       <div className="space-y-6">
-        <AsyncStateContainer isLoading={loading} error={error} onRetry={fetchPolicies}>
+        <AsyncStateContainer
+          isLoading={loading}
+          isError={Boolean(error)}
+          error={error}
+          isEmpty={false}
+          onRetry={fetchPolicies}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Create Policy Form (1 Col) */}
             <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-4">

@@ -7,8 +7,14 @@ export interface ResolvePolicyInput {
   propertyId?: string;
   ownerId?: string;
   rentalBasis: number;
+  commissionBasis?: "FIRST_MONTH_RENT" | "FIRST_AGREED_PAYMENT" | "TOTAL_RENTAL_VALUE";
+  rateOverride?: number;
   collectionFlow?: "OWNER_DIRECT" | "PLATFORM_COLLECTS" | "MIXED" | "UNRESOLVED";
   mixedAllocation?: { ownerAmount: number; platformAmount: number };
+  status?: "PROPOSED" | "AGREED" | "REPORTED" | "VERIFIED" | "WAIVED";
+  verifiedCommission?: number;
+  waivedBy?: string;
+  waivedReason?: string;
   confirmedAt?: Date;
 }
 
@@ -109,7 +115,12 @@ export class CommissionPolicyService {
   /**
    * Decimal-safe commission calculation in TND millimes
    */
-  calculateCommission(rentalBasis: number, rate: number, method = "PERCENTAGE"): number {
+  calculateCommission(
+    rentalBasis: number,
+    rate: number,
+    method = "PERCENTAGE",
+    basis: "FIRST_MONTH_RENT" | "FIRST_AGREED_PAYMENT" | "TOTAL_RENTAL_VALUE" = "FIRST_MONTH_RENT"
+  ): number {
     if (typeof rentalBasis !== "number" || isNaN(rentalBasis) || rentalBasis < 0) {
       throw new Error("Base locative invalide pour le calcul de commission.");
     }
@@ -150,7 +161,14 @@ export class CommissionPolicyService {
       date: input.confirmedAt,
     });
 
-    const calculatedCommission = this.calculateCommission(input.rentalBasis, policy.rate, policy.calculationMethod);
+    const applicableRate = typeof input.rateOverride === "number" ? input.rateOverride : policy.rate;
+    const commissionBasis = input.commissionBasis || "FIRST_MONTH_RENT";
+    const calculatedCommission = this.calculateCommission(
+      input.rentalBasis,
+      applicableRate,
+      policy.calculationMethod,
+      commissionBasis
+    );
 
     const collectionFlow = input.collectionFlow || "OWNER_DIRECT";
 
@@ -166,6 +184,8 @@ export class CommissionPolicyService {
       }
     }
 
+    const verifiedCommission = Math.round((input.verifiedCommission || 0) * 1000) / 1000;
+    const remainingCommission = Math.max(0, Math.round((calculatedCommission - verifiedCommission) * 1000) / 1000);
     const snapshotId = `SNAP-${input.reservationId}`;
 
     const snapshot = await CommissionSnapshotModel.create({
@@ -173,17 +193,23 @@ export class CommissionPolicyService {
       reservationId: input.reservationId,
       policyId: policy.id,
       policyVersion: policy.version || 1,
-      scope: source,
-      rate: policy.rate,
+      scope: input.rateOverride !== undefined ? "RESERVATION" : source,
+      rate: applicableRate,
       calculationMethod: policy.calculationMethod || "PERCENTAGE",
+      commissionBasis,
       currency: policy.currency || "TND",
       rentalBasis: input.rentalBasis,
       calculatedCommission,
       collectionFlow,
       mixedAllocation: input.mixedAllocation || { ownerAmount: 0, platformAmount: 0 },
+      status: input.status || (verifiedCommission >= calculatedCommission ? "VERIFIED" : "AGREED"),
+      verifiedCommission,
+      remainingCommission,
+      waivedBy: input.waivedBy,
+      waivedReason: input.waivedReason,
       confirmedAt: input.confirmedAt || new Date(),
       snapshotVersion: 1,
-      notes: `Snapshot généré lors de la confirmation de réservation (${source}: ${policy.rate}%).`,
+      notes: `Snapshot généré lors de la confirmation de réservation (${source}: ${applicableRate}%, base: ${commissionBasis}).`,
     });
 
     return snapshot;

@@ -48,7 +48,15 @@ export default function CommissionDetailPage({ params }: { params: Promise<{ id:
           </Link>
         </div>
 
-        <AsyncStateContainer isLoading={loading} error={error} onRetry={fetchDetail}>
+        <AsyncStateContainer
+          isLoading={loading}
+          isError={Boolean(error)}
+          error={error}
+          isEmpty={!data}
+          emptyTitle="Commission introuvable"
+          emptyDescription="Le snapshot de commission demandé n'existe pas."
+          onRetry={fetchDetail}
+        >
           {data && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Snapshot & Breakdown (2 Cols) */}

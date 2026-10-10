@@ -30,6 +30,9 @@ import {
   Calendar,
   BarChart3,
   Heart,
+  Trash2,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import type { PropertyPerformance } from "@/lib/analytics/types";
 
@@ -65,6 +68,11 @@ export default function AdminPropertyReviewPage({
   const [reservationFrom, setReservationFrom] = useState("");
   const [reservationTo, setReservationTo] = useState("");
   const [reserveError, setReserveError] = useState<string | null>(null);
+
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function fetchDetails() {
     try {
@@ -189,6 +197,27 @@ export default function AdminPropertyReviewPage({
       await fetchDetails();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleDeleteProperty() {
+    try {
+      setActionLoading(true);
+      setDeleteError(null);
+      const res = await fetch(`/api/admin/properties/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: deleteReason.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Échec de la suppression.");
+      }
+      router.push("/admin/properties");
+    } catch (err: any) {
+      setDeleteError(err.message || "Erreur lors de la suppression.");
     } finally {
       setActionLoading(false);
     }
@@ -426,6 +455,20 @@ export default function AdminPropertyReviewPage({
                   </button>
                 </>
               )}
+
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() => {
+                  setDeleteError(null);
+                  setDeleteReason("");
+                  setShowDeleteModal(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors shadow-2xs"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Supprimer le bien
+              </button>
             </div>
           </div>
 
@@ -935,6 +978,104 @@ export default function AdminPropertyReviewPage({
               >
                 {actionLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {reserveMode === "create" ? "Enregistrer la réservation" : "Mettre à jour"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-bold text-foreground">
+                    Supprimer l'annonce (Modération)
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Action d'administration irréversible</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!actionLoading) setShowDeleteModal(false);
+                }}
+                disabled={actionLoading}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="rounded-lg bg-surface/80 p-3 border border-border/60 text-xs space-y-1">
+              <p className="font-semibold text-foreground line-clamp-1">{data?.property?.title}</p>
+              <div className="flex items-center justify-between text-muted-foreground pt-1">
+                <span>ID : #{data?.property?.id}</span>
+                <span>Propriétaire : {data?.property?.owner?.name || "N/A"}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Confirmez-vous la suppression de cette annonce ? Elle ne sera plus consultable ni visible sur le catalogue public.
+            </p>
+
+            <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-[0.75rem] text-amber-800 dark:text-amber-300">
+              <p className="font-semibold mb-0.5">Règles de suppression sécurisée :</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>Des réservations actives en cours ou à venir bloqueront la suppression.</li>
+                <li>Si des réservations ou des flux comptables existent, l'annonce sera archivée afin de protéger l'intégrité financière.</li>
+                <li>Sans historique, l'annonce et ses photos spécifiques seront supprimées définitivement.</li>
+              </ul>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="admin-detail-delete-reason" className="text-xs font-semibold text-foreground">
+                Motif de la suppression (optionnel) :
+              </label>
+              <input
+                id="admin-detail-delete-reason"
+                type="text"
+                placeholder="Ex : Annonce frauduleuse, doublon, résiliation..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                disabled={actionLoading}
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            {deleteError && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={actionLoading}
+                className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-surface/80 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProperty}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs"
+              >
+                {actionLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                <span>{actionLoading ? "Suppression…" : "Confirmer la suppression"}</span>
               </button>
             </div>
           </div>

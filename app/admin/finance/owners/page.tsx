@@ -36,7 +36,15 @@ export default function AdminOwnerBalancesPage() {
 
   return (
     <AdminShell title="Balances Propriétaires" subtitle="Suivi individualisé des créances et des montants payables par propriétaire">
-      <AsyncStateContainer isLoading={loading} error={error} onRetry={fetchBalances}>
+      <AsyncStateContainer
+        isLoading={loading}
+        isError={Boolean(error)}
+        error={error}
+        isEmpty={items.length === 0}
+        emptyTitle="Aucun propriétaire"
+        emptyDescription="Aucun solde propriétaire disponible pour le moment."
+        onRetry={fetchBalances}
+      >
         <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
@@ -67,10 +75,10 @@ export default function AdminOwnerBalancesPage() {
                       </td>
                       <td className="p-4 font-mono">{owner.reservationCount}</td>
                       <td className="p-4 font-mono">{formatDT(owner.commissionEarned)}</td>
-                      <td className="p-4 font-mono text-emerald-600 font-medium">{formatDT(owner.verifiedRemittances)}</td>
-                      <td className="p-4 font-mono text-amber-600">{formatDT(owner.reportedRemittances)}</td>
-                      <td className="p-4 font-mono font-bold text-rose-600">{formatDT(owner.commissionReceivable)}</td>
-                      <td className="p-4 font-mono font-bold text-blue-600">{formatDT(owner.ownerPayable)}</td>
+                      <td className="p-4 font-mono font-medium text-foreground">{formatDT(owner.verifiedRemittances)}</td>
+                      <td className="p-4 font-mono font-medium text-foreground">{formatDT(owner.reportedRemittances)}</td>
+                      <td className="p-4 font-mono font-semibold text-foreground">{formatDT(owner.commissionReceivable)}</td>
+                      <td className="p-4 font-mono font-semibold text-foreground">{formatDT(owner.ownerPayable)}</td>
                     </tr>
                   ))
                 )}

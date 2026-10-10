@@ -23,6 +23,9 @@ import {
   Users,
   Ruler,
   TrendingUp,
+  Trash2,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import type { OwnerPropertyAnalytics } from "@/lib/analytics/types";
 
@@ -40,6 +43,9 @@ export default function OwnerPropertyDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProperty() {
@@ -91,6 +97,25 @@ export default function OwnerPropertyDetailPage({
       alert(err.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      setDeleting(true);
+      setDeleteError(null);
+      const res = await fetch(`/api/owner/properties/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de la suppression.");
+      }
+      router.push("/owner/properties");
+    } catch (err: any) {
+      setDeleteError(err.message || "Impossible de supprimer ce bien.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -171,6 +196,19 @@ export default function OwnerPropertyDetailPage({
                 Soumettre pour vérification
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteError(null);
+                setShowDeleteModal(true);
+              }}
+              disabled={deleting}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors shadow-2xs"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Supprimer l'annonce</span>
+            </button>
           </div>
         </div>
 
@@ -407,6 +445,84 @@ export default function OwnerPropertyDetailPage({
             </div>
           )}
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
+                    <Trash2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-base font-bold text-foreground">
+                      Supprimer cette annonce
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Confirmation requise</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!deleting) setShowDeleteModal(false);
+                  }}
+                  disabled={deleting}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="rounded-lg bg-surface/80 p-3 border border-border/60 text-xs space-y-1">
+                <p className="font-semibold text-foreground line-clamp-1">{property.title}</p>
+                <p className="text-muted-foreground">ID : #{property.id}</p>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Êtes-vous sûr de vouloir supprimer définitivement cette annonce ? Elle ne sera plus accessible ni visible par les locataires sur LOC MAISON.
+              </p>
+
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-[0.75rem] text-amber-800 dark:text-amber-300">
+                <p className="font-semibold mb-0.5">Conservation comptable & historique :</p>
+                <p>
+                  Si cette annonce possède des réservations ou des mouvements financiers enregistrés, elle sera désactivée et archivée afin de préserver l'intégrité comptable.
+                </p>
+              </div>
+
+              {deleteError && (
+                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>{deleteError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-surface/80 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs"
+                >
+                  {deleting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                  <span>{deleting ? "Suppression…" : "Confirmer la suppression"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageShell>
   );

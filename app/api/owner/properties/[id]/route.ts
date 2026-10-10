@@ -59,3 +59,38 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await requireOwnerAccess();
+    const { id } = await params;
+
+    const result = await propertyService.deleteProperty({
+      id,
+      userId: user.id,
+      userRole: "OWNER",
+    });
+
+    return NextResponse.json({
+      success: true,
+      ...result,
+    });
+  } catch (error: any) {
+    const res = ownerAuthErrorResponse(error);
+    if (res) return res;
+    const status =
+      error.status ||
+      (error.message?.includes("Accès refusé")
+        ? 403
+        : error.message?.includes("introuvable")
+        ? 404
+        : 400);
+    return NextResponse.json(
+      { error: error.message || "Erreur lors de la suppression du bien." },
+      { status }
+    );
+  }
+}

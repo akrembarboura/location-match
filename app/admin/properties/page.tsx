@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AsyncStateContainer } from "@/components/shared/AsyncStateContainer";
 import { AdminStatusBadge } from "@/lib/admin-theme";
@@ -26,6 +29,10 @@ import {
   Bath,
   Ruler,
   X,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +83,10 @@ const STATUS_TABS = [
   { key: "ARCHIVED", label: "Archivées" },
 ] as const;
 
-export default function AdminProperties() {
+function AdminPropertiesContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || searchParams.get("ownerId") || "";
+
   const [properties, setProperties] = useState<AdminProperty[]>([]);
   const [counts, setCounts] = useState({
     all: 0,
@@ -89,7 +99,7 @@ export default function AdminProperties() {
 
   // State Filters
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
@@ -145,7 +155,12 @@ export default function AdminProperties() {
     return properties.filter((p) => p.rentalCategory === categoryFilter);
   }, [properties, categoryFilter]);
 
-  const hasActiveFilters = searchQuery.trim() !== "" || categoryFilter !== "ALL" || selectedStatus !== "ALL";
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<AdminProperty | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -154,11 +169,74 @@ export default function AdminProperties() {
     setCurrentPage(1);
   };
 
+  const handleDeleteProperty = async () => {
+    if (!propertyToDelete) return;
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      const res = await fetch(`/api/admin/properties/${propertyToDelete.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: deleteReason.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Impossible de supprimer ce bien.");
+      }
+
+      setFeedbackMessage({
+        type: "success",
+        text: data.message || "Annonce supprimée avec succès.",
+      });
+
+      setPropertyToDelete(null);
+      setDeleteReason("");
+      await fetchProperties();
+    } catch (err: any) {
+      setDeleteError(err.message || "Erreur lors de la suppression.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AdminShell
       title="Biens"
       subtitle="Gérez les annonces, vérifiez les dossiers et suivez leur publication."
     >
+      {/* Feedback Banner */}
+      {feedbackMessage && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            <span>{feedbackMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedbackMessage(null)}
+            className="rounded p-1 hover:bg-emerald-500/20"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Biens & Propriétaires Section Navigation Tabs */}
+      <div className="mb-6 flex items-center border-b border-border">
+        <Link
+          href="/admin/properties"
+          className="flex items-center gap-2 border-b-2 border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors"
+        >
+          <Building2 className="h-4 w-4" /> Logements & Annonces
+        </Link>
+        <Link
+          href="/admin/owners"
+          className="flex items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-border hover:text-foreground transition-colors"
+        >
+          <Users className="h-4 w-4" /> Propriétaires
+        </Link>
+      </div>
+
       {/* Metric Summary Strip */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
@@ -442,18 +520,35 @@ export default function AdminProperties() {
 
                         {/* Action */}
                         <td className="p-3.5 text-right whitespace-nowrap">
-                          <Link
-                            href={`/admin/properties/${p.id}`}
-                            className={cn(
-                              "inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs font-semibold transition-colors shadow-2xs",
-                              p.status === "PENDING_REVIEW"
-                                ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20"
-                                : "border-border bg-surface text-foreground hover:border-primary hover:bg-card"
-                            )}
-                          >
-                            <Eye className="h-3.5 w-3.5 text-primary" />
-                            <span>{p.status === "PENDING_REVIEW" ? "Vérifier" : "Examen"}</span>
-                          </Link>
+                          <div className="inline-flex items-center gap-1.5 justify-end">
+                            <Link
+                              href={`/admin/properties/${p.id}`}
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs font-semibold transition-colors shadow-2xs",
+                                p.status === "PENDING_REVIEW"
+                                  ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20"
+                                  : "border-border bg-surface text-foreground hover:border-primary hover:bg-card"
+                              )}
+                            >
+                              <Eye className="h-3.5 w-3.5 text-primary" />
+                              <span>{p.status === "PENDING_REVIEW" ? "Vérifier" : "Examen"}</span>
+                            </Link>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteError(null);
+                                setDeleteReason("");
+                                setPropertyToDelete(p);
+                              }}
+                              title="Supprimer le bien"
+                              aria-label={`Supprimer le bien ${p.title}`}
+                              className="inline-flex items-center gap-1 rounded-lg border border-destructive/20 bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors shadow-2xs"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span className="sr-only sm:not-sr-only">Supprimer</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -521,12 +616,27 @@ export default function AdminProperties() {
                         <span className="text-xs text-muted-foreground">{periodLabel}</span>
                       </div>
 
-                      <Link
-                        href={`/admin/properties/${p.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:border-primary hover:bg-card transition-colors"
-                      >
-                        <Eye className="h-3.5 w-3.5 text-primary" /> Examen
-                      </Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          href={`/admin/properties/${p.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:border-primary hover:bg-card transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-primary" /> Examen
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleteReason("");
+                            setPropertyToDelete(p);
+                          }}
+                          title="Supprimer le bien"
+                          aria-label={`Supprimer le bien ${p.title}`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-destructive/20 bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors shadow-2xs"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -592,6 +702,123 @@ export default function AdminProperties() {
           </div>
         )}
       </AsyncStateContainer>
+
+      {/* Delete Confirmation Modal for Admin */}
+      {propertyToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-bold text-foreground">
+                    Supprimer l'annonce (Modération)
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Action d'administration</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isDeleting) setPropertyToDelete(null);
+                }}
+                disabled={isDeleting}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="rounded-lg bg-surface/80 p-3 border border-border/60 text-xs space-y-1">
+              <p className="font-semibold text-foreground line-clamp-1">{propertyToDelete.title}</p>
+              <div className="flex items-center justify-between text-muted-foreground pt-1">
+                <span>ID : #{propertyToDelete.id}</span>
+                <span>Propriétaire : {propertyToDelete.owner?.name || "N/A"}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Confirmez-vous la suppression de cette annonce ? Elle sera retirée du catalogue public.
+            </p>
+
+            <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-[0.75rem] text-amber-800 dark:text-amber-300">
+              <p className="font-semibold mb-0.5">Règles de suppression sécurisée :</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>Des réservations actives en cours ou à venir bloqueront la suppression.</li>
+                <li>Si des réservations ou paiements historiques existent, l'annonce sera archivée afin de préserver l'intégrité comptable.</li>
+                <li>Sans historique, l'annonce et ses images associées seront supprimées définitivement.</li>
+              </ul>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="admin-delete-reason" className="text-xs font-semibold text-foreground">
+                Motif de la suppression (optionnel) :
+              </label>
+              <input
+                id="admin-delete-reason"
+                type="text"
+                placeholder="Ex : Annonce dupliquée, demande expresse du propriétaire..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                disabled={isDeleting}
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            {deleteError && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setPropertyToDelete(null)}
+                disabled={isDeleting}
+                className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-surface/80 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProperty}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                <span>{isDeleting ? "Suppression…" : "Confirmer la suppression"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminShell>
+  );
+}
+
+export default function AdminProperties() {
+  return (
+    <Suspense
+      fallback={
+        <AdminShell
+          title="Biens"
+          subtitle="Gérez les annonces, vérifiez les dossiers et suivez leur publication."
+        >
+          <div className="flex h-64 items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        </AdminShell>
+      }
+    >
+      <AdminPropertiesContent />
+    </Suspense>
   );
 }

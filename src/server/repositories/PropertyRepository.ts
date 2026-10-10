@@ -438,6 +438,14 @@ export class PropertyRepository {
     await connectToDatabase();
     return await DestinationModel.find({}).lean().exec();
   }
+
+  async deletePermanently(id: string) {
+    await connectToDatabase();
+    await Promise.all([
+      PropertyModel.deleteMany({ $or: [{ id }, { slug: id }] }).exec(),
+      HouseModel.deleteMany({ $or: [{ id }, { slug: id }] }).exec(),
+    ]);
+  }
 }
 
 export const propertyRepository = new PropertyRepository();

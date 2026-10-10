@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { authService } from "@/server/services/AuthService";
 import { ResetPasswordSchema } from "@/server/validations/auth";
-import { checkRateLimit } from "@/server/utils/rate-limit";
+import { rateLimit, rateLimitResponse } from "@/server/rate-limit";
+import { POLICIES } from "@/server/rate-limit/policies";
+import { getClientIp } from "@/server/utils/client-ip";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   // Apply rate limiting: max 5 attempts per 15 minutes per IP
-  const rateLimitErr = checkRateLimit(req, { limit: 5, windowMs: 15 * 60 * 1000 });
-  if (rateLimitErr) return rateLimitErr;
+  const clientIp = getClientIp(req);
+  const rateLimitResult = await rateLimit(`rate-limit:AUTH_RESET_PASSWORD:${clientIp}`, POLICIES.AUTH_RESET_PASSWORD);
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -35,7 +40,7 @@ export async function POST(req: Request) {
       data: result,
     });
   } catch (err: any) {
-    console.error("Reset password error:", err);
+    console.error("[AUTH] Reset password error:", err.message);
     return NextResponse.json(
       {
         success: false,
@@ -44,8 +49,7 @@ export async function POST(req: Request) {
           message: err.message || "Une erreur est survenue lors de la réinitialisation.",
         },
       },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 400 }
     );
   }
 }
-

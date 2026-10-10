@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
  * Extracts the trusted client IP.
  * Relies on typical proxy headers like x-forwarded-for.
  */
-export function getClientIp(req: NextRequest): string {
+export function getClientIp(req: Request | NextRequest): string {
   // Check standard proxy header (first entry is original client IP)
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {

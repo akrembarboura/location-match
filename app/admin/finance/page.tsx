@@ -61,7 +61,7 @@ export default function AdminFinancePage() {
 
   return (
     <AdminShell title="Gestion Financière & Commissions" subtitle="Ledger réconcilié, snapshots historiques et suivi des encaissements">
-      <AsyncStateContainer isLoading={loading} error={error} onRetry={fetchOverview}>
+      <AsyncStateContainer isLoading={loading} isError={Boolean(error)} error={error} isEmpty={false} onRetry={fetchOverview}>
         {overview && (
           <div className="space-y-6">
             {/* Alert banner for unresolved configurations */}
@@ -89,9 +89,9 @@ export default function AdminFinancePage() {
 
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-2">
+              <div className="bg-card border border-border/80 p-5 rounded-2xl shadow-2xs transition-all hover:shadow-card space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Commissions Gagnées</span>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commissions Gagnées</span>
                   <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <TrendingUp className="h-5 w-5" />
                   </div>
@@ -100,40 +100,40 @@ export default function AdminFinancePage() {
                 <p className="text-xs text-muted-foreground">Créations fermes à la confirmation</p>
               </div>
 
-              <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-2">
+              <div className="bg-card border border-border/80 p-5 rounded-2xl shadow-2xs transition-all hover:shadow-card space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Commissions Encaissées</span>
-                  <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commissions Encaissées</span>
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                <div className="text-2xl font-bold text-foreground font-mono">
                   {formatDT(overview.commissionCollected)}
                 </div>
                 <p className="text-xs text-muted-foreground">Règlements vérifiés & confirmés</p>
               </div>
 
-              <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-2">
+              <div className="bg-card border border-border/80 p-5 rounded-2xl shadow-2xs transition-all hover:shadow-card space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Commissions Déclarées</span>
-                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commissions Déclarées</span>
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <Clock className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 font-mono">
+                <div className="text-2xl font-bold text-foreground font-mono">
                   {formatDT(overview.commissionReported)}
                 </div>
                 <p className="text-xs text-muted-foreground">En attente de vérification admin</p>
               </div>
 
-              <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-2">
+              <div className="bg-card border border-border/80 p-5 rounded-2xl shadow-2xs transition-all hover:shadow-card space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Reste à Recouvrer</span>
-                  <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reste à Recouvrer</span>
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <DollarSign className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 font-mono">
+                <div className="text-2xl font-bold text-foreground font-mono">
                   {formatDT(overview.commissionOutstanding)}
                 </div>
                 <p className="text-xs text-muted-foreground">Créances nettes impayées</p>
@@ -142,10 +142,10 @@ export default function AdminFinancePage() {
 
             {/* Treasury & Owner Payable Split */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-4">
+              <div className="bg-card border border-border/80 p-6 rounded-2xl shadow-2xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                       <Wallet className="h-6 w-6" />
                     </div>
                     <div>
@@ -160,10 +160,10 @@ export default function AdminFinancePage() {
                 </p>
               </div>
 
-              <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-4">
+              <div className="bg-card border border-border/80 p-6 rounded-2xl shadow-2xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                       <Building2 className="h-6 w-6" />
                     </div>
                     <div>
@@ -171,7 +171,7 @@ export default function AdminFinancePage() {
                       <p className="text-xs text-muted-foreground">Payables nets déduction faite de la commission</p>
                     </div>
                   </div>
-                  <span className="text-xl font-bold text-blue-600 dark:text-blue-400 font-mono">{formatDT(overview.ownerPayable)}</span>
+                  <span className="text-xl font-bold text-foreground font-mono">{formatDT(overview.ownerPayable)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Montant dû aux propriétaires après déduction de la commission contractuelle. Calculé exclusivement sur les fonds réels vérifiés.
@@ -183,7 +183,7 @@ export default function AdminFinancePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link
                 href="/admin/finance/commissions"
-                className="group p-5 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all shadow-sm flex flex-col justify-between"
+                className="group p-5 bg-card border border-border/80 rounded-2xl hover:border-primary/50 transition-all shadow-2xs hover:shadow-card flex flex-col justify-between"
               >
                 <div className="space-y-2">
                   <div className="p-2 w-fit rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
@@ -199,10 +199,10 @@ export default function AdminFinancePage() {
 
               <Link
                 href="/admin/finance/transactions"
-                className="group p-5 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all shadow-sm flex flex-col justify-between"
+                className="group p-5 bg-card border border-border/80 rounded-2xl hover:border-primary/50 transition-all shadow-2xs hover:shadow-card flex flex-col justify-between"
               >
                 <div className="space-y-2">
-                  <div className="p-2 w-fit rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                  <div className="p-2 w-fit rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">Gestion des Transactions</h4>
@@ -215,10 +215,10 @@ export default function AdminFinancePage() {
 
               <Link
                 href="/admin/finance/owners"
-                className="group p-5 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all shadow-sm flex flex-col justify-between"
+                className="group p-5 bg-card border border-border/80 rounded-2xl hover:border-primary/50 transition-all shadow-2xs hover:shadow-card flex flex-col justify-between"
               >
                 <div className="space-y-2">
-                  <div className="p-2 w-fit rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
+                  <div className="p-2 w-fit rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">Balances Propriétaires</h4>
@@ -231,10 +231,10 @@ export default function AdminFinancePage() {
 
               <Link
                 href="/admin/finance/settings"
-                className="group p-5 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all shadow-sm flex flex-col justify-between"
+                className="group p-5 bg-card border border-border/80 rounded-2xl hover:border-primary/50 transition-all shadow-2xs hover:shadow-card flex flex-col justify-between"
               >
                 <div className="space-y-2">
-                  <div className="p-2 w-fit rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400 group-hover:scale-105 transition-transform">
+                  <div className="p-2 w-fit rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
                     <Settings className="h-5 w-5" />
                   </div>
                   <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">Configuration Taux</h4>

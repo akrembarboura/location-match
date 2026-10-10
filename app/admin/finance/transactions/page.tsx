@@ -154,7 +154,15 @@ export default function AdminTransactionsPage() {
         </div>
 
         {/* Transactions Table */}
-        <AsyncStateContainer isLoading={loading} error={error} onRetry={fetchTransactions}>
+        <AsyncStateContainer
+          isLoading={loading}
+          isError={Boolean(error)}
+          error={error}
+          isEmpty={items.length === 0}
+          emptyTitle="Aucune transaction"
+          emptyDescription="Aucune transaction enregistrée ne correspond à vos critères."
+          onRetry={fetchTransactions}
+        >
           <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">

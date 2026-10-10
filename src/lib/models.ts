@@ -18,6 +18,7 @@ const UserSchema = new Schema({
   avatar: String,
   resetPasswordToken: { type: String, index: true },
   resetPasswordExpires: { type: Date },
+  passwordChangedAt: { type: Date },
   verificationStatus: {
     type: String,
     enum: ["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"],
@@ -340,6 +341,74 @@ const HousingRequestSchema = new Schema({
     grantedAt: { type: Date },
     reason: { type: String },
   },
+  // Workflow Negotiation & Commission Tracking
+  negotiation: {
+    customerVerification: {
+      status: {
+        type: String,
+        enum: ["PENDING", "CONTACTED", "CONFIRMED", "DECLINED"],
+        default: "PENDING",
+      },
+      notes: { type: String },
+      verifiedAt: { type: Date },
+      verifiedBy: { type: String },
+    },
+    ownerNegotiation: {
+      status: {
+        type: String,
+        enum: ["PENDING", "CONTACTED", "AGREED", "REJECTED"],
+        default: "PENDING",
+      },
+      proposedRate: { type: Number },
+      proposedBasis: {
+        type: String,
+        enum: ["FIRST_MONTH_RENT", "FIRST_AGREED_PAYMENT", "TOTAL_RENTAL_VALUE"],
+        default: "FIRST_MONTH_RENT",
+      },
+      collectionFlow: {
+        type: String,
+        enum: ["OWNER_DIRECT", "PLATFORM_COLLECTS", "MIXED"],
+        default: "OWNER_DIRECT",
+      },
+      notes: { type: String },
+      negotiatedAt: { type: Date },
+      negotiatedBy: { type: String },
+    },
+    commissionTerms: {
+      status: {
+        type: String,
+        enum: ["DRAFT", "PROPOSED", "AGREED", "WAIVED"],
+        default: "DRAFT",
+      },
+      rate: { type: Number },
+      basis: {
+        type: String,
+        enum: ["FIRST_MONTH_RENT", "FIRST_AGREED_PAYMENT", "TOTAL_RENTAL_VALUE"],
+        default: "FIRST_MONTH_RENT",
+      },
+      rentalBasis: { type: Number },
+      calculatedCommission: { type: Number },
+      collectionFlow: { type: String, default: "OWNER_DIRECT" },
+      waivedReason: { type: String },
+      confirmedAt: { type: Date },
+      confirmedBy: { type: String },
+    },
+    paymentVerification: {
+      status: {
+        type: String,
+        enum: ["UNPAID", "REPORTED", "VERIFIED", "WAIVED"],
+        default: "UNPAID",
+      },
+      reportedAmount: { type: Number, default: 0 },
+      verifiedAmount: { type: Number, default: 0 },
+      remainingAmount: { type: Number, default: 0 },
+      paymentMethod: { type: String, default: "CASH" },
+      reference: { type: String },
+      reportedAt: { type: Date },
+      verifiedAt: { type: Date },
+      verifiedBy: { type: String },
+    },
+  },
   // Legacy / Prototype Compatibility Fields
   kind: { type: String },
   people: { type: Number },
@@ -646,6 +715,12 @@ const CommissionSnapshotSchema = new Schema(
     scope: { type: String, enum: POLICY_SCOPE_ENUM, default: "PLATFORM" },
     rate: { type: Number, required: true },
     calculationMethod: { type: String, default: "PERCENTAGE" },
+    commissionBasis: {
+      type: String,
+      enum: ["FIRST_MONTH_RENT", "FIRST_AGREED_PAYMENT", "TOTAL_RENTAL_VALUE"],
+      default: "FIRST_MONTH_RENT",
+      index: true,
+    },
     currency: { type: String, default: "TND" },
     rentalBasis: { type: Number, required: true },
     calculatedCommission: { type: Number, required: true },
@@ -659,6 +734,16 @@ const CommissionSnapshotSchema = new Schema(
       ownerAmount: { type: Number, default: 0 },
       platformAmount: { type: Number, default: 0 },
     },
+    status: {
+      type: String,
+      enum: ["PROPOSED", "AGREED", "REPORTED", "VERIFIED", "WAIVED"],
+      default: "AGREED",
+      index: true,
+    },
+    verifiedCommission: { type: Number, default: 0 },
+    remainingCommission: { type: Number, default: 0 },
+    waivedBy: { type: String },
+    waivedReason: { type: String },
     confirmedAt: { type: Date, default: Date.now, index: true },
     snapshotVersion: { type: Number, default: 1 },
     notes: { type: String },
@@ -716,5 +801,42 @@ FinancialLedgerSchema.index({ ownerId: 1, type: 1, status: 1 });
 
 export const FinancialLedgerModel =
   mongoose.models.FinancialLedger || mongoose.model("FinancialLedger", FinancialLedgerSchema);
+
+// --- OTP CHALLENGES (FORGOT PASSWORD SECURITY) ---
+export const OTP_CHALLENGE_STATUSES = [
+  "ACTIVE",
+  "VERIFIED",
+  "CONSUMED",
+  "EXPIRED",
+  "LOCKED",
+] as const;
+export type OTPChallengeStatus = (typeof OTP_CHALLENGE_STATUSES)[number];
+
+const OTPChallengeSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    email: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    otpHmac: { type: String, required: true },
+    status: {
+      type: String,
+      enum: OTP_CHALLENGE_STATUSES,
+      default: "ACTIVE",
+      index: true,
+    },
+    attempts: { type: Number, default: 0 },
+    resendAllowedAt: { type: Date, required: true },
+    expiresAt: { type: Date, required: true },
+    resetTokenHash: { type: String, index: true, sparse: true },
+    resetTokenExpiresAt: { type: Date, index: true, sparse: true },
+  },
+  { timestamps: true }
+);
+
+OTPChallengeSchema.index({ email: 1, status: 1 });
+OTPChallengeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+export const OTPChallengeModel =
+  mongoose.models.OTPChallenge || mongoose.model("OTPChallenge", OTPChallengeSchema);
 
 

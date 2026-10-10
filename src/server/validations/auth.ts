@@ -74,3 +74,14 @@ export const ResetPasswordSchema = z.object({
   password: passwordField,
 });
 export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
+
+export const VerifyOTPSchema = z.object({
+  email: emailField,
+  otp: z.string().trim().length(6, "Le code OTP doit contenir exactement 6 chiffres."),
+});
+export type VerifyOTPInput = z.infer<typeof VerifyOTPSchema>;
+
+export const ResendOTPSchema = z.object({
+  email: emailField,
+});
+export type ResendOTPInput = z.infer<typeof ResendOTPSchema>;

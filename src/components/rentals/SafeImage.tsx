@@ -11,14 +11,6 @@ import { t } from "@/lib/i18n";
  * Adds f_auto (best format: AVIF/WebP), q_auto (intelligent quality compression),
  * and width constraints to prevent serving oversized images without relying on Next.js local proxy.
  */
-function getOptimizedSrc(src: string): string {
-  if (!src.includes("res.cloudinary.com")) return src;
-  if (src.includes("/upload/f_auto") || src.includes("/upload/q_auto") || src.includes("/upload/c_")) {
-    return src;
-  }
-  return src.replace("/upload/", "/upload/f_auto,q_auto,c_limit,w_800/");
-}
-
 type SafeImageProps = Omit<
   ImageProps,
   "src" | "alt" | "fill" | "width" | "height" | "onLoad" | "onError"
@@ -27,7 +19,7 @@ type SafeImageProps = Omit<
   alt: string;
 };
 
-/** Image with loading shimmer, broken-image fallback, and native Cloudinary CDN optimization. */
+/** Image with loading shimmer, broken-image fallback, and Next.js image optimization. */
 export function SafeImage({
   className,
   src,
@@ -54,13 +46,11 @@ export function SafeImage({
     );
   }
 
-  const finalSrc = getOptimizedSrc(src);
-
   return (
     <div className="relative h-full w-full">
       <Image
         {...props}
-        src={finalSrc}
+        src={src}
         alt={alt}
         fill
         loading={props.loading ?? "lazy"}

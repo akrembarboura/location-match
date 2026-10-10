@@ -10,8 +10,19 @@ import type {
   UpdateOwnerPropertyInput,
 } from "../validations/property";
 import { notificationService } from "./NotificationService";
-import { OwnerModel, UserModel, HouseModel } from "@/lib/models";
+import {
+  OwnerModel,
+  UserModel,
+  HouseModel,
+  ReservationModel,
+  PaymentModel,
+  FinancialLedgerModel,
+  HousingRequestModel,
+  AuditLogModel,
+  PropertyModerationEventModel,
+} from "@/lib/models";
 import { analyticsRepository } from "../analytics/AnalyticsRepository";
+import { deleteFromCloudinary } from "../utils/cloudinary";
 import crypto from "crypto";
 
 function generateSlug(title: string, city: string, id: string): string {
@@ -813,6 +824,198 @@ export class PropertyService {
     }
 
     return mapPropertyToAdminDTO(updated);
+  }
+
+  /* =======================================================================
+   * PROPERTY DELETION WORKFLOW (OWNER / ADMIN)
+   * ======================================================================= */
+
+  async deleteProperty({
+    id,
+    userId,
+    userRole,
+    reason,
+  }: {
+    id: string;
+    userId: string;
+    userRole: "OWNER" | "ADMIN" | "SUPER_ADMIN";
+    reason?: string;
+  }): Promise<{
+    action: "DELETED" | "ARCHIVED";
+    message: string;
+    propertyId: string;
+  }> {
+    const property = await propertyRepository.findById(id);
+    if (!property) {
+      const err = new Error("Bien introuvable.");
+      (err as any).status = 404;
+      throw err;
+    }
+
+    // IDOR Protection: Owner can only delete their own properties
+    if (userRole === "OWNER" && property.ownerId !== userId) {
+      const err = new Error("Accès refusé. Vous n'êtes pas le propriétaire de ce bien.");
+      (err as any).status = 403;
+      throw err;
+    }
+
+    // Case C: Active or upcoming confirmed reservations
+    const now = new Date();
+    const activeReservation = await ReservationModel.findOne({
+      propertyId: property.id,
+      status: "CONFIRMED",
+      checkOut: { $gte: now },
+    })
+      .lean()
+      .exec();
+
+    if (activeReservation) {
+      const err = new Error(
+        "Impossible de supprimer ce bien : des réservations confirmées en cours ou à venir sont enregistrées."
+      );
+      (err as any).status = 400;
+      throw err;
+    }
+
+    // Case D: Active housing request proposal or workflow
+    const activeHousingRequest = await HousingRequestModel.findOne({
+      $or: [
+        { selectedProperty: property.id },
+        { "propertyProposal.propertyId": property.id },
+      ],
+      status: {
+        $in: [
+          "CLIENT_CONFIRMATION",
+          "VISIT_COORDINATION",
+          "DOCS_PENDING",
+          "PAYMENT_PENDING",
+        ],
+      },
+    })
+      .lean()
+      .exec();
+
+    if (activeHousingRequest) {
+      const err = new Error(
+        "Impossible de supprimer ce bien : une demande de logement active est en cours pour ce bien."
+      );
+      (err as any).status = 400;
+      throw err;
+    }
+
+    // Case B: Historical records check (past reservations, payments, financial ledgers)
+    const [pastReservationsCount, paymentsCount, financialLedgerCount] = await Promise.all([
+      ReservationModel.countDocuments({ propertyId: property.id }),
+      PaymentModel.countDocuments({ propertyId: property.id }),
+      FinancialLedgerModel.countDocuments({ propertyId: property.id }),
+    ]);
+
+    const hasHistoricalRecords =
+      pastReservationsCount > 0 || paymentsCount > 0 || financialLedgerCount > 0;
+
+    if (hasHistoricalRecords) {
+      // Archive / soft delete to protect historical ledger and reservations integrity
+      await propertyRepository.update(property.id, {
+        status: "ARCHIVED",
+        isPublished: false,
+        availabilityStatus: "AVAILABLE",
+        reservation: null,
+        "moderation.reviewedBy": userId,
+        "moderation.reviewedAt": now,
+      });
+
+      await HouseModel.updateMany(
+        { $or: [{ id: property.id }, { slug: property.id }] },
+        { $set: { isPublished: false, unavailable: [] } }
+      ).exec();
+
+      await AuditLogModel.create({
+        id: crypto.randomUUID(),
+        action: "PROPERTY_ARCHIVED_ON_DELETE",
+        actorId: userId,
+        actorRole: userRole,
+        targetType: "PROPERTY",
+        targetId: property.id,
+        reason:
+          reason ||
+          "Bien archivé suite à une demande de suppression car des historiques de réservations ou de paiements existent.",
+        details: {
+          propertyTitle: property.title,
+          ownerId: property.ownerId,
+          pastReservationsCount,
+          paymentsCount,
+          financialLedgerCount,
+        },
+        occurredAt: now,
+      });
+
+      await propertyRepository.recordModerationEvent({
+        id: crypto.randomUUID(),
+        propertyId: property.id,
+        adminId: userId,
+        action: "ARCHIVED",
+        previousStatus: property.status,
+        newStatus: "ARCHIVED",
+        reason:
+          reason ||
+          "Archivé suite à une demande de suppression (historique financier et réservations conservé).",
+      });
+
+      return {
+        action: "ARCHIVED",
+        message:
+          "Le bien a été désactivé et archivé car des historiques de réservations ou de paiements y sont associés. Il n'est plus visible publiquement.",
+        propertyId: property.id,
+      };
+    }
+
+    // Case A: No historical records - Permanent deletion
+    await propertyRepository.deletePermanently(property.id);
+
+    await PropertyModerationEventModel.deleteMany({ propertyId: property.id }).exec();
+
+    await AuditLogModel.create({
+      id: crypto.randomUUID(),
+      action: "PROPERTY_DELETED",
+      actorId: userId,
+      actorRole: userRole,
+      targetType: "PROPERTY",
+      targetId: property.id,
+      reason: reason || "Suppression définitive du bien.",
+      details: {
+        propertyTitle: property.title,
+        ownerId: property.ownerId,
+      },
+      occurredAt: now,
+    });
+
+    // Cloudinary safe asset cleanup (never target seeds/placeholders/hero)
+    if (Array.isArray(property.images)) {
+      for (const img of property.images) {
+        const publicId = typeof img === "object" ? img?.publicId : null;
+        if (
+          publicId &&
+          typeof publicId === "string" &&
+          publicId.startsWith("location-match/properties/") &&
+          !publicId.includes("seed") &&
+          !publicId.includes("placeholder") &&
+          !publicId.includes("hero") &&
+          !publicId.startsWith("prop-")
+        ) {
+          try {
+            await deleteFromCloudinary(publicId);
+          } catch (err) {
+            console.error(`Erreur lors du nettoyage de l'asset Cloudinary ${publicId}:`, err);
+          }
+        }
+      }
+    }
+
+    return {
+      action: "DELETED",
+      message: "L'annonce a été définitivement supprimée avec succès.",
+      propertyId: property.id,
+    };
   }
 }
 
