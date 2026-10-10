@@ -35,23 +35,23 @@ function applyThemeClass(resolved: ResolvedTheme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Initialize from localStorage and system preference
+  // Initialize: Light mode displays first by default, user can toggle to dark mode
   useEffect(() => {
-    let initialTheme: Theme = "system";
+    let initialTheme: Theme = "light";
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "light" || stored === "dark" || stored === "system") {
+      if (stored === "dark" || stored === "light") {
         initialTheme = stored;
       }
     } catch {
       // localStorage might be unavailable in private browsing
     }
 
-    const resolved = initialTheme === "system" ? getSystemTheme() : initialTheme;
+    const resolved: ResolvedTheme = initialTheme === "dark" ? "dark" : "light";
     setThemeState(initialTheme);
     setResolvedTheme(resolved);
     applyThemeClass(resolved);
