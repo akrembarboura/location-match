@@ -15,13 +15,15 @@ export class FinanceLedgerService {
     calculatedCommission: number;
     collectionFlow: string;
     currency?: string;
-  }): Promise<any> {
+  }, session?: any): Promise<any> {
     await connectToDatabase();
 
-    const existingObligation = await FinancialLedgerModel.findOne({
+    const existingQuery = FinancialLedgerModel.findOne({
       reservationId: reservation.id,
       type: "COMMISSION_OBLIGATION",
-    }).exec();
+    });
+    if (session) existingQuery.session(session);
+    const existingObligation = await existingQuery.exec();
 
     if (existingObligation) {
       return existingObligation;
@@ -29,7 +31,7 @@ export class FinanceLedgerService {
 
     const txId = `TX-OBL-${reservation.id}`;
 
-    return await FinancialLedgerModel.create({
+    const txDoc = {
       id: txId,
       reservationId: reservation.id,
       propertyId: reservation.propertyId,
@@ -44,7 +46,13 @@ export class FinanceLedgerService {
       status: "VERIFIED",
       reference: `OBLIGATION-${reservation.id}`,
       notes: `Obligation de commission générée lors de la confirmation (${snapshot.calculatedCommission} TND).`,
-    });
+    };
+
+    const res = session
+      ? await FinancialLedgerModel.create([txDoc], { session })
+      : await FinancialLedgerModel.create(txDoc);
+
+    return Array.isArray(res) ? res[0] : res;
   }
 
   /**

@@ -3,6 +3,7 @@ import type { PartialPeriodRule, PricePeriod, PricingQuote } from "./pricing.typ
 
 export interface PricedProperty {
   rentalCategory?: string;
+  rentalCategories?: string[];
   pricing?: { price?: number; pricePeriod?: string; currency?: string } | null;
   pricePerNight?: number;
   summerPrice?: number;
@@ -11,6 +12,14 @@ export interface PricedProperty {
 
 const isPositive = (n: unknown): boolean => Number.isFinite(Number(n)) && Number(n) > 0;
 const isPeriod = (v: unknown): v is PricePeriod => v === "night" || v === "week" || v === "month";
+
+function isStudent(prop: PricedProperty): boolean {
+  return prop.rentalCategory === "student" || (Array.isArray(prop.rentalCategories) && prop.rentalCategories.includes("student"));
+}
+
+function isSummer(prop: PricedProperty): boolean {
+  return prop.rentalCategory === "summer" || (Array.isArray(prop.rentalCategories) && prop.rentalCategories.includes("summer"));
+}
 
 /**
  * Resolves the authoritative price AND period for a property.
@@ -36,9 +45,9 @@ export function resolvePropertyPricing(prop?: PricedProperty | null): {
     let period: PricePeriod = "night";
     if (isPeriod(prop.pricing.pricePeriod)) {
       period = prop.pricing.pricePeriod;
-    } else if (prop.rentalCategory === "student" || isPositive(prop.studentPrice)) {
+    } else if (isStudent(prop) || isPositive(prop.studentPrice)) {
       period = "month";
-    } else if (prop.rentalCategory === "summer" || isPositive(prop.summerPrice)) {
+    } else if (isSummer(prop) || isPositive(prop.summerPrice)) {
       period = "week";
     } else {
       period = "month";
@@ -73,7 +82,7 @@ export function resolvePropertyPricing(prop?: PricedProperty | null): {
   if (isPositive(prop.pricePerNight)) {
     return {
       unitPrice: Number(prop.pricePerNight),
-      pricePeriod: prop.rentalCategory === "student" ? "month" : "night",
+      pricePeriod: isStudent(prop) ? "month" : "night",
       currency: "TND",
     };
   }
@@ -81,7 +90,7 @@ export function resolvePropertyPricing(prop?: PricedProperty | null): {
   // Safe fallback
   return {
     unitPrice: 0,
-    pricePeriod: prop.rentalCategory === "student" ? "month" : "night",
+    pricePeriod: isStudent(prop) ? "month" : "night",
     currency: "TND",
   };
 }

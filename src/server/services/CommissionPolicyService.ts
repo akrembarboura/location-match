@@ -1,6 +1,7 @@
 import { CommissionPolicyModel, CommissionSnapshotModel } from "@/lib/models";
 import connectToDatabase from "@/lib/mongoose";
 import crypto from "crypto";
+import currency from "currency.js";
 
 export interface ResolvePolicyInput {
   reservationId?: string;
@@ -16,6 +17,7 @@ export interface ResolvePolicyInput {
   waivedBy?: string;
   waivedReason?: string;
   confirmedAt?: Date;
+  session?: any;
 }
 
 export class CommissionPolicyService {
@@ -130,13 +132,13 @@ export class CommissionPolicyService {
 
     let rawAmount = 0;
     if (method === "PERCENTAGE") {
-      rawAmount = (rentalBasis * rate) / 100;
+      rawAmount = currency(rentalBasis, { precision: 3 }).multiply(rate).divide(100).value;
     } else {
-      rawAmount = rate;
+      rawAmount = currency(rate, { precision: 3 }).value;
     }
 
-    // Round to 3 decimal places (millimes TND)
-    return Math.round(rawAmount * 1000) / 1000;
+    // Return safely rounded to 3 decimal places (millimes TND) using currency.js
+    return currency(rawAmount, { precision: 3 }).value;
   }
 
   /**
@@ -146,9 +148,11 @@ export class CommissionPolicyService {
     await connectToDatabase();
 
     // Check existing snapshot to ensure strict immutability & idempotency
-    const existing = await CommissionSnapshotModel.findOne({
+    const existingQuery = CommissionSnapshotModel.findOne({
       reservationId: input.reservationId,
-    }).exec();
+    });
+    if (input.session) existingQuery.session(input.session);
+    const existing = await existingQuery.exec();
 
     if (existing) {
       return existing;
@@ -178,17 +182,17 @@ export class CommissionPolicyService {
       if (!alloc || typeof alloc.ownerAmount !== "number" || typeof alloc.platformAmount !== "number") {
         throw new Error("L'allocation MIXTE nécessite explicitement les montants propriétaire et plateforme.");
       }
-      const sum = Math.round((alloc.ownerAmount + alloc.platformAmount) * 1000) / 1000;
+      const sum = currency(alloc.ownerAmount, { precision: 3 }).add(alloc.platformAmount).value;
       if (Math.abs(sum - input.rentalBasis) > 0.01) {
         throw new Error(`La somme des allocations (${sum} TND) ne correspond pas au total du loyer (${input.rentalBasis} TND).`);
       }
     }
 
-    const verifiedCommission = Math.round((input.verifiedCommission || 0) * 1000) / 1000;
-    const remainingCommission = Math.max(0, Math.round((calculatedCommission - verifiedCommission) * 1000) / 1000);
+    const verifiedCommission = currency(input.verifiedCommission || 0, { precision: 3 }).value;
+    const remainingCommission = Math.max(0, currency(calculatedCommission, { precision: 3 }).subtract(verifiedCommission).value);
     const snapshotId = `SNAP-${input.reservationId}`;
 
-    const snapshot = await CommissionSnapshotModel.create({
+    const snapshotDoc = {
       id: snapshotId,
       reservationId: input.reservationId,
       policyId: policy.id,
@@ -210,9 +214,13 @@ export class CommissionPolicyService {
       confirmedAt: input.confirmedAt || new Date(),
       snapshotVersion: 1,
       notes: `Snapshot généré lors de la confirmation de réservation (${source}: ${applicableRate}%, base: ${commissionBasis}).`,
-    });
+    };
 
-    return snapshot;
+    const snapshot = input.session
+      ? await CommissionSnapshotModel.create([snapshotDoc], { session: input.session })
+      : await CommissionSnapshotModel.create(snapshotDoc);
+
+    return Array.isArray(snapshot) ? snapshot[0] : snapshot;
   }
 
   /**

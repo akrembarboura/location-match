@@ -2,7 +2,7 @@
 
 > 📌 **DOCUMENT PROPERTIES**
 > - **Category**: Security Architecture, Auth Guards & Rate Limiting
-> - **Stack**: JWT, bcryptjs, HMAC SHA256, MongoDB Atomic Rate Limiter
+> - **Stack**: JWT, bcryptjs, HMAC SHA256, Sliding Window Rate Limiter
 > - **Authoritative Literature References**:
 >   - 📚 *OAuth 2.0 in Action* by Justin Richer & Antonio Sanso
 >   - 📚 *Web Application Security: Exploitation and Countermeasures* by Andrew Hoffman
@@ -83,24 +83,15 @@ export function computeOTPHmac(challengeId: string, userId: string, otp: string)
 
 ---
 
-## 🛡️ 3. Distributed MongoDB Atomic Rate Limiter
+## 🛡️ 3. Sliding Window Token Bucket Rate Limiter
 
-Rate limiting is enforced at the controller layer and shared across all Vercel instances using a MongoDB-backed store (`MongoStore`). This distributed approach avoids the pitfalls of in-memory rate limiting (which can be bypassed when serverless instances scale or restart).
-
-### Key Features:
-- **Atomic Operations**: Uses `$inc` and `findOneAndUpdate` to prevent race conditions during concurrent requests.
-- **Independent Limits**: We enforce distinct limits per identifier to prevent sophisticated bypasses:
-  - **By IP Address**: Protects against brute-forcing from a single source (`AUTH_FORGOT_PASSWORD_IP`).
-  - **By Normalized Email/Account**: Protects targeted accounts regardless of the attacker's IP (`AUTH_FORGOT_PASSWORD_ACCOUNT`).
-  - **By Global Route**: Imposes overall budget constraints to prevent backend exhaustion (`PUBLIC_API`, `SEARCH`).
-- **TTL Indexing**: Automatically cleans up expired rate limit buckets using MongoDB's `expireAfterSeconds` index.
+Rate limiting is enforced at the controller layer to defend against brute-force attacks and DDOS:
 
 ```typescript
-export const POLICIES = {
-  AUTH_LOGIN: { name: "AUTH_LOGIN", limit: isDev ? 500 : 10, windowMs: 15 * 60 * 1000 },
-  AUTH_FORGOT_PASSWORD_IP: { name: "AUTH_FORGOT_PASSWORD_IP", limit: isDev ? 500 : 20, windowMs: 15 * 60 * 1000 },
-  AUTH_FORGOT_PASSWORD_ACCOUNT: { name: "AUTH_FORGOT_PASSWORD_ACCOUNT", limit: isDev ? 200 : 5, windowMs: 60 * 60 * 1000 },
-  // ... other policies
+export const RATE_LIMIT_POLICIES = {
+  AUTH_LOGIN: { windowMs: 15 * 60 * 1000, max: 5, failClosed: true },    // 5 attempts per 15 min
+  CUSTOMER_SUBMIT: { windowMs: 60 * 60 * 1000, max: 3, failClosed: false }, // 3 requests per hour
+  PUBLIC_SEARCH: { windowMs: 60 * 1000, max: 60, failClosed: false },     // 60 searches per min
 };
 ```
 

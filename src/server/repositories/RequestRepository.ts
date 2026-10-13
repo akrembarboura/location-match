@@ -49,7 +49,7 @@ export class RequestRepository {
     };
   }
 
-  async updateStatus(id: string, status: string, adminNotes?: string) {
+  async updateStatus(id: string, status: string, adminNotes?: string, session?: any) {
     await connectToDatabase();
     const update: any = { status };
     if (adminNotes !== undefined) {
@@ -58,7 +58,7 @@ export class RequestRepository {
     return await HousingRequestModel.findOneAndUpdate(
       { id },
       { $set: update },
-      { returnDocument: "after" }
+      { returnDocument: "after", session }
     )
       .lean()
       .exec();

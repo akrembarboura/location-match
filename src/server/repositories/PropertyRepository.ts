@@ -356,7 +356,7 @@ export class PropertyRepository {
       .exec();
   }
 
-  async reserve(id: string, reservation: { from: Date; to: Date; adminId: string }) {
+  async reserve(id: string, reservation: { from: Date; to: Date; adminId: string }, session?: any) {
     await connectToDatabase();
     let updated = await PropertyModel.findOneAndUpdate(
       { $or: [{ id }, { slug: id }] },
@@ -371,7 +371,7 @@ export class PropertyRepository {
           },
         },
       },
-      { returnDocument: "after" }
+      { returnDocument: "after", session }
     )
       .lean()
       .exec();
@@ -387,7 +387,7 @@ export class PropertyRepository {
             },
           },
         },
-        { returnDocument: "after" }
+        { returnDocument: "after", session }
       )
         .lean()
         .exec();
@@ -416,9 +416,12 @@ export class PropertyRepository {
     return updated;
   }
 
-  async recordModerationEvent(eventData: any) {
+  async recordModerationEvent(eventData: any, session?: any) {
     await connectToDatabase();
-    return await PropertyModerationEventModel.create(eventData);
+    const result = session
+      ? await PropertyModerationEventModel.create([eventData], { session })
+      : await PropertyModerationEventModel.create(eventData);
+    return Array.isArray(result) ? result[0] : result;
   }
 
   async getModerationEvents(propertyId: string) {

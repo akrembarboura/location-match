@@ -8,6 +8,7 @@ import type { CreateRentalRequestInput } from "@/lib/rentals/request-schema";
 import { normalizeTunisianPhone } from "@/lib/rentals/request-schema";
 import { analyticsRepository } from "../analytics/AnalyticsRepository";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { resolvePropertyPricing } from "@/lib/pricing/pricing.service";
 import { commissionPolicyService } from "./CommissionPolicyService";
 import { financeLedgerService } from "./FinanceLedgerService";
@@ -614,8 +615,21 @@ export class RequestService {
     options?: { skipCommissionCheck?: boolean; waiverReason?: string }
   ) {
     await connectToDatabase();
-    const existingReq = await HousingRequestModel.findOne({ id }).exec();
-    if (!existingReq) return null;
+    const conn = mongoose.connection as any;
+    const topologyType = conn?.client?.topology?.description?.type;
+    const supportsTransactions = topologyType && topologyType !== "Single" && topologyType !== "Unknown";
+    const session = supportsTransactions ? await mongoose.startSession() : null;
+    if (session) {
+      session.startTransaction();
+    }
+    try {
+      const existingReqQuery = HousingRequestModel.findOne({ id });
+      if (session) existingReqQuery.session(session);
+      const existingReq = await existingReqQuery.exec();
+      if (!existingReq) {
+        if (session) session.endSession();
+        return null;
+      }
 
     const targetPropId = existingReq.propertyId || existingReq.selectedProperty;
 
@@ -661,13 +675,17 @@ export class RequestService {
         const fromDate = new Date(existingReq.checkIn);
         const toDate = new Date(existingReq.checkOut);
         if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
-          try {
-            await propertyRepository.reserve(targetPropId, {
+          await propertyRepository.reserve(
+            targetPropId,
+            {
               from: fromDate,
               to: toDate,
               adminId,
-            });
-            await propertyRepository.recordModerationEvent({
+            },
+            session
+          );
+          await propertyRepository.recordModerationEvent(
+            {
               id: crypto.randomUUID(),
               propertyId: targetPropId,
               adminId,
@@ -675,16 +693,16 @@ export class RequestService {
               previousStatus: "AVAILABLE",
               newStatus: "RESERVED",
               reason: `Réservation confirmée suite à la demande ${id} (du ${existingReq.checkIn} au ${existingReq.checkOut})`,
-            });
-          } catch (reserveErr) {
-            console.error("Failed to mark property reserved on request confirmation:", reserveErr);
-          }
+            },
+            session
+          );
         }
       }
 
       // Finance & Commission Ledger Integration
-      try {
-        const propDoc = targetPropId ? await PropertyModel.findOne({ id: targetPropId }).lean().exec() : null;
+        let propDocQuery = targetPropId ? PropertyModel.findOne({ id: targetPropId }).lean() : null;
+        if (session && propDocQuery) propDocQuery.session(session);
+        const propDoc = propDocQuery ? await propDocQuery.exec() : null;
         const ownerId = propDoc?.ownerId || "owner-default";
         const rentalBasis =
           commissionTerms?.rentalBasis ||
@@ -705,8 +723,7 @@ export class RequestService {
           collectionFlow: commissionTerms?.collectionFlow || "OWNER_DIRECT",
           status: paymentVerif?.status === "VERIFIED" ? "VERIFIED" : "AGREED",
           verifiedCommission: paymentVerif?.verifiedAmount || 0,
-          confirmedAt: new Date(),
-        });
+          confirmedAt: new Date(), session });
 
         await financeLedgerService.postCommissionObligation(
           {
@@ -715,11 +732,8 @@ export class RequestService {
             ownerId,
             customerId: existingReq.customerId,
           },
-          snapshot
-        );
-      } catch (finErr) {
-        console.error("Failed to post commission obligation on request confirmation:", finErr);
-      }
+          snapshot, session);
+      
 
       // Stage G Notifications to Owner and Customer
       try {
@@ -789,8 +803,19 @@ export class RequestService {
       }
     }
 
-    const updated = await requestRepository.updateStatus(id, status, adminNotes);
+    const updated = await requestRepository.updateStatus(id, status, adminNotes, session || undefined);
+    if (session) {
+      await session.commitTransaction();
+      session.endSession();
+    }
     return updated;
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
+      throw error;
+    }
   }
 
   // --- STAGE B: Customer Verification ---
@@ -929,8 +954,7 @@ export class RequestService {
       status: termsStatus,
       waivedBy: isWaived ? adminId : undefined,
       waivedReason: data.waivedReason,
-      confirmedAt: new Date(),
-    });
+      confirmedAt: new Date(), });
 
     return req.toObject();
   }
