@@ -18,20 +18,28 @@
 
 ## 📸 Product Preview
 
-### 1. Marketplace Discovery & Structured Search
-Clean real estate discovery experience supporting seasonal vacation houses, student accommodations, and category filters (Villas, Waterfront, Pools).
+### 1. Marketplace Discovery & Mobile Experience
+Clean real estate discovery experience supporting seasonal vacation houses, student accommodations, and category filters (Villas, Waterfront, Pools). Built fully responsive with touch-first controls for mobile users.
 
-![LOC MAISON Homepage](docs/assets/screenshots/homepage-light.png)
+| Desktop (1440px Viewport) | Mobile (390px Viewport) |
+| :---: | :---: |
+| ![LOC MAISON Desktop Homepage](docs/assets/screenshots/homepage-desktop.png) | ![LOC MAISON Mobile Homepage](docs/assets/screenshots/homepage-mobile.png) |
 
-### 2. Operational Admin Console (Dark / Light Theme)
+> 💡 **Design & UX Highlights**: Multi-category filter pills with instant client-side state, localized Tunisian date formatting, and touch-optimized request modals designed for low-friction conversion.
+
+### 2. Operational Admin Console (Dark & Light Mode)
 Real-time administrative operations hub featuring pending listing moderation, open client request dispatching, and two-tier payment verification.
 
 ![Admin Operations Console](docs/assets/screenshots/admin-dashboard-dark.png)
 
+> 💡 **Operational Workflow**: Summarizes high-priority action items into single-click workflows: *"Biens en attente"*, *"Demandes ouvertes"*, and *"Paiements à vérifier"*.
+
 ### 3. Market Intelligence & Conversion Funnels
-Interactive analytics dashboard tracking visitor funnels, supply vs. demand market tension across Tunisian cities (Mahdia, Hiboun, Rejiche), and commission margins.
+Interactive analytics dashboard tracking visitor funnels, supply vs. demand market tension across Tunisian coastal cities (Mahdia, Hiboun, Rejiche), and cumulative platform margins.
 
 ![Admin Analytics and Market Intelligence](docs/assets/screenshots/admin-analytics.png)
+
+> 💡 **Marketplace Analytics**: Correlates tenant search volumes against active landlord inventory to guide geographic marketing and property acquisition.
 
 ---
 
