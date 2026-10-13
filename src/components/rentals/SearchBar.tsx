@@ -54,15 +54,15 @@ export function SearchBar({ initial = {} }: { initial?: SearchValues }) {
       </label>
       <label className={`${cell} border-b border-r border-border lg:border-b-0`}>
         <span className={label}>{t.search.checkIn}</span>
-        <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className={input} />
+        <input suppressHydrationWarning type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className={input} />
       </label>
       <label className={`${cell} border-b border-border lg:border-b-0 lg:border-r`}>
         <span className={label}>{t.search.checkOut}</span>
-        <input type="date" value={checkOut} min={checkIn || undefined} onChange={(e) => setCheckOut(e.target.value)} className={input} />
+        <input suppressHydrationWarning type="date" value={checkOut} min={checkIn || undefined} onChange={(e) => setCheckOut(e.target.value)} className={input} />
       </label>
       <label className={`${cell} sm:col-span-2 lg:col-span-1`}>
         <span className={label}>{t.search.guests}</span>
-        <input type="number" min={1} max={20} value={guests} onChange={(e) => setGuests(Number(e.target.value))} className={input} />
+        <input suppressHydrationWarning type="number" min={1} max={20} value={guests} onChange={(e) => setGuests(Number(e.target.value))} className={input} />
       </label>
       <div className="p-2 sm:col-span-2 lg:col-span-1">
         <button

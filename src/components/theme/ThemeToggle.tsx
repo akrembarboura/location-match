@@ -22,7 +22,7 @@ export function ThemeToggle({
   const isDark = resolvedTheme === "dark";
 
   // Prevent layout shift during SSR before client hydration:
-  // Render Sun icon by default in light mode
+  // Render Moon icon by default in light mode (action to switch to dark mode)
   if (!mounted) {
     if (variant === "switch") {
       return (
@@ -49,12 +49,13 @@ export function ThemeToggle({
             className
           )}
         >
-          <Sun className="h-5 w-5 text-foreground/80 stroke-[1.75]" />
+          <Moon className="h-5 w-5 text-foreground/80 stroke-[1.75]" />
         </button>
       );
     }
 
     const buttonSize = size === "sm" ? "h-8 w-8" : "h-8.5 w-8.5";
+    const iconSize = size === "sm" ? "h-4 w-4" : "h-4.5 w-4.5";
     return (
       <div
         className={cn(
@@ -64,14 +65,14 @@ export function ThemeToggle({
         )}
         aria-hidden="true"
       >
-        <Sun className="h-4.5 w-4.5 text-foreground/80 stroke-[1.75]" />
+        <Moon className={cn(iconSize, "text-foreground/80 stroke-[1.75]")} />
       </div>
     );
   }
 
   // Minimalist Ghost Icon Button:
-  // - In Light mode: displays Sun icon to reflect daytime/light theme.
-  // - In Dark mode: displays Moon icon to reflect night/dark theme.
+  // - In Dark mode: displays Sun icon to allow switching to light mode.
+  // - In Light mode: displays Moon icon to allow switching to dark mode.
   if (variant === "ghost") {
     return (
       <button
@@ -85,9 +86,9 @@ export function ThemeToggle({
         )}
       >
         {isDark ? (
-          <Moon className="h-5 w-5 text-sky-400 group-hover:text-sky-300 transition-transform duration-200 stroke-[1.75]" />
+          <Sun className="h-5 w-5 text-amber-400 group-hover:text-amber-300 transition-transform duration-200 stroke-[1.75]" />
         ) : (
-          <Sun className="h-5 w-5 text-amber-500 group-hover:text-amber-600 transition-transform duration-200 stroke-[1.75]" />
+          <Moon className="h-5 w-5 text-foreground/80 group-hover:text-foreground transition-transform duration-200 stroke-[1.75]" />
         )}
       </button>
     );
@@ -142,7 +143,9 @@ export function ThemeToggle({
     );
   }
 
-  // Interactive 1-Click Button with Border
+  // Interactive 1-Click Button with Border:
+  // - In Dark mode: displays Sun icon to allow switching to light mode.
+  // - In Light mode: displays Moon icon to allow switching to dark mode.
   const buttonSizeClasses = size === "sm" ? "h-8 w-8" : "h-8.5 w-8.5";
   const iconSizeClasses = size === "sm" ? "h-4 w-4" : "h-4.5 w-4.5";
 
@@ -150,7 +153,7 @@ export function ThemeToggle({
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label={customAriaLabel || (isDark ? "Désactiver le mode sombre" : "Activer le mode sombre")}
+      aria-label={customAriaLabel || (isDark ? "Activer le mode clair" : "Activer le mode sombre")}
       title={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
       className={cn(
         "group relative inline-flex items-center justify-center rounded-full border border-border/80 bg-card text-foreground transition-all duration-200 hover:border-primary/60 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 shrink-0",
@@ -159,9 +162,9 @@ export function ThemeToggle({
       )}
     >
       {isDark ? (
-        <Moon className={cn(iconSizeClasses, "text-sky-400 transition-transform duration-200 stroke-[1.75]")} />
+        <Sun className={cn(iconSizeClasses, "text-amber-400 transition-transform duration-200 stroke-[1.75]")} />
       ) : (
-        <Sun className={cn(iconSizeClasses, "text-amber-500 transition-transform duration-200 stroke-[1.75]")} />
+        <Moon className={cn(iconSizeClasses, "text-foreground/80 transition-transform duration-200 stroke-[1.75]")} />
       )}
     </button>
   );

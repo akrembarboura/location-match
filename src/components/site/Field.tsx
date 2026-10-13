@@ -21,17 +21,33 @@ export function Field({
   );
 }
 
-export function TextField(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={cn("field-input", props.className)} />;
+export function TextField({
+  className,
+  suppressHydrationWarning = true,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      suppressHydrationWarning={suppressHydrationWarning}
+      className={cn("field-input", className)}
+      {...props}
+    />
+  );
 }
 
 export function SelectField({
   options,
   placeholder,
+  className,
+  suppressHydrationWarning = true,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & { options: readonly string[]; placeholder?: string }) {
   return (
-    <select {...props} className={cn("field-input appearance-none pr-8", props.className)}>
+    <select
+      suppressHydrationWarning={suppressHydrationWarning}
+      className={cn("field-input appearance-none pr-8", className)}
+      {...props}
+    >
       <option value="">{placeholder ?? "Select an option"}</option>
       {options.map((o) => (
         <option key={o} value={o}>

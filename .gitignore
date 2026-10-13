@@ -47,3 +47,5 @@ create-admin.ts
 
 # Kilo
 .kilo/
+
+scratch/
