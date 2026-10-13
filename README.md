@@ -1,264 +1,237 @@
-# LOC MAISON — Tunisian Rental Marketplace
+# LOC MAISON — Tunisian Managed Rental Marketplace
 
-> **Managed Rental Marketplace for Summer Vacation & Student Housing in Tunisia**  
-> *Developed by [Micro Edition](https://microedition.tn/) · Founder & Lead: Akrem Barboura*
+> **Verified property listings, matching engine, and auditable reservation workflow for the Tunisian real estate market.**  
+> *Developed by [Micro Edition](https://microedition.tn/) · Founder & Technical Lead: Akrem Barboura*
 
----
+[![Next.js 15](https://img.shields.io/badge/Next.js-15_(App_Router)-black?logo=next.js)](https://nextjs.org/)
+[![React 19](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB_Atlas-green?logo=mongodb)](https://www.mongodb.com/)
+[![Tests Passing](https://img.shields.io/badge/Tests-250_Passed_(41_Suites)-success?logo=vitest)](https://vitest.dev/)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
 
-## 🌟 Overview
-
-**LOC MAISON** is a managed, human-assisted rental marketplace built for the Tunisian real estate market (initiating in **Mahdia, Tunisia**). Unlike unmoderated instant-booking platforms, LOC MAISON integrates a structured operational layer where properties are verified, customer requests are matched, payments are audited, and contact details are released strictly under controlled business invariants.
-
-The platform provides dedicated, role-scoped experiences for:
-- **Customers**: Property discovery, structured rental requests, proposal comparison, live payment tracking, and concierge support.
-- **Property Owners**: Listing submission, availability calendars, cash payment declarations, operational check-in/check-out schedules, and masked customer communications.
-- **Administrators**: Moderation, user lifecycle review, payment verification, request proposals, and platform analytics.
-
----
-
-## 🔐 Controlled Customer Contact Release Policy
-
-To protect marketplace integrity and prevent off-platform bypass before reservation and payment validation, LOC MAISON enforces a **Server-Side Contact Masking & Release Engine** (`ContactReleasePolicy`).
-
-```text
-               Customer Contact Data (Phone, Email, WhatsApp)
-                                    │
-                                    ▼
-                ┌───────────────────────────────────────┐
-                │   Server-Side Evaluation Policy       │
-                └───────────────────┬───────────────────┘
-                                    │
-               ┌────────────────────┴────────────────────┐
-               │  Is Authorized Owner?                   │
-               │  Is Reservation Status CONFIRMED?       │
-               │  Is Payment State VERIFIED / REPORTED?  │
-               └────────────────────┬────────────────────┘
-                                    │
-                   ┌────────────────┴────────────────┐
-                   │                                 │
-                   ▼                                 ▼
-             NO (Default)                        YES (Satisfied)
-   ┌──────────────────────────────┐  ┌──────────────────────────────┐
-   │ Contact Status: HIDDEN       │  │ Contact Status: RELEASED     │
-   │ Phone: null                  │  │ Phone: +216 22 123 456       │
-   │ Name: "Mohamed A."           │  │ Name: "Mohamed Ben Ali"      │
-   └──────────────────────────────┘  └──────────────────────────────┘
-```
-
-> **Security Invariant**: Unreleased contact data is stripped at the **API & Repository level**. It is never transferred to the browser or hidden via CSS, eliminating client-side inspection vulnerabilities.
+[**🚀 Explore Live Demo (Deployed on Vercel)**](https://location-match.vercel.app)  
+*(Interactive preview of the marketplace client experience and operations portal.)*
 
 ---
 
-## 💳 Dynamic Payment Workflow & Single Source of Truth
+## 📸 Product Preview
 
-LOC MAISON implements a domain-driven payment state machine (`PaymentModel`) to track cash, bank transfer, D17, and online transactions with full audit trails.
+### 1. Marketplace Discovery & Structured Search
+Clean real estate discovery experience supporting seasonal vacation houses, student accommodations, and category filters (Villas, Waterfront, Pools).
 
-### Conceptual Payment Model
+![LOC MAISON Homepage](docs/assets/screenshots/homepage-light.png)
 
-```typescript
-type PaymentMethod = "CASH" | "BANK_TRANSFER" | "D17" | "ONLINE" | "OTHER";
+### 2. Operational Admin Console (Dark / Light Theme)
+Real-time administrative operations hub featuring pending listing moderation, open client request dispatching, and two-tier payment verification.
 
-type PaymentStatus =
-  | "PENDING"
-  | "AWAITING_OWNER_CONFIRMATION"
-  | "REPORTED"
-  | "VERIFIED"
-  | "CONFIRMED"
-  | "REJECTED"
-  | "REFUNDED";
-```
+![Admin Operations Console](docs/assets/screenshots/admin-dashboard-dark.png)
 
-### Owner Cash Confirmation & Audit Flow (`REPORTED` ≠ `VERIFIED`)
+### 3. Market Intelligence & Conversion Funnels
+Interactive analytics dashboard tracking visitor funnels, supply vs. demand market tension across Tunisian cities (Mahdia, Hiboun, Rejiche), and commission margins.
 
-```text
-Customer selects Cash Payment
-             │
-             ▼
-Physical Cash Paid to Owner
-             │
-             ▼
-Owner Clicks "Paiement reçu"  ──►  Payment.status = REPORTED (Owner Audit)
-             │
-             ▼
-LOC MAISON Admin Audit        ──►  Payment.status = VERIFIED / CONFIRMED
-             │
-             ▼
-Contact Released to Owner & Customer Sees "Paiement confirmé"
-```
-
-1. **Single Source of Truth**: Payment state is saved in MongoDB (`PaymentModel` + `ReservationModel.paymentSummary`) and synced to `HousingRequestModel`. Both Customer and Owner views consume the identical server state via [src/lib/payment-status.ts](file:///c:/Users/Akrem/Desktop/location_match/src/lib/payment-status.ts).
-2. **Auditability**: When an owner confirms physical receipt of cash, `Payment.status` transitions to `REPORTED`. LOC MAISON platform admins verify the record to set `VERIFIED`, preserving a full audit log (`reportedBy`, `reportedAt`, `verifiedBy`, `verifiedAt`, `history`).
+![Admin Analytics and Market Intelligence](docs/assets/screenshots/admin-analytics.png)
 
 ---
 
-## 🔄 End-to-End Marketplace Workflow
+## 🌟 Executive Overview
 
-```text
- Property Owner               LOC MAISON Platform             Customer
-───────────────              ─────────────────────           ──────────
-       │                               │                         │
-       ├──► Create Listing (DRAFT) ───►│                         │
-       │    Submit for Review          │                         │
-       │                               ├──► Moderation & Publish │
-       │                               │    (/houses)            │
-       │                               │                         │
-       │                               │◄── Submit Request ──────┤
-       │                               │    (Summer/Student)     │
-       │                               │                         │
-       │◄── View Reservation (Masked) ─┤                         │
-       │    Receive Physical Cash      │                         │
-       ├──► Report Cash Payment ──────►│                         │
-       │    (Status: REPORTED)         ├──► Admin Verification   │
-       │                               │    (Status: VERIFIED)   │
-       │                               │                         │
-       │◄── Release Customer Contact ──┤                         │
-       │    (Status: RELEASED)         ├──► Paiement confirmé ──►│
-```
+**LOC MAISON** is a managed rental platform engineered specifically for the Tunisian marketplace. Unlike unmoderated instant-booking directories, LOC MAISON introduces a structured operational layer where:
+- Property listings are physically or documentarily verified by administrators before publication.
+- Tenant requests (for summer vacations or university housing) are matched algorithmically and reviewed by operations.
+- Direct customer contact information is shielded until reservations and payment commitments are verified.
+- Financial obligations and cash payment declarations undergo strict dual-confirmation auditing.
+
+### Role-Scoped Interfaces
+- **Tenants & Students**: Filter verified listings, submit structured rental requests, track proposal stages, and receive automated SMS/Email updates.
+- **Property Owners**: Manage listing details, track booking calendars, declare received cash payments, and view check-in schedules.
+- **Administrators**: Moderate submissions, match tenant requests with landlords, audit offline payments, and track platform metrics.
 
 ---
 
-## 🏛️ Application Architecture & Tech Stack
+## 🏛️ Core Architecture & Domain Invariants
 
-LOC MAISON is built on the **Next.js 15 App Router** using TypeScript, React 19, and Tailwind CSS v4.
+The platform is designed around strict separation of concerns, transactional safety, and business-level security policies.
 
-| Layer | Technology / Tool |
+### 1. Controlled Contact Masking Engine
+To protect the integrity of the marketplace and prevent disintermediation prior to a formal agreement, tenant contact details (phone, email, WhatsApp) are masked by default. Contact access is granted only after a reservation reaches `CONFIRMED` and its payment is `VERIFIED`.
+
+> 📘 **Full Architecture Blueprint**: See the [Contact Release Policy Diagram & Spec](docs/architecture/SYSTEM_DESIGN_AND_FSM.md#3-controlled-customer-contact-release-policy).
+
+### 2. Guarded Finite State Machine (Stage A → Stage F)
+Rental inquiries progress through a six-stage Finite State Machine (FSM):
+1. **Stage A**: Request Submitted
+2. **Stage B**: Dates & Preferences Verified
+3. **Stage C**: Terms Negotiated with Owner
+4. **Stage D**: Commission Terms Locked
+5. **Stage E**: Payment Verified by Admin
+6. **Stage F**: Reservation Confirmed & Contacts Released
+
+> 📘 **Full State Machine Specification**: See the [Stage A–F Lifecycle Documentation](docs/architecture/SYSTEM_DESIGN_AND_FSM.md#2-finite-state-machine-stage-a--stage-f-lifecycle).
+
+### 3. Dual-Confirmation Payment Audit Trail
+To accommodate local payment methods (cash on site, bank transfer, D17), physical cash handoffs must first be declared by the owner (`Payment.status = REPORTED`) and subsequently audited and approved by an administrator (`Payment.status = VERIFIED`), maintaining an immutable audit log. Both views consume state via the repository-level helper [`src/lib/payment-status.ts`](src/lib/payment-status.ts).
+
+> 📘 **Payment State Machine Details**: See the [Payment Audit Documentation](docs/architecture/SYSTEM_DESIGN_AND_FSM.md#4-dynamic-payment-workflow--single-source-of-truth).
+
+### 4. Distributed Atomic Rate Limiter
+Public endpoints, authentication workflows, and image uploads are protected by an atomic, distributed MongoDB-backed rate limiter (`MongoStore`). This eliminates the weaknesses of in-memory stores in serverless environments.
+
+> 📘 **Security Architecture**: See the [Security, Auth & Rate Limiting Guide](docs/backend/SECURITY_AUTH_RATE_LIMITING.md).
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
 | :--- | :--- |
-| **Framework** | [Next.js 15](https://nextjs.org/) (App Router) |
-| **UI Library** | [React 19](https://react.dev/) |
+| **Framework** | [Next.js 15](https://nextjs.org/) (App Router, Server Actions, Route Handlers) |
+| **Frontend UI** | [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/) |
+| **Icons & Design** | [Lucide React](https://lucide.dev/), Radix UI Primitives, Sonner Toaster |
 | **Language** | [TypeScript](https://www.typescriptlang.org/) (Strict Mode) |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) (Canonical Utility Classes) |
-| **Icons & Motion** | Lucide React, Framer Motion |
-| **Database & ODM** | MongoDB Atlas, Mongoose |
-| **Data Fetching** | [TanStack Query v5](https://tanstack.com/query/latest) |
-| **Validation & Forms**| [Zod](https://zod.dev/), React Hook Form |
-| **Authentication** | Signed JWT HTTP-Only Cookies (`jose`, `bcryptjs`) |
-| **Media Hosting** | Cloudinary API |
-| **Testing** | [Vitest](https://vitest.dev/) (26 Test Suites, 162 Tests) |
-| **CI/CD** | GitHub Actions (`ci.yml`, `security.yml`) |
-
----
-
-## 👥 User Roles & Access Control
-
-- **`CUSTOMER`**: Default role for public registration. Can browse listings, submit requests, view proposals, track payment status, and access `/dashboard`.
-- **`OWNER`**: Can list properties, manage availability calendars, declare received cash payments, view operational check-in/check-out schedules, and manage `/owner`.
-- **`ADMIN`**: Platform operators who review property listings, generate proposals, audit payment reports, and manage user lifecycles.
-- **`SUPER_ADMIN`**: Full platform management and administrative override capabilities.
+| **Database & ODM** | [MongoDB Atlas](https://www.mongodb.com/atlas), [Mongoose 9](https://mongoosejs.com/) |
+| **Client State & Cache**| [TanStack Query v5](https://tanstack.com/query/latest) |
+| **Validation** | [Zod](https://zod.dev/), React Hook Form |
+| **Security & Auth** | Stateless signed JWT HTTP-Only Cookies (`jose`), `bcryptjs`, HMAC OTP verification |
+| **Media Pipeline** | [Cloudinary API](https://cloudinary.com/) (Secure server-side upload & transformations) |
+| **Testing Engine** | [Vitest](https://vitest.dev/), Testing Library, `@testing-library/react` |
+| **CI / Automation** | GitHub Actions (`ci.yml`, `security.yml`) |
 
 ---
 
 ## 🛣️ Application Routes
 
-### Public Routes
-- `/` — Marketplace landing page & search
-- `/houses` — Verified property listings catalog
-- `/houses/[slug]` — Individual property details & reservation request
-- `/summer` — Seasonal vacation rental discovery
-- `/student` — Dedicated student housing catalog
-- `/request/summer` & `/request/student` — Structured rental request wizards
-- `/login` & `/register` — Authentication forms
-
-### Customer Routes
-- `/dashboard` — Customer request dashboard & tracking
-- `/request/[id]` — Detailed request tracking & payment status
-
-### Owner Routes
-- `/owner` — Owner overview & operational KPI summary
-- `/owner/properties` — Property listing management
-- `/owner/properties/new` — Listing creation wizard
-- `/owner/properties/[id]/edit` — Property editing
-- `/owner/calendar` — Availability calendar & check-in schedule
-- `/owner/reservations` — Reservation list & cash payment declaration
-- `/owner/payments` — Financial summaries & transaction logs
-
-### Admin Routes
-- `/admin` — Operational overview
-- `/admin/properties` — Moderation queue (Approve / Review / Reject)
-- `/admin/requests` — Customer request matching & proposal engine
-- `/admin/analytics` — Marketplace performance metrics
+| Category | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| **Public** | `/` | Marketplace landing page & global search | Public |
+| | `/houses` | Verified property catalog | Public |
+| | `/houses/[slug]` | Individual property details & booking request | Public |
+| | `/summer` | Vacation rentals catalog | Public |
+| | `/student` | University student housing catalog | Public |
+| | `/request/summer` | Vacation rental structured wizard | Public / Tenant |
+| | `/request/student` | Student accommodation request wizard | Public / Student |
+| | `/login` & `/register` | Authentication with cookie-based JWT | Public |
+| **Customer** | `/dashboard` | Tenant request tracking & active reservations | `CUSTOMER` |
+| | `/request/[id]` | Real-time negotiation & payment status tracker | `CUSTOMER` |
+| **Owner** | `/owner` | Owner overview & operational KPI summary | `OWNER` |
+| | `/owner/properties` | Property portfolio & listing manager | `OWNER` |
+| | `/owner/calendar` | Availability calendar & check-in schedules | `OWNER` |
+| | `/owner/reservations` | Reservation list & cash payment declaration | `OWNER` |
+| **Admin** | `/admin` | Operations console & daily action items | `ADMIN` |
+| | `/admin/properties` | Listing moderation & verification queue | `ADMIN` |
+| | `/admin/requests` | Request matching & proposal management | `ADMIN` |
+| | `/admin/analytics` | Marketplace KPIs, city demand & conversion funnels | `ADMIN` |
 
 ---
 
-## 🚦 Security & Protection Mechanisms
+## 🧪 Testing & Verification
 
-### 1. HTTP-Only Cookie Authentication
-Signed JWT sessions stored in `loc_maison_session` HTTP-Only, `SameSite=Lax`, `Secure` (production) cookies.
-
-### 2. MongoDB MongoStore Rate Limiting
-Abuse protection enforced via server-side rate-limiting policies (`AUTH_LOGIN`, `AUTH_REGISTER`, `PUBLIC_API`, `OWNER_API`, `ADMIN_API`).
-
-### 3. Role-Based Route Guards
-Authorization guards (`requireOwnerAccess()`, `requireAdminAccess()`) prevent unauthorized role escalation.
-
-### 4. Continuous Integration & Security Workflows
-Automated testing and vulnerability scanning via GitHub Actions:
-- **`.github/workflows/ci.yml`**: Runs `npx tsc --noEmit`, `npm run lint`, and `npm test` (Vitest).
-- **`.github/workflows/security.yml`**: Dependency audit & secret scanning.
-
----
-
-## 🛠️ Development & Environment Setup
-
-### 1. Prerequisites
-- **Node.js**: v20+
-- **MongoDB**: Local MongoDB instance or Atlas connection
-- **Cloudinary Account**: For property image hosting
-
-### 2. Installation & Setup
+The codebase maintains automated test coverage across authentication, rate limiting, pricing algorithms, state machines, and contact-release invariants.
 
 ```bash
-# Clone repository
+# Run complete test suite via Vitest
+npm test
+```
+
+### Verified Test Run:
+```text
+ ✓ tests/properties/admin-reservation.test.ts (13 tests)
+ ✓ tests/analytics/analytics.test.ts (13 tests)
+ ✓ tests/finance/commission-negotiation-workflow.test.ts (6 tests)
+ ✓ tests/owner/contact-release.test.ts (12 tests)
+ ✓ tests/rate-limit/mongo-store.test.ts (3 tests)
+ ✓ tests/pricing/canonical-pricing.test.ts (13 tests)
+ ...
+ Test Files  41 passed (41)
+      Tests  250 passed (250)
+   Duration  ~19s
+```
+
+- **Type Safety**: `npx tsc --noEmit`
+- **Linting**: `npm run lint`
+- **Continuous Integration**: Every pull request and push to `main` runs type checking, linting, and the complete 250-test test suite via GitHub Actions.
+
+---
+
+## 🚀 Getting Started & Local Setup
+
+### 1. Prerequisites
+- **Node.js**: `v20.x` or higher
+- **npm**: `v10.x` or higher
+- **MongoDB**: Local MongoDB instance (`mongodb://127.0.0.1:27017`) or a free MongoDB Atlas cluster
+- **Cloudinary Account**: For property image hosting (free tier suffices)
+
+### 2. Installation
+
+```bash
+# Clone the repository
 git clone https://github.com/akrembarboura/location-match.git
 cd location-match
 
 # Install dependencies
 npm install
 
-# Copy environment template
+# Copy environment variables template
 cp .env.example .env.local
 ```
 
-### 3. Environment Variables (`.env.local`)
+### 3. Environment Variables Configuration
+
+Open `.env.local` and configure your local placeholder values:
 
 ```env
+# Database connection
 MONGODB_URI=mongodb://127.0.0.1:27017/location_match
-JWT_SECRET=your_super_secret_jwt_key_at_least_32_bytes
-NEXT_PUBLIC_APP_URL=http://localhost:3002
 
-CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+# Authentication Secret (Generate at least 32 random characters)
+JWT_SECRET=your_local_development_jwt_secret_key_32_chars_min
+
+# App URL (Default Next.js dev port)
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Cloudinary Media Storage (Replace with your sandbox/test credentials)
+CLOUDINARY_URL=cloudinary://<API_KEY>:<API_SECRET>@<CLOUD_NAME>
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=<CLOUD_NAME>
+
+# Email Service (Optional for development; falls back to terminal logger)
+RESEND_API_KEY=re_your_resend_api_key_placeholder
 ```
 
-### 4. Running Development Server
+> ⚠️ **Security Warning**: Never commit real API keys or database connection strings containing credentials to version control. The repository enforces `.gitignore` on all `.env*.local` files.
+
+### 4. Running the Development Server
 
 ```bash
 npm run dev
 ```
 
-The application will start at `http://localhost:3002`.
+The application will be accessible at:  
+👉 **`http://localhost:3000`**
 
-### 5. Running Quality & Verification Checks
+### 5. Running Quality Checks
 
 ```bash
-# Type check TypeScript
+# Verify TypeScript compilation
 npx tsc --noEmit
 
-# Run Linter
+# Run Next.js and ESLint checks
 npm run lint
 
-# Run Unit & Integration Tests (Vitest)
+# Execute Vitest test suite
 npm test
 
-# Build for Production
+# Verify production build
 npm run build
 ```
 
 ---
 
-## 📜 License & Intellectual Property
+## 📜 Intellectual Property & Rights
 
 **LOC MAISON** is a proprietary commercial application developed by **Micro Edition**.  
 © 2026 Micro Edition. All rights reserved.
 
-- **Developer**: Micro Edition ([microedition.tn](https://microedition.tn/))
-- **Founder & Lead**: Akrem Barboura
+- **Developer & Agency**: [Micro Edition](https://microedition.tn/)
+- **Founder & Lead Engineer**: Akrem Barboura
+- **Commercial Rights**: All trademarks, design assets, and business logic are proprietary property of Micro Edition.

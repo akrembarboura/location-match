@@ -609,7 +609,7 @@ export class RequestService {
 
   async updateRequestStatus(
     id: string,
-    status: string,
+    status?: string,
     adminNotes?: string,
     adminId = "admin",
     options?: { skipCommissionCheck?: boolean; waiverReason?: string }
@@ -631,9 +631,10 @@ export class RequestService {
         return null;
       }
 
+    const effectiveStatus = status || existingReq.status;
     const targetPropId = existingReq.propertyId || existingReq.selectedProperty;
 
-    if (status === "CONFIRMED") {
+    if (effectiveStatus === "CONFIRMED") {
       // Stage F Prerequisite Enforcement
       if (!targetPropId) {
         const err: any = new Error("Impossible de confirmer une demande sans logement sélectionné.");
@@ -793,7 +794,7 @@ export class RequestService {
       } catch (notifErr) {
         console.error("Failed to send party notifications on confirmation:", notifErr);
       }
-    } else if (status === "CANCELLED" || status === "REJECTED") {
+    } else if (effectiveStatus === "CANCELLED" || effectiveStatus === "REJECTED") {
       if (targetPropId) {
         try {
           await propertyRepository.releaseReservation(targetPropId);
@@ -803,7 +804,7 @@ export class RequestService {
       }
     }
 
-    const updated = await requestRepository.updateStatus(id, status, adminNotes, session || undefined);
+    const updated = await requestRepository.updateStatus(id, effectiveStatus, adminNotes, session || undefined);
     if (session) {
       await session.commitTransaction();
       session.endSession();

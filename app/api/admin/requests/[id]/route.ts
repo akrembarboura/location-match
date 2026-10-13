@@ -8,6 +8,8 @@ import { z } from "zod";
 const PatchSchema = z.object({
   status: z.enum(REQUEST_STATUSES).optional(),
   adminNotes: z.string().optional(),
+  skipCommissionCheck: z.boolean().optional(),
+  waiverReason: z.string().optional(),
 });
 
 export async function GET(
@@ -25,13 +27,15 @@ export async function GET(
 
     return NextResponse.json(requestData);
   } catch (error: any) {
-    if (error.name === "AuthenticationError") {
+    console.error("[AdminRequest GET Error]:", error);
+    if (error.name === "AuthenticationError" || error.statusCode === 401) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
-    if (error.name === "AuthorizationError") {
+    if (error.name === "AuthorizationError" || error.statusCode === 403) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    const status = typeof error.statusCode === "number" ? error.statusCode : 500;
+    return NextResponse.json({ error: error.message || "Erreur serveur" }, { status });
   }
 }
 
@@ -51,9 +55,13 @@ export async function PATCH(
 
     const updated = await requestService.updateRequestStatus(
       id,
-      parsed.data.status || "PENDING",
+      parsed.data.status,
       parsed.data.adminNotes,
-      adminUser.id
+      adminUser.id,
+      {
+        skipCommissionCheck: parsed.data.skipCommissionCheck,
+        waiverReason: parsed.data.waiverReason,
+      }
     );
 
     if (!updated) {
@@ -62,8 +70,14 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    if (error.name === "AuthenticationError") return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    if (error.name === "AuthorizationError") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    console.error("[AdminRequest PATCH Error]:", error);
+    if (error.name === "AuthenticationError" || error.statusCode === 401) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+    if (error.name === "AuthorizationError" || error.statusCode === 403) {
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+    }
+    const status = typeof error.statusCode === "number" ? error.statusCode : 500;
+    return NextResponse.json({ error: error.message || "Erreur serveur" }, { status });
   }
 }

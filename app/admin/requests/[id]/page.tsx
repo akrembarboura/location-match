@@ -206,6 +206,13 @@ export default function AdminRequestDetailPage({ params }: { params: Promise<{ i
   const customerName = requestData?.customer?.fullName || requestData?.customer || "Client inconnu";
   const customerPhone = requestData?.customer?.phone || requestData?.phone;
 
+  // Workflow Checklist Conditions
+  const commTerms = requestData?.negotiation?.commissionTerms || {};
+  const payVerif = requestData?.negotiation?.paymentVerification || {};
+  const isTermsFrozen = commTerms.status === "AGREED" || commTerms.status === "WAIVED";
+  const isPaymentVerified = payVerif.status === "VERIFIED" || commTerms.status === "WAIVED" || payVerif.status === "WAIVED";
+  const canConfirmReservation = isTermsFrozen && isPaymentVerified && Boolean(requestData?.selectedProperty || requestData?.propertyId);
+
   return (
     <AdminShell
       title={`Fiche Demande ${id}`}
@@ -252,7 +259,13 @@ export default function AdminRequestDetailPage({ params }: { params: Promise<{ i
               </div>
 
               {statusMessage && (
-                <div className="mt-4 rounded-md bg-primary/10 p-3 text-xs font-medium text-primary">
+                <div
+                  className={`mt-4 rounded-md p-3 text-xs font-medium ${
+                    statusMessage.startsWith("Statut mis à jour") || statusMessage.includes("enregistrées")
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
+                >
                   {statusMessage}
                 </div>
               )}
@@ -405,14 +418,20 @@ export default function AdminRequestDetailPage({ params }: { params: Promise<{ i
                   onChange={(e) => handleStatusChange(e.target.value as RequestStatus)}
                 >
                   {REQUEST_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
+                    <option
+                      key={s}
+                      value={s}
+                      disabled={s === "CONFIRMED" && !canConfirmReservation}
+                    >
+                      {s} {s === "CONFIRMED" && !canConfirmReservation ? "(Conditions non remplies)" : ""}
                     </option>
                   ))}
                 </select>
                 {requestData.propertyId && requestData.status !== "CONFIRMED" && (
                   <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
-                    Passer le statut à &quot;CONFIRMED&quot; bloquera automatiquement ce logement pour les dates {requestData.checkIn} → {requestData.checkOut}.
+                    {!canConfirmReservation
+                      ? "⚠️ Pour confirmer la réservation, vous devez d'abord valider les termes de la commission et vérifier son règlement dans le panneau ci-contre."
+                      : `Passer le statut à "CONFIRMED" bloquera automatiquement ce logement pour les dates ${requestData.checkIn} → ${requestData.checkOut}.`}
                   </p>
                 )}
                 {requestData.propertyId && requestData.status === "CONFIRMED" && (
